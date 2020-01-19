@@ -1,0 +1,1 @@
+# SWM - simple window manager
