@@ -299,7 +299,7 @@ func handleConfigureRequestEvent(e xproto.ConfigureRequestEvent) {
 }
 
 func handleMapRequestEvent(e xproto.MapRequestEvent) {
-	w := workspaces["default"]
+	w := workspaces[0]
 	xproto.MapWindowChecked(xc, e.Window)
 	w.Add(e.Window)
 	w.TileWindows()

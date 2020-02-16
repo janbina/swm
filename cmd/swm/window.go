@@ -18,7 +18,7 @@ type Workspace struct {
 	mu *sync.Mutex
 }
 
-var workspaces map[string]*Workspace
+var workspaces []*Workspace
 var activeWindow *xproto.Window
 
 func initWorkspaces() error {
@@ -27,7 +27,6 @@ func initWorkspaces() error {
 		return err
 	}
 	if tree != nil {
-		workspaces = make(map[string]*Workspace)
 		defaultw := &Workspace{mu: &sync.Mutex{}}
 		for _, c := range tree.Children {
 			if err := defaultw.Add(c); err != nil {
@@ -39,7 +38,7 @@ func initWorkspaces() error {
 			defaultw.Screen = &attachedScreens[0]
 		}
 
-		workspaces["default"] = defaultw
+		workspaces = append(workspaces, defaultw)
 
 		if err := defaultw.TileWindows(); err != nil {
 			log.Println(err)
