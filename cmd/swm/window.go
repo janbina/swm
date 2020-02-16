@@ -4,15 +4,17 @@ import (
 	"fmt"
 	"github.com/BurntSushi/xgb/xinerama"
 	"github.com/BurntSushi/xgb/xproto"
+	"log"
 	"sync"
+	"time"
 )
 
 type ManagedWindow xproto.Window
 
 type Column []ManagedWindow
 
-type Workspace struct{
-	Screen *xinerama.ScreenInfo
+type Workspace struct {
+	Screen  *xinerama.ScreenInfo
 	columns []Column
 
 	mu *sync.Mutex
@@ -20,6 +22,33 @@ type Workspace struct{
 
 var workspaces map[string]*Workspace
 var activeWindow *xproto.Window
+
+func initWorkspaces() error {
+	tree, err := xproto.QueryTree(xc, setupInfo.Roots[0].Root).Reply()
+	if err != nil {
+		return err
+	}
+	if tree != nil {
+		workspaces = make(map[string]*Workspace)
+		defaultw := &Workspace{mu: &sync.Mutex{}}
+		for _, c := range tree.Children {
+			if err := defaultw.Add(c); err != nil {
+				log.Println(err)
+			}
+		}
+
+		if len(attachedScreens) > 0 {
+			defaultw.Screen = &attachedScreens[0]
+		}
+
+		workspaces["default"] = defaultw
+
+		if err := defaultw.TileWindows(); err != nil {
+			log.Println(err)
+		}
+	}
+	return nil
+}
 
 func (w *Workspace) Add(win xproto.Window) error {
 	// Ensure that we can manage this window.
@@ -52,7 +81,7 @@ func (w *Workspace) Add(win xproto.Window) error {
 	switch len(w.columns) {
 	case 0:
 		w.columns = []Column{
-			{ ManagedWindow(win) },
+			{ManagedWindow(win)},
 		}
 	case 1:
 		if len(w.columns[0]) == 0 {
@@ -60,7 +89,7 @@ func (w *Workspace) Add(win xproto.Window) error {
 			w.columns[0] = append(w.columns[0], ManagedWindow(win))
 		} else {
 			// There's something in the primary column, so create a new one.
-			w.columns = append(w.columns, Column{ ManagedWindow(win) })
+			w.columns = append(w.columns, Column{ManagedWindow(win)})
 		}
 	default:
 		// Add to the first empty column we can find, and shortcircuit out
@@ -73,7 +102,7 @@ func (w *Workspace) Add(win xproto.Window) error {
 		}
 
 		// No empty columns, add to the last one.
-		i := len(w.columns)-1
+		i := len(w.columns) - 1
 		w.columns[i] = append(w.columns[i], ManagedWindow(win))
 	}
 	return nil
@@ -156,4 +185,57 @@ func (wp *Workspace) RemoveWindow(w xproto.Window) error {
 		}
 	}
 	return fmt.Errorf("Window not managed by workspace")
+}
+
+func destroyActiveWindow(aggressive bool) error {
+	if aggressive {
+		if activeWindow != nil {
+			return xproto.DestroyWindowChecked(xc, *activeWindow).Check()
+		}
+		return nil
+	} else {
+		prop, err := xproto.GetProperty(
+			xc,
+			false,
+			*activeWindow,
+			atomWMProtocols,
+			xproto.GetPropertyTypeAny,
+			0,
+			64,
+		).Reply()
+		if err != nil {
+			return err
+		}
+		if prop == nil {
+			// There were no properties, so the window doesn't follow ICCCM.
+			// Just destroy it.
+			return destroyActiveWindow(true)
+		}
+		for v := prop.Value; len(v) >= 4; v = v[4:] {
+			switch xproto.Atom(uint32(v[0]) | uint32(v[1])<<8 | uint32(v[2])<<16 | uint32(v[3])<<24) {
+			case atomWMDeleteWindow:
+				t := time.Now().Unix()
+				return xproto.SendEventChecked(
+					xc,
+					false,
+					*activeWindow,
+					xproto.EventMaskNoEvent,
+					string(xproto.ClientMessageEvent{
+						Format: 32,
+						Window: *activeWindow,
+						Type:   atomWMProtocols,
+						Data: xproto.ClientMessageDataUnionData32New([]uint32{
+							uint32(atomWMDeleteWindow),
+							uint32(t),
+							0,
+							0,
+							0,
+						}),
+					}.Bytes()),
+				).Check()
+			}
+		}
+		// No WM_DELETE_WINDOW protocol, so destroy.
+		return destroyActiveWindow(true)
+	}
 }

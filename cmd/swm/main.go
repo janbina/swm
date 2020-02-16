@@ -8,109 +8,184 @@ import (
 	"github.com/janbina/swm/cmd/swm/keysym"
 	"log"
 	"os/exec"
-	"sync"
-	"time"
 )
 
 var xc *xgb.Conn
-var xroot xproto.ScreenInfo
-var keymap [256][]xproto.Keysym
+var setupInfo *xproto.SetupInfo
 var attachedScreens []xinerama.ScreenInfo
+var keymap [256][]xproto.Keysym
 
 var (
-	atomWMProtocols xproto.Atom
+	atomWMProtocols    xproto.Atom
 	atomWMDeleteWindow xproto.Atom
 )
 
 func main() {
-	// Connect to X Server
-	xcon, err := xgb.NewConn()
-	if err != nil {
-		log.Fatal(err)
+
+	if err := initConnection(); err != nil {
+		log.Fatalf("Cannot init connection: %s", err)
 	}
-	xc = xcon
 	defer xc.Close()
 
-	// Initialize Xinerama
-	if err := xinerama.Init(xc); err != nil {
-		log.Fatal(err)
+	if err := queryAttachedScreens(); err != nil {
+		log.Fatalf("Error querying attached screens: %s", err)
 	}
 
-	// Set xroot to Root Window
-	coninfo := xproto.Setup(xc)
-	if coninfo == nil {
-		log.Fatal("Could not parse X connection info")
+	if err := initializeAtoms(); err != nil {
+		log.Fatalf("Error initializing atoms: %s", err)
 	}
-	if len(coninfo.Roots) != 1 {
-		log.Fatal("Inappropriate number of roots. Did Xinerama initialize correctly?")
-	}
-	xroot = coninfo.Roots[0]
 
+	if err := takeWMOwnership(); err != nil {
+		log.Fatalf("Cannot take WM ownership: %s", err)
+	}
+
+	if err := initKeyMap(); err != nil {
+		log.Fatalf("Cannot init keymap: %s", err)
+	}
+
+	if errs := grabKeys(); len(errs) > 0 {
+		log.Println("There were some errors grabbing keys:")
+		for _, err := range errs {
+			log.Println("\t", err)
+		}
+	}
+
+	if err := initWorkspaces(); err != nil {
+		log.Fatalf("Cannot init workspaces: %s", err)
+	}
+
+eventloop:
+	for {
+		event, err := xc.WaitForEvent()
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		if event != nil {
+			if err := handleEvent(event); err != nil {
+				break eventloop
+			}
+		}
+	}
+}
+
+func initConnection() error {
+	xConn, err := xgb.NewConn()
+	if err != nil {
+		return err
+	}
+
+	if err := xinerama.Init(xConn); err != nil {
+		xConn.Close()
+		return err
+	}
+
+	connInfo := xproto.Setup(xConn)
+	if connInfo == nil {
+		xConn.Close()
+		return fmt.Errorf("could not parse X connection info")
+	} else if len(connInfo.Roots) != 1 {
+		xConn.Close()
+		return fmt.Errorf("inappropriate number of roots (%d), Xinerama probably didn't initialize correctly", len(connInfo.Roots))
+	}
+
+	xc = xConn
+	setupInfo = connInfo
+	return nil
+}
+
+func queryAttachedScreens() error {
 	if r, err := xinerama.QueryScreens(xc).Reply(); err != nil {
-		log.Fatal(err)
+		return err
 	} else {
 		if len(r.ScreenInfo) == 0 {
-			attachedScreens = []xinerama.ScreenInfo{
-				xinerama.ScreenInfo{
-					Width:  coninfo.Roots[0].WidthInPixels,
-					Height: coninfo.Roots[0].HeightInPixels,
-				},
-			}
-
+			attachedScreens = []xinerama.ScreenInfo{{
+				Width:  setupInfo.Roots[0].WidthInPixels,
+				Height: setupInfo.Roots[0].HeightInPixels,
+			}}
 		} else {
 			attachedScreens = r.ScreenInfo
 		}
+		return nil
 	}
+}
 
-	atomWMProtocols = getAtom("WM_PROTOCOLS")
-	atomWMDeleteWindow = getAtom("WM_DELETE_WINDOW")
-
-	if err := TakeWMOwnership(); err != nil {
-		if _, ok := err.(xproto.AccessError); ok {
-			log.Fatal("Could not become the WM. Is another WM already running?")
-		}
-		log.Fatal(err)
+func initializeAtoms() error {
+	if a, err := getAtom("WM_PROTOCOLS"); err != nil {
+		return err
+	} else {
+		atomWMProtocols = a
 	}
+	if a, err := getAtom("WM_DELETE_WINDOW"); err != nil {
+		return err
+	} else {
+		atomWMDeleteWindow = a
+	}
+	return nil
+}
 
-	const (
-		loKey = 8
-		hiKey = 255
-	)
-
-	m := xproto.GetKeyboardMapping(xc, loKey, hiKey-loKey+1)
-	reply, err := m.Reply()
+func getAtom(name string) (xproto.Atom, error) {
+	r, err := xproto.InternAtom(xc, false, uint16(len(name)), name).Reply()
 	if err != nil {
-		log.Fatal(err)
+		return xproto.AtomNone, err
 	}
-	if reply == nil {
-		log.Fatal("Could not load keyboard map")
+	if r == nil {
+		// TODO: should we return error here or not?
+		return xproto.AtomNone, nil
 	}
+	return r.Atom, nil
+}
+
+func takeWMOwnership() error {
+	err := xproto.ChangeWindowAttributesChecked(
+		xc,
+		setupInfo.Roots[0].Root,
+		xproto.CwEventMask,
+		[]uint32{
+			xproto.EventMaskKeyPress |
+				xproto.EventMaskKeyRelease |
+				xproto.EventMaskButtonPress |
+				xproto.EventMaskButtonRelease |
+				xproto.EventMaskStructureNotify |
+				xproto.EventMaskSubstructureRedirect,
+		}).Check()
+	if _, ok := err.(xproto.AccessError); ok {
+		return fmt.Errorf("could not become the WM, another WM is probably already running (%s)", err)
+	}
+	return err
+}
+
+func initKeyMap() error {
+	// ASCII codes below 8 don't correspond to any keys on modern keyboards
+	const loKey, hiKey = 8, 255
+
+	mapping, err := xproto.GetKeyboardMapping(xc, loKey, hiKey-loKey+1).Reply()
+	if err != nil {
+		return err
+	}
+	if mapping == nil {
+		return fmt.Errorf("cannot load keyboard map")
+	}
+
+	keysymsPerKeycode := int(mapping.KeysymsPerKeycode)
 
 	for i := 0; i < hiKey-loKey+1; i++ {
-		keymap[loKey + i] = reply.Keysyms[i*int(reply.KeysymsPerKeycode):(i+1)*int(reply.KeysymsPerKeycode)]
+		keymap[loKey+i] = mapping.Keysyms[i*keysymsPerKeycode : (i+1)*keysymsPerKeycode]
 	}
 
+	return nil
+}
+
+func grabKeys() []error {
 	grabs := []struct {
-		sym       xproto.Keysym
-		modifiers uint16
-		codes     []xproto.Keycode
+		sym   xproto.Keysym
+		mods  uint16
+		codes []xproto.Keycode
 	}{
-		{
-			sym:       keysym.XK_BackSpace,
-			modifiers: xproto.ModMaskControl | xproto.ModMask1,
-		},
-		{
-			sym:       keysym.XK_e,
-			modifiers: xproto.ModMask1,
-		},
-		{
-			sym:       keysym.XK_q,
-			modifiers: xproto.ModMask1,
-		},
-		{
-			sym:       keysym.XK_q,
-			modifiers: xproto.ModMask1 | xproto.ModMaskShift,
-		},
+		{sym: keysym.XK_BackSpace, mods: xproto.ModMaskControl | xproto.ModMask1},
+		{sym: keysym.XK_e, mods: xproto.ModMask1},
+		{sym: keysym.XK_q, mods: xproto.ModMask1},
+		{sym: keysym.XK_q, mods: xproto.ModMask1 | xproto.ModMaskShift},
 	}
 
 	for i, syms := range keymap {
@@ -122,122 +197,64 @@ func main() {
 			}
 		}
 	}
+
+	var errs []error
 	for _, grabbed := range grabs {
 		for _, code := range grabbed.codes {
 			if err := xproto.GrabKeyChecked(
 				xc,
 				false,
-				xroot.Root,
-				grabbed.modifiers,
+				setupInfo.Roots[0].Root,
+				grabbed.mods,
 				code,
 				xproto.GrabModeAsync,
 				xproto.GrabModeAsync,
 			).Check(); err != nil {
-				log.Print(err)
+				errs = append(errs, err)
 			}
-
 		}
 	}
-
-	tree, err := xproto.QueryTree(xc, xroot.Root).Reply()
-	if err != nil {
-		log.Fatal(err)
-	}
-	if tree != nil {
-		workspaces = make(map[string]*Workspace)
-		defaultw := &Workspace{mu: &sync.Mutex{}}
-		for _, c := range tree.Children {
-			if err := defaultw.Add(c); err != nil {
-				log.Println(err)
-			}
-
-		}
-
-		if len(attachedScreens) > 0 {
-			defaultw.Screen = &attachedScreens[0]
-		}
-
-		workspaces["default"] = defaultw
-
-		if err := defaultw.TileWindows(); err != nil {
-			log.Println(err)
-		}
-	}
-
-	// Main X Event loop
-eventloop:
-	for {
-		xev, err := xc.WaitForEvent()
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		switch e := xev.(type) {
-		case xproto.KeyPressEvent:
-			if err := HandleKeyPressEvent(e); err != nil {
-				break eventloop
-			}
-		case xproto.DestroyNotifyEvent:
-			for _, w := range workspaces {
-				go func(w *Workspace) {
-					if err := w.RemoveWindow(e.Window); err == nil {
-						w.TileWindows()
-					}
-				}(w)
-			}
-			if activeWindow != nil && e.Window == *activeWindow {
-				activeWindow = nil
-			}
-		case xproto.ConfigureRequestEvent:
-			ev := xproto.ConfigureNotifyEvent{
-				Event:            e.Window,
-				Window:           e.Window,
-				AboveSibling:     0,
-				X:                e.X,
-				Y:                e.Y,
-				Width:            e.Width,
-				Height:           e.Height,
-				BorderWidth:      0,
-				OverrideRedirect: false,
-			}
-			xproto.SendEventChecked(xc, false, e.Window, xproto.EventMaskStructureNotify, string(ev.Bytes()))
-		case xproto.MapRequestEvent:
-			w := workspaces["default"]
-			xproto.MapWindowChecked(xc, e.Window)
-			w.Add(e.Window)
-			w.TileWindows()
-		case xproto.EnterNotifyEvent:
-			activeWindow = &e.Event
-		default:
-			log.Println(xev)
-		}
-	}
+	return errs
 }
 
-func TakeWMOwnership() error {
-	return xproto.ChangeWindowAttributesChecked(
-		xc,
-		xroot.Root,
-		xproto.CwEventMask,
-		[]uint32{
-			xproto.EventMaskKeyPress |
-				xproto.EventMaskKeyRelease |
-				xproto.EventMaskButtonPress |
-				xproto.EventMaskButtonRelease |
-				xproto.EventMaskStructureNotify |
-				xproto.EventMaskSubstructureRedirect,
-		}).Check()
+func handleEvent(event xgb.Event) error {
+	log.Println(event)
+	switch e := event.(type) {
+	case xproto.KeyPressEvent:
+		if err := handleKeyPressEvent(KeyPressEvent(e)); err != nil {
+			return err
+		}
+	case xproto.DestroyNotifyEvent:
+		handleDestroyNotifyEvent(e)
+	case xproto.ConfigureRequestEvent:
+		handleConfigureRequestEvent(e)
+	case xproto.MapRequestEvent:
+		handleMapRequestEvent(e)
+	case xproto.EnterNotifyEvent:
+		handleEnterNotifyEvent(e)
+	}
+	return nil
 }
 
-func HandleKeyPressEvent(key xproto.KeyPressEvent) error {
-	switch keymap[key.Detail][0] {
+type KeyPressEvent xproto.KeyPressEvent
+
+func (e KeyPressEvent) hasModifiers(mods ...uint16) bool {
+	for _, mod := range mods {
+		if e.State&mod == 0 {
+			return false
+		}
+	}
+	return true
+}
+
+func handleKeyPressEvent(e KeyPressEvent) error {
+	switch keymap[e.Detail][0] {
 	case keysym.XK_BackSpace:
-		if (key.State & xproto.ModMaskControl != 0) && (key.State & xproto.ModMask1 != 0) {
+		if e.hasModifiers(xproto.ModMaskControl, xproto.ModMask1) {
 			return fmt.Errorf("quit")
 		}
-		return nil
 	case keysym.XK_e:
-		if key.State & xproto.ModMask1 != 0 {
+		if e.hasModifiers(xproto.ModMask1) {
 			cmd := exec.Command("xterm")
 			err := cmd.Start()
 			go func() {
@@ -245,67 +262,49 @@ func HandleKeyPressEvent(key xproto.KeyPressEvent) error {
 			}()
 			return err
 		}
-		return nil
 	case keysym.XK_q:
-		switch key.State {
-		case xproto.ModMask1:
-			prop, err := xproto.GetProperty(xc, false, *activeWindow, atomWMProtocols,
-				xproto.GetPropertyTypeAny, 0, 64).Reply()
-			if err != nil {
-				return err
-			}
-			if prop == nil {
-				// There were no properties, so the window doesn't follow ICCCM.
-				// Just destroy it.
-				if activeWindow != nil {
-					return xproto.DestroyWindowChecked(xc, *activeWindow).Check()
-				}
-			}
-			for v := prop.Value; len(v) >= 4; v = v[4:] {
-				switch xproto.Atom( uint32(v[0]) | uint32(v[1]) <<8 | uint32(v[2]) <<16 | uint32(v[3]) << 24 ) {
-				case atomWMDeleteWindow:
-					t := time.Now().Unix()
-					return xproto.SendEventChecked(
-						xc,
-						false,
-						*activeWindow,
-						xproto.EventMaskNoEvent,
-						string(xproto.ClientMessageEvent{
-							Format: 32,
-							Window: *activeWindow,
-							Type:   atomWMProtocols,
-							Data: xproto.ClientMessageDataUnionData32New([]uint32{
-								uint32(atomWMDeleteWindow),
-								uint32(t),
-								0,
-								0,
-								0,
-							}),
-						}.Bytes())).Check()
-				}
-			}
-			// No WM_DELETE_WINDOW protocol, so destroy.
-			if activeWindow != nil {
-				return xproto.DestroyWindowChecked(xc, *activeWindow).Check()
-			}
-		case xproto.ModMask1 | xproto.ModMaskShift:
-			if activeWindow != nil {
-				return xproto.DestroyWindowChecked(xc, *activeWindow).Check()
-			}
+		if e.hasModifiers(xproto.ModMask1) {
+			return destroyActiveWindow(e.hasModifiers(xproto.ModMaskShift))
 		}
-		return nil
-	default:
-		return nil
+	}
+	return nil
+}
+
+func handleDestroyNotifyEvent(e xproto.DestroyNotifyEvent) {
+	for _, w := range workspaces {
+		go func(w *Workspace) {
+			if err := w.RemoveWindow(e.Window); err == nil {
+				w.TileWindows()
+			}
+		}(w)
+	}
+	if activeWindow != nil && e.Window == *activeWindow {
+		activeWindow = nil
 	}
 }
 
-func getAtom(name string) xproto.Atom {
-	rply, err := xproto.InternAtom(xc, false, uint16(len(name)), name).Reply()
-	if err != nil {
-		log.Fatal(err)
+func handleConfigureRequestEvent(e xproto.ConfigureRequestEvent) {
+	ev := xproto.ConfigureNotifyEvent{
+		Event:            e.Window,
+		Window:           e.Window,
+		AboveSibling:     0,
+		X:                e.X,
+		Y:                e.Y,
+		Width:            e.Width,
+		Height:           e.Height,
+		BorderWidth:      0,
+		OverrideRedirect: false,
 	}
-	if rply == nil {
-		return 0
-	}
-	return rply.Atom
+	xproto.SendEventChecked(xc, false, e.Window, xproto.EventMaskStructureNotify, string(ev.Bytes()))
+}
+
+func handleMapRequestEvent(e xproto.MapRequestEvent) {
+	w := workspaces["default"]
+	xproto.MapWindowChecked(xc, e.Window)
+	w.Add(e.Window)
+	w.TileWindows()
+}
+
+func handleEnterNotifyEvent(e xproto.EnterNotifyEvent) {
+	activeWindow = &e.Event
 }
