@@ -177,6 +177,12 @@ func initKeyMap() error {
 }
 
 func grabKeys() []error {
+	ignoreMods := []uint16{
+		0,
+		xproto.ModMaskLock,                   // Caps lock
+		xproto.ModMask2,                      // Num lock
+		xproto.ModMaskLock | xproto.ModMask2, // Caps and Num lock
+	}
 	grabs := []struct {
 		sym   xproto.Keysym
 		mods  uint16
@@ -201,16 +207,18 @@ func grabKeys() []error {
 	var errs []error
 	for _, grabbed := range grabs {
 		for _, code := range grabbed.codes {
-			if err := xproto.GrabKeyChecked(
-				xc,
-				false,
-				setupInfo.Roots[0].Root,
-				grabbed.mods,
-				code,
-				xproto.GrabModeAsync,
-				xproto.GrabModeAsync,
-			).Check(); err != nil {
-				errs = append(errs, err)
+			for _, ignoreMod := range ignoreMods {
+				if err := xproto.GrabKeyChecked(
+					xc,
+					false,
+					setupInfo.Roots[0].Root,
+					grabbed.mods|ignoreMod,
+					code,
+					xproto.GrabModeAsync,
+					xproto.GrabModeAsync,
+				).Check(); err != nil {
+					errs = append(errs, err)
+				}
 			}
 		}
 	}
