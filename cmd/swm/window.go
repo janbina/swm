@@ -131,16 +131,17 @@ func (w *Workspace) RemoveWindow(win xproto.Window) error {
 }
 
 func destroyActiveWindow(aggressive bool) error {
-	if aggressive {
-		if activeWindow != nil {
-			return xproto.DestroyWindowChecked(xc, *activeWindow).Check()
-		}
+	win := activeWindow
+	if win == nil {
 		return nil
+	}
+	if aggressive {
+		return xproto.DestroyWindowChecked(xc, *win).Check()
 	} else {
 		prop, err := xproto.GetProperty(
 			xc,
 			false,
-			*activeWindow,
+			*win,
 			atomWMProtocols,
 			xproto.GetPropertyTypeAny,
 			0,
@@ -161,11 +162,11 @@ func destroyActiveWindow(aggressive bool) error {
 				return xproto.SendEventChecked(
 					xc,
 					false,
-					*activeWindow,
+					*win,
 					xproto.EventMaskNoEvent,
 					string(xproto.ClientMessageEvent{
 						Format: 32,
-						Window: *activeWindow,
+						Window: *win,
 						Type:   atomWMProtocols,
 						Data: xproto.ClientMessageDataUnionData32New([]uint32{
 							uint32(atomWMDeleteWindow),
