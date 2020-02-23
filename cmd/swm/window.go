@@ -90,10 +90,12 @@ func (w *Workspace) TileWindows() error {
 	if len(w.windows) == 0 {
 		return nil
 	}
-	width := uint32(w.Screen.Width) / uint32(len(w.windows))
-	height := uint32(w.Screen.Height)
+	screenW := uint32(w.Screen.Width)
+	screenH := uint32(w.Screen.Height)
+	horizontalPadding := screenW / 10
+	verticalPadding := screenH / 10
 	var err error
-	for i, window := range w.windows {
+	for _, window := range w.windows {
 		err2 := xproto.ConfigureWindowChecked(
 			xc,
 			xproto.Window(window),
@@ -102,10 +104,10 @@ func (w *Workspace) TileWindows() error {
 				xproto.ConfigWindowWidth|
 				xproto.ConfigWindowHeight,
 			[]uint32{
-				uint32(i) * width,
-				0,
-				width,
-				height,
+				horizontalPadding,
+				verticalPadding,
+				screenW - 2 * horizontalPadding,
+				screenH - 2 * horizontalPadding,
 			},
 		).Check()
 		if err == nil && err2 != nil {
