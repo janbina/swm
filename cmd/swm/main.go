@@ -1,7 +1,19 @@
 package main
 
-import "fmt"
+import (
+	"github.com/BurntSushi/xgbutil"
+	"log"
+)
 
 func main() {
-	fmt.Println("Hello")
+
+	X, err := xgbutil.NewConn()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer X.Conn().Close()
+
+	if err := takeWmOwnership(X, true); err != nil {
+		log.Fatalf("Cannot take wm ownership: %s", err)
+	}
 }
