@@ -8,6 +8,7 @@ import (
 	"github.com/BurntSushi/xgbutil/xinerama"
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"log"
+	"os/exec"
 )
 
 func main() {
@@ -36,6 +37,12 @@ func main() {
 			xevent.Quit(X)
 		},
 	).Connect(X, X.RootWin(), "Mod1-x", true)
+
+	keybind.KeyPressFun(
+		func(X *xgbutil.XUtil, ev xevent.KeyPressEvent) {
+			exec.Command("xterm").Start()
+		},
+	).Connect(X, X.RootWin(), "Mod1-return", true)
 
 	xevent.Main(X)
 }
