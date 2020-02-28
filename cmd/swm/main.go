@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/keybind"
 	"github.com/BurntSushi/xgbutil/xevent"
@@ -49,6 +50,7 @@ func main() {
 
 var root *xwindow.Window
 var heads xinerama.Heads
+
 func initRoot(X *xgbutil.XUtil) error {
 	root = xwindow.New(X, X.RootWin())
 
@@ -64,6 +66,14 @@ func initRoot(X *xgbutil.XUtil) error {
 
 	log.Println("Root geometry: ", rootGeometry)
 	log.Println("Heads: ", heads)
+
+	// as a wm, we have to listen for some events on root window...
+	if err := root.Listen(
+		xproto.EventMaskSubstructureRedirect,
+		xproto.EventMaskSubstructureNotify,
+	); err != nil {
+		return err
+	}
 
 	return nil
 }
