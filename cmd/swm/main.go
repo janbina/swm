@@ -75,5 +75,44 @@ func initRoot(X *xgbutil.XUtil) error {
 		return err
 	}
 
+	// Create notify just informs us that new window has been created, we don't have to respond,
+	// in fact we can do nothing about that
+	xevent.CreateNotifyFun(
+		func(xu *xgbutil.XUtil, event xevent.CreateNotifyEvent) {
+			log.Printf("Create notify: %s", event)
+		},
+	).Connect(X, root.Id)
+
+	// Now app sends configuration request and we should respond somehow
+	xevent.ConfigureRequestFun(
+		func(xu *xgbutil.XUtil, e xevent.ConfigureRequestEvent) {
+			log.Printf("Configure request: %s", e)
+			xwindow.New(X, e.Window).Configure(
+				int(e.ValueMask),
+				int(e.X),
+				int(e.Y),
+				int(e.Width),
+				int(e.Height),
+				e.Sibling,
+				e.StackMode,
+			)
+		},
+	).Connect(X, root.Id)
+
+	// Now map request is the one where we would show window on screen
+	xevent.MapRequestFun(
+		func(xu *xgbutil.XUtil, e xevent.MapRequestEvent) {
+			log.Printf("Map request: %s", e)
+			xwindow.New(X, e.Window).Map()
+		},
+	).Connect(X, root.Id)
+
+	// Map notify is again just notification that window was mapped
+	xevent.MapNotifyFun(
+		func(xu *xgbutil.XUtil, event xevent.MapNotifyEvent) {
+			log.Printf("Map notify: %s", event)
+		},
+	).Connect(X, root.Id)
+
 	return nil
 }
