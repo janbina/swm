@@ -27,7 +27,7 @@ func main() {
 
 	keybind.KeyPressFun(
 		func(X *xgbutil.XUtil, ev xevent.KeyPressEvent) {
-			xevent.Quit(X)
+			windowmanager.ShutDown()
 		},
 	).Connect(windowmanager.X, windowmanager.Root.Id, "Mod1-x", true)
 

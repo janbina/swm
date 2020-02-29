@@ -73,6 +73,10 @@ func Run() error {
 	return nil
 }
 
+func ShutDown() {
+	xevent.Quit(X)
+}
+
 func configureRequestFun(x *xgbutil.XUtil, e xevent.ConfigureRequestEvent) {
 	log.Printf("Configure request: %s", e)
 	xwindow.New(x, e.Window).Configure(
