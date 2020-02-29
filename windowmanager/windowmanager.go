@@ -92,4 +92,18 @@ func mapRequestFun(x *xgbutil.XUtil, e xevent.MapRequestEvent) {
 	managedWindows = append(managedWindows, win)
 	win.Map()
 	win.Focus()
+	win.Listen(
+		xproto.EventMaskStructureNotify,
+		xproto.EventMaskEnterWindow,
+	)
+	xevent.DestroyNotifyFun(destroyNotifyFun).Connect(x, e.Window)
+}
+
+func destroyNotifyFun(x *xgbutil.XUtil, e xevent.DestroyNotifyEvent) {
+	log.Printf("Destroy notify: %s", e)
+	for i, win := range managedWindows {
+		if win.Id() == e.Window {
+			managedWindows = append(managedWindows[0:i], managedWindows[i+1:]...)
+		}
+	}
 }

@@ -16,6 +16,14 @@ func New(x *xgbutil.XUtil, w xproto.Window) *Window {
 	}
 }
 
+func (w *Window) Id() xproto.Window {
+	return w.win.Id
+}
+
+func (w *Window) Listen(evMasks ...int) error {
+	return w.win.Listen(evMasks...)
+}
+
 func (w *Window) Map() {
 	w.win.Map()
 }
@@ -23,5 +31,3 @@ func (w *Window) Map() {
 func (w *Window) Focus() {
 	w.win.Focus()
 }
-
-
