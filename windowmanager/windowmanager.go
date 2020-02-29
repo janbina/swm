@@ -18,6 +18,7 @@ var RootGeometry xrect.Rect
 var Heads xinerama.Heads
 
 var managedWindows []*window.Window
+var activeWindow *window.Window
 
 // Initialize connection to x server, take wm ownership and initialize variables
 func Initialize(replace bool) error {
@@ -95,12 +96,17 @@ func mapRequestFun(x *xgbutil.XUtil, e xevent.MapRequestEvent) {
 	win := window.New(x, e.Window)
 	managedWindows = append(managedWindows, win)
 	win.Map()
-	win.Focus()
 	win.Listen(
 		xproto.EventMaskStructureNotify,
 		xproto.EventMaskEnterWindow,
+		xproto.EventMaskFocusChange,
 	)
 	xevent.DestroyNotifyFun(destroyNotifyFun).Connect(x, e.Window)
+	xevent.FocusInFun(func(x *xgbutil.XUtil, e xevent.FocusInEvent) {
+		log.Printf("Focus in event: %s", e)
+		activeWindow = win
+	}).Connect(x, e.Window)
+	win.Focus()
 }
 
 func destroyNotifyFun(x *xgbutil.XUtil, e xevent.DestroyNotifyEvent) {
@@ -108,6 +114,9 @@ func destroyNotifyFun(x *xgbutil.XUtil, e xevent.DestroyNotifyEvent) {
 	for i, win := range managedWindows {
 		if win.Id() == e.Window {
 			managedWindows = append(managedWindows[0:i], managedWindows[i+1:]...)
+			if activeWindow != nil && activeWindow.Id() == e.Window {
+				activeWindow = nil
+			}
 		}
 	}
 }
