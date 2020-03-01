@@ -33,6 +33,12 @@ func main() {
 
 	keybind.KeyPressFun(
 		func(X *xgbutil.XUtil, ev xevent.KeyPressEvent) {
+			windowmanager.DestroyActiveWindow()
+		},
+	).Connect(windowmanager.X, windowmanager.Root.Id, "Mod1-q", true)
+
+	keybind.KeyPressFun(
+		func(X *xgbutil.XUtil, ev xevent.KeyPressEvent) {
 			exec.Command("xterm").Start()
 		},
 	).Connect(windowmanager.X, windowmanager.Root.Id, "Mod1-return", true)

@@ -78,6 +78,30 @@ func ShutDown() {
 	xevent.Quit(X)
 }
 
+func FindWindowById(id xproto.Window) *window.Window {
+	for _, win := range managedWindows {
+		if win.Id() == id {
+			return win
+		}
+	}
+	return nil
+}
+
+func DestroyActiveWindow() {
+	if activeWindow != nil {
+		DestroyWindow(activeWindow.Id())
+	}
+}
+
+func DestroyWindow(xWin xproto.Window) {
+	win := FindWindowById(xWin)
+	if win == nil {
+		return
+	}
+	log.Printf("Destroy win %d", xWin)
+	win.Destroy()
+}
+
 func configureRequestFun(x *xgbutil.XUtil, e xevent.ConfigureRequestEvent) {
 	log.Printf("Configure request: %s", e)
 	xwindow.New(x, e.Window).Configure(
@@ -117,6 +141,7 @@ func destroyNotifyFun(x *xgbutil.XUtil, e xevent.DestroyNotifyEvent) {
 			if activeWindow != nil && activeWindow.Id() == e.Window {
 				activeWindow = nil
 			}
+			return
 		}
 	}
 }
