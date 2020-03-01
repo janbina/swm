@@ -21,14 +21,11 @@ var managedWindows []*window.Window
 var activeWindow *window.Window
 
 // Initialize connection to x server, take wm ownership and initialize variables
-func Initialize(replace bool) error {
+func Initialize(x *xgbutil.XUtil, replace bool) error {
 	var err error
-	X, err = xgbutil.NewConn()
-	if err != nil {
-		return err
-	}
+	X = x
 
-	if err := takeWmOwnership(X, replace); err != nil {
+	if err = takeWmOwnership(X, replace); err != nil {
 		X.Conn().Close()
 		return err
 	}
