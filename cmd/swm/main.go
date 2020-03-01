@@ -41,6 +41,8 @@ func main() {
 		log.Fatalf("Cannot setup root window: %s", err)
 	}
 
+	windowmanager.ManageExistingClients()
+
 	go communication.Listen(X.Conn())
 
 	keybind.KeyPressFun(

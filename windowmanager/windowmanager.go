@@ -61,6 +61,43 @@ func SetupRoot() error {
 	return nil
 }
 
+
+func ManageExistingClients() error {
+	tree, err := xproto.QueryTree(X.Conn(), Root.Id).Reply()
+	if err != nil {
+		return err
+	}
+	for _, child := range tree.Children {
+		if child == X.Dummy() {
+			continue
+		}
+
+		attrs, err := xproto.GetWindowAttributes(X.Conn(), child).Reply()
+		if err != nil {
+			continue
+		}
+		if attrs.MapState == xproto.MapStateUnmapped {
+			continue
+		}
+
+		win := window.New(X, child)
+		managedWindows = append(managedWindows, win)
+		win.Map()
+		win.Listen(
+			xproto.EventMaskStructureNotify,
+			xproto.EventMaskEnterWindow,
+			xproto.EventMaskFocusChange,
+		)
+		xevent.DestroyNotifyFun(destroyNotifyFun).Connect(X, child)
+		xevent.FocusInFun(func(x *xgbutil.XUtil, e xevent.FocusInEvent) {
+			log.Printf("Focus in event: %s", e)
+			activeWindow = win
+		}).Connect(X, child)
+		win.Focus()
+	}
+	return nil
+}
+
 // Rut the window manager - main event loop
 func Run() error {
 	if X == nil {
