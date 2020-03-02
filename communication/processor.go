@@ -8,6 +8,13 @@ import (
 	"strings"
 )
 
+type commandFunc func([]string) string
+
+var commands = map[string]commandFunc{
+	"shutdown":   shutdownCommand,
+	"destroywin": destroyWindowCommand,
+}
+
 func processCommand(msg string) string {
 	args := strings.Fields(msg)
 
@@ -18,20 +25,16 @@ func processCommand(msg string) string {
 	command := args[0]
 	commandArgs := args[1:]
 
-	switch command {
-	case "shutdown":
-		shutdownCommand()
-	case "destroywin":
-		return destroyWindowCommand(commandArgs)
-	default:
+	if c, ok := commands[command]; !ok {
 		return fmt.Sprintf("Unknown command: %s", command)
+	} else {
+		return c(commandArgs)
 	}
-
-	return ""
 }
 
-func shutdownCommand() {
+func shutdownCommand(_ []string) string {
 	windowmanager.Shutdown()
+	return ""
 }
 
 func destroyWindowCommand(args []string) string {
