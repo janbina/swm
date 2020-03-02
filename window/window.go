@@ -15,6 +15,13 @@ type Window struct {
 	protocols []string
 }
 
+type Directions struct {
+	Left   int
+	Right  int
+	Bottom int
+	Top    int
+}
+
 func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 
 	protocols, err := icccm.WmProtocolsGet(x, xWin)
@@ -58,6 +65,15 @@ func (w *Window) Destroy() {
 	} else {
 		w.win.Kill()
 	}
+}
+
+func (w *Window) Resize(d Directions) {
+	g, _ := w.win.Geometry()
+	x := g.X() + d.Left
+	y := g.Y() + d.Top
+	width := g.Width() + d.Right - d.Left
+	height := g.Height() + d.Bottom - d.Top
+	w.win.MoveResize(x, y, width, height)
 }
 
 func (w *Window) HasProtocol(x string) bool {

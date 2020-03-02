@@ -3,6 +3,7 @@ package communication
 import (
 	"fmt"
 	"github.com/BurntSushi/xgb/xproto"
+	"github.com/janbina/swm/window"
 	"github.com/janbina/swm/windowmanager"
 	"strconv"
 	"strings"
@@ -13,6 +14,7 @@ type commandFunc func([]string) string
 var commands = map[string]commandFunc{
 	"shutdown":   shutdownCommand,
 	"destroywin": destroyWindowCommand,
+	"resize":     resizeCommand,
 }
 
 func processCommand(msg string) string {
@@ -47,5 +49,28 @@ func destroyWindowCommand(args []string) string {
 			windowmanager.DestroyWindow(xproto.Window(win))
 		}
 	}
+	return ""
+}
+
+func resizeCommand(args []string) string {
+	d := window.Directions{}
+	for i := 0; i < len(args) - 1; i += 2 {
+		name := args[i]
+		value, err := strconv.Atoi(args[i+1])
+		if err != nil {
+			return fmt.Sprintf("Invalid value for argument %s. Expected int, got %s", name, args[i+1])
+		}
+		switch name {
+		case "l", "left":
+			d.Left = value
+		case "r", "right":
+			d.Right = value
+		case "t", "top":
+			d.Top = value
+		case "b", "bottom":
+			d.Bottom = value
+		}
+	}
+	windowmanager.ResizeActiveWindow(d)
 	return ""
 }

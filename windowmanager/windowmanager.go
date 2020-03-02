@@ -136,6 +136,20 @@ func DestroyWindow(xWin xproto.Window) {
 	win.Destroy()
 }
 
+func ResizeActiveWindow(directions window.Directions) {
+	if activeWindow != nil {
+		ResizeWindow(activeWindow.Id(), directions)
+	}
+}
+
+func ResizeWindow(xWin xproto.Window, directions window.Directions) {
+	win := FindWindowById(xWin)
+	if win == nil {
+		return
+	}
+	win.Resize(directions)
+}
+
 func configureRequestFun(x *xgbutil.XUtil, e xevent.ConfigureRequestEvent) {
 	log.Printf("Configure request: %s", e)
 	xwindow.New(x, e.Window).Configure(
