@@ -108,7 +108,7 @@ func Run() error {
 	return nil
 }
 
-func ShutDown() {
+func Shutdown() {
 	xevent.Quit(X)
 }
 

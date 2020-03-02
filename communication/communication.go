@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/BurntSushi/xgb"
-	"io"
 	"log"
 	"net"
 	"os"
@@ -42,11 +41,9 @@ func Listen(x *xgb.Conn) {
 
 	for {
 		conn, err := listener.Accept()
-		if err != nil {
-			continue
+		if err == nil {
+			go handleClient(conn)
 		}
-
-		go handleClient(conn)
 	}
 }
 
@@ -54,9 +51,6 @@ func handleClient(conn net.Conn) {
 	defer conn.Close()
 	for {
 		msg, err := bufio.NewReader(conn).ReadString(0)
-		if err == io.EOF {
-			return
-		}
 		if err != nil {
 			return
 		}
