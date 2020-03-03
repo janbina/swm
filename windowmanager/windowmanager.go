@@ -80,20 +80,7 @@ func ManageExistingClients() error {
 			continue
 		}
 
-		win := window.New(X, child)
-		managedWindows = append(managedWindows, win)
-		win.Map()
-		win.Listen(
-			xproto.EventMaskStructureNotify,
-			xproto.EventMaskEnterWindow,
-			xproto.EventMaskFocusChange,
-		)
-		xevent.DestroyNotifyFun(destroyNotifyFun).Connect(X, child)
-		xevent.FocusInFun(func(x *xgbutil.XUtil, e xevent.FocusInEvent) {
-			log.Printf("Focus in event: %s", e)
-			activeWindow = win
-		}).Connect(X, child)
-		win.Focus()
+		manageWindow(child)
 	}
 	return nil
 }
@@ -165,20 +152,7 @@ func configureRequestFun(x *xgbutil.XUtil, e xevent.ConfigureRequestEvent) {
 
 func mapRequestFun(x *xgbutil.XUtil, e xevent.MapRequestEvent) {
 	log.Printf("Map request: %s", e)
-	win := window.New(x, e.Window)
-	managedWindows = append(managedWindows, win)
-	win.Map()
-	win.Listen(
-		xproto.EventMaskStructureNotify,
-		xproto.EventMaskEnterWindow,
-		xproto.EventMaskFocusChange,
-	)
-	xevent.DestroyNotifyFun(destroyNotifyFun).Connect(x, e.Window)
-	xevent.FocusInFun(func(x *xgbutil.XUtil, e xevent.FocusInEvent) {
-		log.Printf("Focus in event: %s", e)
-		activeWindow = win
-	}).Connect(x, e.Window)
-	win.Focus()
+	manageWindow(e.Window)
 }
 
 func destroyNotifyFun(x *xgbutil.XUtil, e xevent.DestroyNotifyEvent) {
@@ -192,4 +166,21 @@ func destroyNotifyFun(x *xgbutil.XUtil, e xevent.DestroyNotifyEvent) {
 			return
 		}
 	}
+}
+
+func manageWindow(w xproto.Window) {
+	win := window.New(X, w)
+	managedWindows = append(managedWindows, win)
+	win.Map()
+	win.Listen(
+		xproto.EventMaskStructureNotify,
+		xproto.EventMaskEnterWindow,
+		xproto.EventMaskFocusChange,
+	)
+	xevent.DestroyNotifyFun(destroyNotifyFun).Connect(X, w)
+	xevent.FocusInFun(func(x *xgbutil.XUtil, e xevent.FocusInEvent) {
+		log.Printf("Focus in event: %s", e)
+		activeWindow = win
+	}).Connect(X, w)
+	win.Focus()
 }
