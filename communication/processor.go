@@ -12,9 +12,10 @@ import (
 type commandFunc func([]string) string
 
 var commands = map[string]commandFunc{
-	"shutdown":   shutdownCommand,
-	"destroywin": destroyWindowCommand,
-	"resize":     resizeCommand,
+	"shutdown":           shutdownCommand,
+	"destroywin":         destroyWindowCommand,
+	"resize":             resizeCommand,
+	"move-drag-shortcut": moveDragShortcutCommand,
 }
 
 func processCommand(msg string) string {
@@ -54,7 +55,7 @@ func destroyWindowCommand(args []string) string {
 
 func resizeCommand(args []string) string {
 	d := window.Directions{}
-	for i := 0; i < len(args) - 1; i += 2 {
+	for i := 0; i < len(args)-1; i += 2 {
 		name := args[i]
 		value, err := strconv.Atoi(args[i+1])
 		if err != nil {
@@ -72,5 +73,17 @@ func resizeCommand(args []string) string {
 		}
 	}
 	windowmanager.ResizeActiveWindow(d)
+	return ""
+}
+
+func moveDragShortcutCommand(args []string) string {
+	if len(args) == 0 {
+		return "No shortcut provided"
+	}
+	s := args[0]
+	err := windowmanager.SetMoveDragShortcut(s)
+	if err != nil {
+		return "Invalid shortcut"
+	}
 	return ""
 }

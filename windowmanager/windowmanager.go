@@ -19,6 +19,8 @@ var Root *xwindow.Window
 var RootGeometry xrect.Rect
 var Heads xinerama.Heads
 
+var moveDragShortcut = ""
+
 var managedWindows []*window.Window
 var activeWindow *window.Window
 
@@ -139,6 +141,15 @@ func ResizeWindow(xWin xproto.Window, directions window.Directions) {
 	win.Resize(directions)
 }
 
+func SetMoveDragShortcut(s string) error {
+	if _, _, err := mousebind.ParseString(X, s); err != nil {
+		return err
+	}
+	moveDragShortcut = s
+	moveDragShortcutChanged()
+	return nil
+}
+
 func configureRequestFun(x *xgbutil.XUtil, e xevent.ConfigureRequestEvent) {
 	log.Printf("Configure request: %s", e)
 	xwindow.New(x, e.Window).Configure(
@@ -188,7 +199,17 @@ func manageWindow(w xproto.Window) {
 	setupMoveDrag(win)
 }
 
+func moveDragShortcutChanged() {
+	for _, win := range managedWindows {
+		mousebind.DetachPress(X, win.Id())
+		setupMoveDrag(win)
+	}
+}
+
 func setupMoveDrag(win *window.Window) {
+	if _, _, err := mousebind.ParseString(X, moveDragShortcut); err != nil {
+		return
+	}
 	dStart := xgbutil.MouseDragBeginFun(
 		func(X *xgbutil.XUtil, rx, ry, ex, ey int) (bool, xproto.Cursor) {
 			cursor, _ := xcursor.CreateCursor(X, xcursor.Fleur)
@@ -202,5 +223,5 @@ func setupMoveDrag(win *window.Window) {
 		func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
 			win.DragMoveEnd(rx, ry, ex, ey)
 		})
-	mousebind.Drag(X, X.Dummy(), win.Id(), "Mod1-3", true, dStart, dStep, dEnd)
+	mousebind.Drag(X, X.Dummy(), win.Id(), moveDragShortcut, true, dStart, dStep, dEnd)
 }
