@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
+	"github.com/BurntSushi/xgbutil/mousebind"
+	"github.com/BurntSushi/xgbutil/xcursor"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xinerama"
 	"github.com/BurntSushi/xgbutil/xrect"
@@ -183,4 +185,22 @@ func manageWindow(w xproto.Window) {
 		activeWindow = win
 	}).Connect(X, w)
 	win.Focus()
+	setupMoveDrag(win)
+}
+
+func setupMoveDrag(win *window.Window) {
+	dStart := xgbutil.MouseDragBeginFun(
+		func(X *xgbutil.XUtil, rx, ry, ex, ey int) (bool, xproto.Cursor) {
+			cursor, _ := xcursor.CreateCursor(X, xcursor.Fleur)
+			return win.DragMoveBegin(rx, ry, ex, ey), cursor
+		})
+	dStep := xgbutil.MouseDragFun(
+		func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
+			win.DragMoveStep(rx, ry, ex, ey)
+		})
+	dEnd := xgbutil.MouseDragFun(
+		func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
+			win.DragMoveEnd(rx, ry, ex, ey)
+		})
+	mousebind.Drag(X, X.Dummy(), win.Id(), "Mod1-3", true, dStart, dStep, dEnd)
 }

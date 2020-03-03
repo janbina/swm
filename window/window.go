@@ -13,6 +13,12 @@ import (
 type Window struct {
 	win *xwindow.Window
 	protocols []string
+	moveState *MoveState
+}
+
+type MoveState struct {
+	Moving bool
+	dX, dY int
 }
 
 type Directions struct {
@@ -31,6 +37,11 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 	win := &Window{
 		win: xwindow.New(x, xWin),
 		protocols: protocols,
+		moveState: &MoveState{
+			Moving: false,
+			dX:     0,
+			dY:     0,
+		},
 	}
 
 	return win
@@ -83,4 +94,33 @@ func (w *Window) HasProtocol(x string) bool {
 		}
 	}
 	return false
+}
+
+func (w *Window) DragMoveBegin(rx, ry, ex, ey int) bool {
+	log.Printf("Drag move begin: %d, %d, %d, %d", rx, ry, ex, ey)
+
+	g, _ := w.win.Geometry()
+	w.moveState = &MoveState{
+		Moving: true,
+		dX:     g.X() - rx,
+		dY:     g.Y() - ry,
+	}
+
+	return true
+}
+
+func (w *Window) DragMoveStep(rx, ry, ex, ey int) {
+	log.Printf("Drag move step: %d, %d, %d, %d", rx, ry, ex, ey)
+
+	w.win.Move(w.moveState.dX + rx, w.moveState.dY + ry)
+}
+
+func (w *Window) DragMoveEnd(rx, ry, ex, ey int) {
+	log.Printf("Drag move end: %d, %d, %d, %d", rx, ry, ex, ey)
+
+	w.moveState = &MoveState{
+		Moving: false,
+		dX:     0,
+		dY:     0,
+	}
 }
