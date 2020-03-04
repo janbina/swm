@@ -1,0 +1,29 @@
+# Destroy active window
+alt + x
+	swmctl destroywin
+
+# Enlarge active window by 10px left/bottom/top/right
+super + alt + {h, j, k, l}
+	swmctl resize {-l -10, -b 10, -t -10, -r 10}
+
+# Move window by 10 px left/bottom/top/right
+# Note that "-l 10" is same as "-r -10"
+# If you pass "-l 10" and "-r 5", window will be moved 5px left
+ctrl + super + alt + {h, j, k, l}
+	swmctl move {-l 10, -b 10, -t 10, -r 10}
+
+# Tile window bottom/top
+super + alt + {Down, Up}
+	swmctl moveresize -anchor {b, t} -wr 1 -hr .5
+
+# Tile window left/right
+super + alt + {Left, Right}
+	swmctl moveresize -anchor {l, r} -wr .5 -hr 1
+
+# Tile window to center
+super + alt + c
+	swmctl moveresize -anchor cc -wr .7 -hr .7
+
+# Tile window to bottom right
+super + alt + d
+	swmctl moveresize -anchor br -wr .5 -hr .5
