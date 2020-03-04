@@ -58,23 +58,16 @@ func destroyWindowCommand(args []string) string {
 
 func resizeCommand(args []string) string {
 	d := window.Directions{}
-	for i := 0; i < len(args)-1; i += 2 {
-		name := args[i]
-		value, err := strconv.Atoi(args[i+1])
-		if err != nil {
-			return fmt.Sprintf("Invalid value for argument %s. Expected int, got %s", name, args[i+1])
-		}
-		switch name {
-		case "l", "left":
-			d.Left = value
-		case "r", "right":
-			d.Right = value
-		case "t", "top":
-			d.Top = value
-		case "b", "bottom":
-			d.Bottom = value
-		}
+	f := flag.NewFlagSet("moveresize", flag.ContinueOnError)
+	f.IntVar(&d.Left, "l", 0, "")
+	f.IntVar(&d.Bottom, "b", 0, "")
+	f.IntVar(&d.Top, "t", 0, "")
+	f.IntVar(&d.Right, "r", 0, "")
+
+	if err := f.Parse(args); err != nil {
+		return fmt.Sprintf("Error parsing arguments: %s", err)
 	}
+	
 	windowmanager.ResizeActiveWindow(d)
 	return ""
 }
