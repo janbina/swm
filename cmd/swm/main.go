@@ -8,6 +8,7 @@ import (
 	"github.com/BurntSushi/xgbutil/mousebind"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/janbina/swm/communication"
+	"github.com/janbina/swm/cursors"
 	"github.com/janbina/swm/windowmanager"
 	"log"
 	"os"
@@ -32,12 +33,13 @@ func main() {
 		os.Exit(0)
 	}
 
+	keybind.Initialize(X)
+	mousebind.Initialize(X)
+	cursors.Initialize(X)
+
 	if err := windowmanager.Initialize(X, *replace); err != nil {
 		log.Fatalf("Cannot initialize window manager: %s", err)
 	}
-
-	keybind.Initialize(X)
-	mousebind.Initialize(X)
 
 	if err := windowmanager.SetupRoot(); err != nil {
 		log.Fatalf("Cannot setup root window: %s", err)

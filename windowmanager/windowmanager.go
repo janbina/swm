@@ -5,11 +5,11 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/mousebind"
-	"github.com/BurntSushi/xgbutil/xcursor"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xinerama"
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
+	"github.com/janbina/swm/cursors"
 	"github.com/janbina/swm/window"
 	"log"
 )
@@ -35,6 +35,8 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 	}
 
 	Root = xwindow.New(X, X.RootWin())
+
+	Root.Change(xproto.CwCursor, uint32(cursors.LeftPtr))
 
 	RootGeometry, err = Root.Geometry()
 	if err != nil {
@@ -258,8 +260,7 @@ func setupMoveDrag(win *window.Window) {
 	}
 	dStart := xgbutil.MouseDragBeginFun(
 		func(X *xgbutil.XUtil, rx, ry, ex, ey int) (bool, xproto.Cursor) {
-			cursor, _ := xcursor.CreateCursor(X, xcursor.Fleur)
-			return win.DragMoveBegin(rx, ry, ex, ey), cursor
+			return win.DragMoveBegin(rx, ry, ex, ey), cursors.Fleur
 		})
 	dStep := xgbutil.MouseDragFun(
 		func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
