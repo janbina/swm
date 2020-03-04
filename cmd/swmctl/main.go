@@ -22,7 +22,12 @@ func main() {
 	}
 	defer conn.Close()
 
-	command := strings.Join(os.Args[1:], " ")
+	args := make([]string, len(os.Args) - 1)
+	for i, a := range os.Args[1:] {
+		args[i] = fmt.Sprintf("\"%s\"", a)
+	}
+
+	command := strings.Join(args, " ")
 	if _, err = fmt.Fprintf(conn, "%s%c", command, 0); err != nil {
 		log.Fatalf("Error writing command: %s", err)
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/janbina/swm/window"
 	"github.com/janbina/swm/windowmanager"
+	"github.com/mattn/go-shellwords"
 	"strconv"
 	"strings"
 )
@@ -21,7 +22,7 @@ var commands = map[string]commandFunc{
 }
 
 func processCommand(msg string) string {
-	args := strings.Fields(msg)
+	args, _ := shellwords.Parse(msg)
 
 	if len(args) == 0 {
 		return "No command"
