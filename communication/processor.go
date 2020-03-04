@@ -1,6 +1,7 @@
 package communication
 
 import (
+	"flag"
 	"fmt"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/janbina/swm/window"
@@ -16,6 +17,7 @@ var commands = map[string]commandFunc{
 	"destroywin":         destroyWindowCommand,
 	"resize":             resizeCommand,
 	"move-drag-shortcut": moveDragShortcutCommand,
+	"moveresize":         moveResizeCommand,
 }
 
 func processCommand(msg string) string {
@@ -85,5 +87,67 @@ func moveDragShortcutCommand(args []string) string {
 	if err != nil {
 		return "Invalid shortcut"
 	}
+	return ""
+}
+
+func moveResizeCommand(args []string) string {
+	f := flag.NewFlagSet("moveresize", flag.ContinueOnError)
+	anchor := f.String("anchor", "tl", "")
+	x := f.Int("x", 0, "")
+	y := f.Int("y", 0, "")
+	w := f.Int("w", 0, "")
+	h := f.Int("h", 0, "")
+	xr := f.Float64("xr", 0, "")
+	yr := f.Float64("yr", 0, "")
+	wr := f.Float64("wr", 0, "")
+	hr := f.Float64("hr", 0, "")
+	_ = f.Parse(args)
+
+	screenGeom := windowmanager.GetCurrentScreenGeometry()
+	winGeom, _ := windowmanager.GetActiveWindowGeometry()
+	if *x == 0  {
+		*x = int(*xr * float64(screenGeom.Width()))
+	}
+
+	if *y == 0  {
+		*y = int(*yr * float64(screenGeom.Height()))
+	}
+
+	if *w == 0  {
+		*w = int(*wr * float64(screenGeom.Width()))
+	}
+
+	if *h == 0  {
+		*h = int(*hr * float64(screenGeom.Height()))
+	}
+
+	if *w == 0 {
+		*w = winGeom.Width()
+	}
+
+	if *h == 0 {
+		*h = winGeom.Height()
+	}
+
+	var realY int
+	if strings.Contains(*anchor, "t") {
+		realY = screenGeom.Y() + *y
+	} else if strings.Contains(*anchor, "b") {
+		realY = screenGeom.Y() + screenGeom.Height() - *y - *h
+	} else { //center
+		realY = screenGeom.Y() + screenGeom.Height() / 2 - *h / 2 + *y
+	}
+
+	var realX int
+	if strings.Contains(*anchor, "l") {
+		realX = screenGeom.X() + *x
+	} else if strings.Contains(*anchor, "r") {
+		realX = screenGeom.X() + screenGeom.Width() - *x - *w
+	} else { //center
+		realX = screenGeom.X() + screenGeom.Width() / 2 - *w / 2 + *x
+	}
+
+	windowmanager.MoveResizeActiveWindow(realX, realY, *w, *h)
+
 	return ""
 }

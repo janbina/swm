@@ -5,6 +5,7 @@ import (
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/icccm"
 	"github.com/BurntSushi/xgbutil/xevent"
+	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"github.com/janbina/swm/util"
 	"log"
@@ -51,6 +52,10 @@ func (w *Window) Id() xproto.Window {
 	return w.win.Id
 }
 
+func (w *Window) Geometry() (xrect.Rect, error) {
+	return w.win.Geometry()
+}
+
 func (w *Window) Listen(evMasks ...int) error {
 	return w.win.Listen(evMasks...)
 }
@@ -84,6 +89,10 @@ func (w *Window) Resize(d Directions) {
 	y := g.Y() + d.Top
 	width := g.Width() + d.Right - d.Left
 	height := g.Height() + d.Bottom - d.Top
+	w.win.MoveResize(x, y, width, height)
+}
+
+func (w *Window) MoveResize(x, y, width, height int) {
 	w.win.MoveResize(x, y, width, height)
 }
 

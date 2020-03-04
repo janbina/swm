@@ -65,7 +65,6 @@ func SetupRoot() error {
 	return nil
 }
 
-
 func ManageExistingClients() error {
 	tree, err := xproto.QueryTree(X.Conn(), Root.Id).Reply()
 	if err != nil {
@@ -141,6 +140,20 @@ func ResizeWindow(xWin xproto.Window, directions window.Directions) {
 	win.Resize(directions)
 }
 
+func MoveResizeActiveWindow(x, y, width, height int) {
+	if activeWindow != nil {
+		MoveResizeWindow(activeWindow.Id(), x, y, width, height)
+	}
+}
+
+func MoveResizeWindow(xWin xproto.Window, x, y, width, height int) {
+	win := FindWindowById(xWin)
+	if win == nil {
+		return
+	}
+	win.MoveResize(x, y, width, height)
+}
+
 func SetMoveDragShortcut(s string) error {
 	if _, _, err := mousebind.ParseString(X, s); err != nil {
 		return err
@@ -148,6 +161,25 @@ func SetMoveDragShortcut(s string) error {
 	moveDragShortcut = s
 	moveDragShortcutChanged()
 	return nil
+}
+
+func GetCurrentScreenGeometry() xrect.Rect {
+	return Heads[0]
+}
+
+func GetActiveWindowGeometry() (xrect.Rect, error) {
+	if activeWindow != nil {
+		return GetWindowGeometry(activeWindow.Id())
+	}
+	return nil, fmt.Errorf("no active window")
+}
+
+func GetWindowGeometry(xWin xproto.Window) (xrect.Rect, error) {
+	win := FindWindowById(xWin)
+	if win == nil {
+		return nil, fmt.Errorf("cannot find window with id %d", xWin)
+	}
+	return win.Geometry()
 }
 
 func configureRequestFun(x *xgbutil.XUtil, e xevent.ConfigureRequestEvent) {
