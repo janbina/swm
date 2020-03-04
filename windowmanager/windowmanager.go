@@ -140,6 +140,20 @@ func ResizeWindow(xWin xproto.Window, directions window.Directions) {
 	win.Resize(directions)
 }
 
+func MoveActiveWindow(x, y int) {
+	if activeWindow != nil {
+		MoveWindow(activeWindow.Id(), x, y)
+	}
+}
+
+func MoveWindow(xWin xproto.Window, x, y int) {
+	win := FindWindowById(xWin)
+	if win == nil {
+		return
+	}
+	win.Move(x, y)
+}
+
 func MoveResizeActiveWindow(x, y, width, height int) {
 	if activeWindow != nil {
 		MoveResizeWindow(activeWindow.Id(), x, y, width, height)

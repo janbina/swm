@@ -92,6 +92,10 @@ func (w *Window) Resize(d Directions) {
 	w.win.MoveResize(x, y, width, height)
 }
 
+func (w *Window) Move(x, y int) {
+	w.win.Move(x, y)
+}
+
 func (w *Window) MoveResize(x, y, width, height int) {
 	w.win.MoveResize(x, y, width, height)
 }

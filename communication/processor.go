@@ -19,6 +19,7 @@ var commands = map[string]commandFunc{
 	"resize":             resizeCommand,
 	"move-drag-shortcut": moveDragShortcutCommand,
 	"moveresize":         moveResizeCommand,
+	"move":               moveCommand,
 }
 
 func processCommand(msg string) string {
@@ -67,7 +68,7 @@ func resizeCommand(args []string) string {
 	if err := f.Parse(args); err != nil {
 		return fmt.Sprintf("Error parsing arguments: %s", err)
 	}
-	
+
 	windowmanager.ResizeActiveWindow(d)
 	return ""
 }
@@ -148,6 +149,30 @@ func moveResizeCommand(args []string) string {
 	}
 
 	windowmanager.MoveResizeActiveWindow(realX, realY, *w, *h)
+
+	return ""
+}
+
+func moveCommand(args []string) string {
+	f := flag.NewFlagSet("move", flag.ContinueOnError)
+	l := f.Int("l", 0, "")
+	b := f.Int("b", 0, "")
+	t := f.Int("t", 0, "")
+	r := f.Int("r", 0, "")
+
+	if err := f.Parse(args); err != nil {
+		return fmt.Sprintf("Error parsing arguments: %s", err)
+	}
+
+	winGeom, err := windowmanager.GetActiveWindowGeometry()
+	if err != nil {
+		return fmt.Sprintf("Cannot get active window geometry: %s", err)
+	}
+
+	dx := *r - *l
+	dy := *b - *t
+
+	windowmanager.MoveActiveWindow(winGeom.X() + dx, winGeom.Y() + dy)
 
 	return ""
 }
