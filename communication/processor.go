@@ -102,10 +102,16 @@ func moveResizeCommand(args []string) string {
 	yr := f.Float64("yr", 0, "")
 	wr := f.Float64("wr", 0, "")
 	hr := f.Float64("hr", 0, "")
-	_ = f.Parse(args)
+
+	if err := f.Parse(args); err != nil {
+		return fmt.Sprintf("Error parsing arguments: %s", err)
+	}
 
 	screenGeom := windowmanager.GetCurrentScreenGeometry()
-	winGeom, _ := windowmanager.GetActiveWindowGeometry()
+	winGeom, err := windowmanager.GetActiveWindowGeometry()
+	if err != nil {
+		return fmt.Sprintf("Cannot get active window geometry: %s", err)
+	}
 	if *x == 0  {
 		*x = int(*xr * float64(screenGeom.Width()))
 	}
