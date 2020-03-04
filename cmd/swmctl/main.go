@@ -40,8 +40,7 @@ func main() {
 }
 
 func socketFilePath() string {
-	// TODO: Use swm executable from path
-	c := cmd.New("./swm", "--show-socket")
+	c := cmd.New("swm", "--show-socket")
 	if err := c.Run(); err != nil {
 		log.Fatal(err)
 	}
