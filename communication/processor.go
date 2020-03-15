@@ -3,7 +3,6 @@ package communication
 import (
 	"flag"
 	"fmt"
-	"github.com/BurntSushi/xgb/xproto"
 	"github.com/janbina/swm/window"
 	"github.com/janbina/swm/windowmanager"
 	"github.com/mattn/go-shellwords"
@@ -51,7 +50,7 @@ func destroyWindowCommand(args []string) string {
 		if win, err := strconv.Atoi(args[0]); err != nil {
 			return fmt.Sprintf("Expected window id (int) as first argument, got %s", args[0])
 		} else {
-			windowmanager.DestroyWindow(xproto.Window(win))
+			windowmanager.DestroyWindow(uint32(win))
 		}
 	}
 	return ""

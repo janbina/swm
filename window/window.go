@@ -97,8 +97,11 @@ func createParent(win *xwindow.Window) (*xwindow.Window, error) {
 	return parent, nil
 }
 
-func (w *Window) Id() xproto.Window {
-	return w.win.Id
+// Unique id of this window
+// It is backed by parent window Id, but we don't want to expose that
+// so all manipulations which needs xproto.Window must happen here
+func (w *Window) Id() uint32 {
+	return uint32(w.parent.Id)
 }
 
 func (w *Window) Geometry() (xrect.Rect, error) {
@@ -122,12 +125,12 @@ func (w *Window) Destroy() {
 	if w.HasProtocol("WM_DELETE_WINDOW") {
 		atoms, err := util.Atoms(w.win.X, "WM_PROTOCOLS", "WM_DELETE_WINDOW")
 
-		cm, err := xevent.NewClientMessage(32, w.Id(), atoms[0], int(atoms[1]))
+		cm, err := xevent.NewClientMessage(32, w.win.Id, atoms[0], int(atoms[1]))
 		if err != nil {
 			return
 		}
 
-		xproto.SendEvent(w.win.X.Conn(), false, w.Id(), 0, string(cm.Bytes()))
+		xproto.SendEvent(w.win.X.Conn(), false, w.win.Id, 0, string(cm.Bytes()))
 	} else {
 		w.win.Kill()
 	}
@@ -158,6 +161,17 @@ func (w *Window) HasProtocol(x string) bool {
 		}
 	}
 	return false
+}
+
+func (w *Window) WasUnmapped() {
+	X := w.win.X
+	w.parent.Unmap()
+
+	xproto.ReparentWindowChecked(X.Conn(), w.win.Id, X.RootWin(), 0, 0).Check()
+
+	//XRemoveFromSaveSet(display_, w);
+
+	w.parent.Destroy()
 }
 
 func (w *Window) DragMoveBegin(rx, ry, ex, ey int) bool {

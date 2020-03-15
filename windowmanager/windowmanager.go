@@ -104,7 +104,7 @@ func Shutdown() {
 	xevent.Quit(X)
 }
 
-func FindWindowById(id xproto.Window) *window.Window {
+func FindWindowById(id uint32) *window.Window {
 	for _, win := range managedWindows {
 		if win.Id() == id {
 			return win
@@ -119,12 +119,12 @@ func DestroyActiveWindow() {
 	}
 }
 
-func DestroyWindow(xWin xproto.Window) {
-	win := FindWindowById(xWin)
+func DestroyWindow(id uint32) {
+	win := FindWindowById(id)
 	if win == nil {
 		return
 	}
-	log.Printf("Destroy win %d", xWin)
+	log.Printf("Destroy win %d", id)
 	win.Destroy()
 }
 
@@ -134,8 +134,8 @@ func ResizeActiveWindow(directions window.Directions) {
 	}
 }
 
-func ResizeWindow(xWin xproto.Window, directions window.Directions) {
-	win := FindWindowById(xWin)
+func ResizeWindow(id uint32, directions window.Directions) {
+	win := FindWindowById(id)
 	if win == nil {
 		return
 	}
@@ -148,8 +148,8 @@ func MoveActiveWindow(x, y int) {
 	}
 }
 
-func MoveWindow(xWin xproto.Window, x, y int) {
-	win := FindWindowById(xWin)
+func MoveWindow(id uint32, x, y int) {
+	win := FindWindowById(id)
 	if win == nil {
 		return
 	}
@@ -162,8 +162,8 @@ func MoveResizeActiveWindow(x, y, width, height int) {
 	}
 }
 
-func MoveResizeWindow(xWin xproto.Window, x, y, width, height int) {
-	win := FindWindowById(xWin)
+func MoveResizeWindow(id uint32, x, y, width, height int) {
+	win := FindWindowById(id)
 	if win == nil {
 		return
 	}
@@ -190,10 +190,10 @@ func GetActiveWindowGeometry() (xrect.Rect, error) {
 	return nil, fmt.Errorf("no active window")
 }
 
-func GetWindowGeometry(xWin xproto.Window) (xrect.Rect, error) {
-	win := FindWindowById(xWin)
+func GetWindowGeometry(id uint32) (xrect.Rect, error) {
+	win := FindWindowById(id)
 	if win == nil {
-		return nil, fmt.Errorf("cannot find window with id %d", xWin)
+		return nil, fmt.Errorf("cannot find window with id %d", id)
 	}
 	return win.Geometry()
 }
@@ -216,12 +216,12 @@ func mapRequestFun(x *xgbutil.XUtil, e xevent.MapRequestEvent) {
 	manageWindow(e.Window)
 }
 
-func destroyNotifyFun(x *xgbutil.XUtil, e xevent.DestroyNotifyEvent) {
-	log.Printf("Destroy notify: %s", e)
+func destroyNotify(w *window.Window) {
+	w.WasUnmapped()
 	for i, win := range managedWindows {
-		if win.Id() == e.Window {
+		if win.Id() == w.Id() {
 			managedWindows = append(managedWindows[0:i], managedWindows[i+1:]...)
-			if activeWindow != nil && activeWindow.Id() == e.Window {
+			if activeWindow != nil && activeWindow.Id() == w.Id() {
 				activeWindow = nil
 			}
 			return
@@ -238,10 +238,13 @@ func manageWindow(w xproto.Window) {
 		xproto.EventMaskEnterWindow,
 		xproto.EventMaskFocusChange,
 	)
-	xevent.DestroyNotifyFun(destroyNotifyFun).Connect(X, w)
 	xevent.FocusInFun(func(x *xgbutil.XUtil, e xevent.FocusInEvent) {
 		log.Printf("Focus in event: %s", e)
 		activeWindow = win
+	}).Connect(X, w)
+	xevent.UnmapNotifyFun(func(x *xgbutil.XUtil, e xevent.UnmapNotifyEvent) {
+		log.Printf("UNMAP notify: %s", e)
+		destroyNotify(win)
 	}).Connect(X, w)
 	win.Focus()
 	win.SetupMouseEvents(moveDragShortcut)
