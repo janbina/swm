@@ -189,9 +189,13 @@ func (w *Window) DragMoveEnd(rx, ry, ex, ey int) {
 	}
 }
 
-func (w *Window) SetupMoveDrag(shortcut string) {
+func (w *Window) SetupMouseEvents(moveShortcut string) {
 	X := w.win.X
-	if _, _, err := mousebind.ParseString(X, shortcut); err != nil {
+
+	// Detach old events
+	mousebind.Detach(X, w.parent.Id)
+
+	if _, _, err := mousebind.ParseString(X, moveShortcut); err != nil {
 		return
 	}
 	dStart := xgbutil.MouseDragBeginFun(
@@ -206,5 +210,5 @@ func (w *Window) SetupMoveDrag(shortcut string) {
 		func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
 			w.DragMoveEnd(rx, ry, ex, ey)
 		})
-	mousebind.Drag(X, X.Dummy(), w.parent.Id, shortcut, true, dStart, dStep, dEnd)
+	mousebind.Drag(X, X.Dummy(), w.parent.Id, moveShortcut, true, dStart, dStep, dEnd)
 }

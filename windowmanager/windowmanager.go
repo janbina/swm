@@ -244,12 +244,11 @@ func manageWindow(w xproto.Window) {
 		activeWindow = win
 	}).Connect(X, w)
 	win.Focus()
-	win.SetupMoveDrag(moveDragShortcut)
+	win.SetupMouseEvents(moveDragShortcut)
 }
 
 func moveDragShortcutChanged() {
 	for _, win := range managedWindows {
-		mousebind.DetachPress(X, win.Id())
-		win.SetupMoveDrag(moveDragShortcut)
+		win.SetupMouseEvents(moveDragShortcut)
 	}
 }
