@@ -102,7 +102,7 @@ func (w *Window) Id() xproto.Window {
 }
 
 func (w *Window) Geometry() (xrect.Rect, error) {
-	return w.win.Geometry()
+	return w.parent.Geometry()
 }
 
 func (w *Window) Listen(evMasks ...int) error {
@@ -134,20 +134,21 @@ func (w *Window) Destroy() {
 }
 
 func (w *Window) Resize(d Directions) {
-	g, _ := w.win.Geometry()
+	g, _ := w.Geometry()
 	x := g.X() + d.Left
 	y := g.Y() + d.Top
 	width := g.Width() + d.Right - d.Left
 	height := g.Height() + d.Bottom - d.Top
-	w.win.MoveResize(x, y, width, height)
+	w.MoveResize(x, y, width, height)
 }
 
 func (w *Window) Move(x, y int) {
-	w.win.Move(x, y)
+	w.parent.Move(x, y)
 }
 
 func (w *Window) MoveResize(x, y, width, height int) {
-	w.win.MoveResize(x, y, width, height)
+	w.parent.MoveResize(x, y, width, height)
+	w.win.Resize(width, height)
 }
 
 func (w *Window) HasProtocol(x string) bool {
@@ -162,7 +163,7 @@ func (w *Window) HasProtocol(x string) bool {
 func (w *Window) DragMoveBegin(rx, ry, ex, ey int) bool {
 	log.Printf("Drag move begin: %d, %d, %d, %d", rx, ry, ex, ey)
 
-	g, _ := w.win.Geometry()
+	g, _ := w.Geometry()
 	w.moveState = &MoveState{
 		Moving: true,
 		dX:     g.X() - rx,
@@ -175,7 +176,7 @@ func (w *Window) DragMoveBegin(rx, ry, ex, ey int) bool {
 func (w *Window) DragMoveStep(rx, ry, ex, ey int) {
 	log.Printf("Drag move step: %d, %d, %d, %d", rx, ry, ex, ey)
 
-	w.win.Move(w.moveState.dX+rx, w.moveState.dY+ry)
+	w.Move(w.moveState.dX+rx, w.moveState.dY+ry)
 }
 
 func (w *Window) DragMoveEnd(rx, ry, ex, ey int) {
