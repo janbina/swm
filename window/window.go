@@ -12,7 +12,8 @@ import (
 )
 
 type Window struct {
-	win *xwindow.Window
+	parent    *xwindow.Window
+	win       *xwindow.Window
 	protocols []string
 	moveState *MoveState
 }
@@ -35,8 +36,13 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 	if err != nil {
 		log.Println("Wm protocols not set")
 	}
+
+	w := xwindow.New(x, xWin)
+	p, err := createParent(w)
+
 	win := &Window{
-		win: xwindow.New(x, xWin),
+		parent:    p,
+		win:       xwindow.New(x, xWin),
 		protocols: protocols,
 		moveState: &MoveState{
 			Moving: false,
@@ -46,6 +52,47 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 	}
 
 	return win
+}
+
+// Create parent window for [win]
+func createParent(win *xwindow.Window) (*xwindow.Window, error) {
+	X := win.X
+
+	parent, err := xwindow.Generate(X)
+	if err != nil {
+		return nil, err
+	}
+
+	g, err := win.Geometry()
+	if err != nil {
+		return nil, err
+	}
+
+	err = parent.CreateChecked(
+		X.RootWin(),
+		g.X(),
+		g.Y(),
+		g.Width(),
+		g.Height(),
+		xproto.CwBackPixel,
+		0xff0000, // TODO: red bg so we can easily see if we are off a bit, maybe set to something else later
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set window border to 0, as we will either use our own borders or we don't want any
+	err = xproto.ConfigureWindowChecked(X.Conn(), win.Id, xproto.ConfigWindowBorderWidth, []uint32{0}, ).Check()
+	if err != nil {
+		return nil, err
+	}
+
+	err = xproto.ReparentWindowChecked(X.Conn(), win.Id, parent.Id, 0, 0).Check()
+	if err != nil {
+		return nil, err
+	}
+
+	return parent, nil
 }
 
 func (w *Window) Id() xproto.Window {
@@ -61,6 +108,7 @@ func (w *Window) Listen(evMasks ...int) error {
 }
 
 func (w *Window) Map() {
+	w.parent.Map()
 	w.win.Map()
 }
 
@@ -125,7 +173,7 @@ func (w *Window) DragMoveBegin(rx, ry, ex, ey int) bool {
 func (w *Window) DragMoveStep(rx, ry, ex, ey int) {
 	log.Printf("Drag move step: %d, %d, %d, %d", rx, ry, ex, ey)
 
-	w.win.Move(w.moveState.dX + rx, w.moveState.dY + ry)
+	w.win.Move(w.moveState.dX+rx, w.moveState.dY+ry)
 }
 
 func (w *Window) DragMoveEnd(rx, ry, ex, ey int) {
