@@ -4,9 +4,11 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/icccm"
+	"github.com/BurntSushi/xgbutil/mousebind"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
+	"github.com/janbina/swm/cursors"
 	"github.com/janbina/swm/util"
 	"log"
 )
@@ -184,4 +186,24 @@ func (w *Window) DragMoveEnd(rx, ry, ex, ey int) {
 		dX:     0,
 		dY:     0,
 	}
+}
+
+func (w *Window) SetupMoveDrag(shortcut string) {
+	X := w.win.X
+	if _, _, err := mousebind.ParseString(X, shortcut); err != nil {
+		return
+	}
+	dStart := xgbutil.MouseDragBeginFun(
+		func(X *xgbutil.XUtil, rx, ry, ex, ey int) (bool, xproto.Cursor) {
+			return w.DragMoveBegin(rx, ry, ex, ey), cursors.Fleur
+		})
+	dStep := xgbutil.MouseDragFun(
+		func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
+			w.DragMoveStep(rx, ry, ex, ey)
+		})
+	dEnd := xgbutil.MouseDragFun(
+		func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
+			w.DragMoveEnd(rx, ry, ex, ey)
+		})
+	mousebind.Drag(X, X.Dummy(), w.parent.Id, shortcut, true, dStart, dStep, dEnd)
 }

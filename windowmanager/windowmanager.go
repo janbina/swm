@@ -244,31 +244,12 @@ func manageWindow(w xproto.Window) {
 		activeWindow = win
 	}).Connect(X, w)
 	win.Focus()
-	setupMoveDrag(win)
+	win.SetupMoveDrag(moveDragShortcut)
 }
 
 func moveDragShortcutChanged() {
 	for _, win := range managedWindows {
 		mousebind.DetachPress(X, win.Id())
-		setupMoveDrag(win)
+		win.SetupMoveDrag(moveDragShortcut)
 	}
-}
-
-func setupMoveDrag(win *window.Window) {
-	if _, _, err := mousebind.ParseString(X, moveDragShortcut); err != nil {
-		return
-	}
-	dStart := xgbutil.MouseDragBeginFun(
-		func(X *xgbutil.XUtil, rx, ry, ex, ey int) (bool, xproto.Cursor) {
-			return win.DragMoveBegin(rx, ry, ex, ey), cursors.Fleur
-		})
-	dStep := xgbutil.MouseDragFun(
-		func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
-			win.DragMoveStep(rx, ry, ex, ey)
-		})
-	dEnd := xgbutil.MouseDragFun(
-		func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
-			win.DragMoveEnd(rx, ry, ex, ey)
-		})
-	mousebind.Drag(X, X.Dummy(), win.Id(), moveDragShortcut, true, dStart, dStep, dEnd)
 }
