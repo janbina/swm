@@ -34,6 +34,18 @@ func CreateBorder(parent *xwindow.Window, position Position, size int, color uin
 	}), nil
 }
 
+func CreateBorders(parent *xwindow.Window, size int, color uint32) (Decorations, error) {
+	dec := make(Decorations, 4)
+	for i, p := range []Position{Left, Right, Top, Bottom} {
+		b, err := CreateBorder(parent, p, size, color)
+		if err != nil {
+			return nil, err
+		}
+		dec[i] = b
+	}
+	return dec, nil
+}
+
 func (b *Border) ApplyRect(rect xrect.Rect) xrect.Rect {
 	var x, y, w, h int
 

@@ -45,7 +45,7 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 
 	p, err := createParent(w)
 
-	decorations, _ := createDecorations(p)
+	decorations, _ := decoration.CreateBorders(p, 2, 0xff00ff)
 
 	win := xwindow.New(x, xWin)
 
@@ -94,29 +94,6 @@ func createParent(win *xwindow.Window) (*xwindow.Window, error) {
 	}
 
 	return parent, nil
-}
-
-func createDecorations(p *xwindow.Window) (decoration.Decorations, error) {
-	l, e := decoration.CreateBorder(p, decoration.Left, 1, 0xff00ff)
-	if e != nil {
-		return nil, e
-	}
-	r, e := decoration.CreateBorder(p, decoration.Right, 1, 0xff00ff)
-	if e != nil {
-		return nil, e
-	}
-
-	b, e := decoration.CreateBorder(p, decoration.Bottom, 1, 0xff00ff)
-	if e != nil {
-		return nil, e
-	}
-	t, e := decoration.CreateBorder(p, decoration.Top, 3, 0xff00ff)
-	if e != nil {
-		return nil, e
-	}
-	decorations := []decoration.Decoration{t, l, r, b}
-
-	return decorations, nil
 }
 
 // Unique id of this window
