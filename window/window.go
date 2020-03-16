@@ -9,15 +9,17 @@ import (
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"github.com/janbina/swm/cursors"
+	"github.com/janbina/swm/decoration"
 	"github.com/janbina/swm/util"
 	"log"
 )
 
 type Window struct {
-	parent    *xwindow.Window
-	win       *xwindow.Window
-	protocols []string
-	moveState *MoveState
+	parent      *xwindow.Window
+	win         *xwindow.Window
+	decorations decoration.Decorations
+	protocols   []string
+	moveState   *MoveState
 }
 
 type MoveState struct {
@@ -40,12 +42,18 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 	}
 
 	w := xwindow.New(x, xWin)
+
 	p, err := createParent(w)
 
-	win := &Window{
-		parent:    p,
-		win:       xwindow.New(x, xWin),
-		protocols: protocols,
+	decorations, _ := createDecorations(p)
+
+	win := xwindow.New(x, xWin)
+
+	window := &Window{
+		parent:      p,
+		decorations: decorations,
+		win:         win,
+		protocols:   protocols,
 		moveState: &MoveState{
 			Moving: false,
 			dX:     0,
@@ -53,38 +61,29 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 		},
 	}
 
-	return win
+	decW := decorations.WidthNeeded()
+	decH := decorations.HeightNeeded()
+	g, _ := win.Geometry()
+	g.WidthSet(g.Width() + decW)
+	g.HeightSet(g.Height() + decH)
+	window.MoveResize(g.Pieces())
+
+	return window
 }
 
 // Create parent window for [win]
 func createParent(win *xwindow.Window) (*xwindow.Window, error) {
 	X := win.X
 
-	parent, err := xwindow.Generate(X)
+	parent, err := xwindow.Create(X, X.RootWin())
 	if err != nil {
 		return nil, err
 	}
-
-	g, err := win.Geometry()
-	if err != nil {
-		return nil, err
-	}
-
-	err = parent.CreateChecked(
-		X.RootWin(),
-		g.X(),
-		g.Y(),
-		g.Width(),
-		g.Height(),
-		xproto.CwBackPixel,
-		0xff0000, // TODO: red bg so we can easily see if we are off a bit, maybe set to something else later
-	)
-	if err != nil {
-		return nil, err
-	}
+	// TODO: red bg so we can easily see if we are off a bit, maybe set to something else later
+	parent.Change(xproto.CwBackPixel, 0xff0000)
 
 	// Set window border to 0, as we will either use our own borders or we don't want any
-	err = xproto.ConfigureWindowChecked(X.Conn(), win.Id, xproto.ConfigWindowBorderWidth, []uint32{0}, ).Check()
+	err = xproto.ConfigureWindowChecked(X.Conn(), win.Id, xproto.ConfigWindowBorderWidth, []uint32{0}).Check()
 	if err != nil {
 		return nil, err
 	}
@@ -95,6 +94,29 @@ func createParent(win *xwindow.Window) (*xwindow.Window, error) {
 	}
 
 	return parent, nil
+}
+
+func createDecorations(p *xwindow.Window) (decoration.Decorations, error) {
+	l, e := decoration.CreateBorder(p, decoration.Left, 1, 0xff00ff)
+	if e != nil {
+		return nil, e
+	}
+	r, e := decoration.CreateBorder(p, decoration.Right, 1, 0xff00ff)
+	if e != nil {
+		return nil, e
+	}
+
+	b, e := decoration.CreateBorder(p, decoration.Bottom, 1, 0xff00ff)
+	if e != nil {
+		return nil, e
+	}
+	t, e := decoration.CreateBorder(p, decoration.Top, 3, 0xff00ff)
+	if e != nil {
+		return nil, e
+	}
+	decorations := []decoration.Decoration{t, l, r, b}
+
+	return decorations, nil
 }
 
 // Unique id of this window
@@ -114,6 +136,7 @@ func (w *Window) Listen(evMasks ...int) error {
 
 func (w *Window) Map() {
 	w.parent.Map()
+	w.decorations.Map()
 	w.win.Map()
 }
 
@@ -151,7 +174,8 @@ func (w *Window) Move(x, y int) {
 
 func (w *Window) MoveResize(x, y, width, height int) {
 	w.parent.MoveResize(x, y, width, height)
-	w.win.Resize(width, height)
+	rect := w.decorations.ApplyRect(xrect.New(0, 0, width, height))
+	w.win.MoveResize(rect.Pieces())
 }
 
 func (w *Window) HasProtocol(x string) bool {
@@ -165,12 +189,12 @@ func (w *Window) HasProtocol(x string) bool {
 
 func (w *Window) WasUnmapped() {
 	X := w.win.X
+	w.decorations.Unmap()
 	w.parent.Unmap()
 
 	xproto.ReparentWindowChecked(X.Conn(), w.win.Id, X.RootWin(), 0, 0).Check()
 
-	//XRemoveFromSaveSet(display_, w);
-
+	w.decorations.Destroy()
 	w.parent.Destroy()
 }
 
