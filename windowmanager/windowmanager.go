@@ -177,7 +177,16 @@ func SetMoveDragShortcut(s string) error {
 		return err
 	}
 	moveDragShortcut = s
-	moveDragShortcutChanged()
+	dragShortcutChanged()
+	return nil
+}
+
+func SetResizeDragShortcut(s string) error {
+	if _, _, err := mousebind.ParseString(X, s); err != nil {
+		return err
+	}
+	resizeDragShortcut = s
+	dragShortcutChanged()
 	return nil
 }
 
@@ -252,7 +261,7 @@ func manageWindow(w xproto.Window) {
 	win.SetupMouseEvents(moveDragShortcut, resizeDragShortcut)
 }
 
-func moveDragShortcutChanged() {
+func dragShortcutChanged() {
 	for _, win := range managedWindows {
 		win.SetupMouseEvents(moveDragShortcut, resizeDragShortcut)
 	}
