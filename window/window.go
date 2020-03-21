@@ -63,7 +63,7 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 
 	decW := decorations.WidthNeeded()
 	decH := decorations.HeightNeeded()
-	g, _ := win.Geometry()
+	g, _ := util.GeometryIncludingBorder(win)
 	g.WidthSet(g.Width() + decW)
 	g.HeightSet(g.Height() + decH)
 	window.MoveResize(g.Pieces())
@@ -83,7 +83,7 @@ func createParent(win *xwindow.Window) (*xwindow.Window, error) {
 	parent.Change(xproto.CwBackPixel, 0xff0000)
 
 	// Set window border to 0, as we will either use our own borders or we don't want any
-	err = xproto.ConfigureWindowChecked(X.Conn(), win.Id, xproto.ConfigWindowBorderWidth, []uint32{0}).Check()
+	err = util.SetBorder(win, 5, 0x00ffff)
 	if err != nil {
 		return nil, err
 	}
@@ -152,6 +152,9 @@ func (w *Window) Move(x, y int) {
 func (w *Window) MoveResize(x, y, width, height int) {
 	w.parent.MoveResize(x, y, width, height)
 	rect := w.decorations.ApplyRect(xrect.New(0, 0, width, height))
+	borderW := util.GetBorderWidth(w.win)
+	rect.WidthSet(rect.Width() - 2 * int(borderW))
+	rect.HeightSet(rect.Height() - 2 * int(borderW))
 	w.win.MoveResize(rect.Pieces())
 }
 

@@ -1,0 +1,56 @@
+package util
+
+import (
+	"github.com/BurntSushi/xgb/xproto"
+	"github.com/BurntSushi/xgbutil/xrect"
+	"github.com/BurntSushi/xgbutil/xwindow"
+)
+
+func SetBorder(win *xwindow.Window, width uint32, color uint32) error {
+	if err := SetBorderWidth(win, width); err != nil {
+		return err
+	}
+	if err := SetBorderColor(win, color); err != nil {
+		return err
+	}
+	return nil
+}
+
+func SetBorderWidth(win *xwindow.Window, width uint32) error {
+	return xproto.ConfigureWindowChecked(
+		win.X.Conn(),
+		win.Id,
+		xproto.ConfigWindowBorderWidth,
+		[]uint32{width},
+	).Check()
+}
+
+func SetBorderColor(win *xwindow.Window, color uint32) error {
+	return xproto.ChangeWindowAttributesChecked(
+		win.X.Conn(),
+		win.Id,
+		xproto.CwBorderPixel,
+		[]uint32{color},
+	).Check()
+}
+
+func GetBorderWidth(win *xwindow.Window) uint16 {
+	g, err := xproto.GetGeometry(win.X.Conn(), xproto.Drawable(win.Id)).Reply()
+	if err != nil {
+		return 0
+	}
+	return g.BorderWidth
+}
+
+func GeometryIncludingBorder(win *xwindow.Window) (xrect.Rect, error) {
+	g, err := xproto.GetGeometry(win.X.Conn(), xproto.Drawable(win.Id)).Reply()
+	if err != nil {
+		return nil, err
+	}
+	return xrect.New(
+		int(g.X),
+		int(g.Y),
+		int(g.Width + g.BorderWidth * 2),
+		int(g.Height + g.BorderWidth * 2),
+	), nil
+}
