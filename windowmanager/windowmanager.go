@@ -20,7 +20,7 @@ var Root *xwindow.Window
 var RootGeometry xrect.Rect
 var Heads xinerama.Heads
 
-var moveDragShortcut = ""
+var moveDragShortcut = "Mod1-1"
 
 var managedWindows []*window.Window
 var activeWindow *window.Window
