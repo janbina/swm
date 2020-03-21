@@ -13,9 +13,11 @@ import (
 
 type Window struct {
 	win         *xwindow.Window
-	protocols   []string
 	moveState   *MoveState
 	resizeState *ResizeState
+
+	protocols   []string
+	normalHints *icccm.NormalHints
 }
 
 type MoveState struct {
@@ -124,6 +126,12 @@ func (w *Window) FetchXProperties() {
 
 	w.protocols, err = icccm.WmProtocolsGet(X, id)
 	if err != nil {
-		log.Println("Wm protocols not set")
+		log.Printf("Wm protocols not set: %s", err)
+	}
+
+	w.normalHints, err = icccm.WmNormalHintsGet(X, id)
+	if err != nil {
+		log.Printf("Error getting normal hints: %s", err)
+		w.normalHints = &icccm.NormalHints{}
 	}
 }
