@@ -104,7 +104,17 @@ func (w *Window) Move(x, y int) {
 }
 
 func (w *Window) MoveResize(x, y, width, height int) {
+	if width < int(w.normalHints.MinWidth) {
+		width = int(w.normalHints.MinWidth)
+	}
+	if height < int(w.normalHints.MinHeight) {
+		height = int(w.normalHints.MinHeight)
+	}
 	w.win.MoveResize(x, y, width, height)
+}
+
+func (w *Window) Configure(flags, x, y, width, height int) {
+	w.win.Configure(flags, x, y, width, height, 0, 0)
 }
 
 func (w *Window) HasProtocol(x string) bool {

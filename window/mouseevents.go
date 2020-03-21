@@ -154,7 +154,16 @@ func (w *Window) DragResizeStep(rx, ry, ex, ey int) {
 		}
 	}
 
-	w.MoveResize(g.Pieces())
+	flags := xproto.ConfigWindowX | xproto.ConfigWindowY | xproto.ConfigWindowWidth | xproto.ConfigWindowHeight
+	if g.Width() < int(w.normalHints.MinWidth) {
+		g.SetWidth(int(w.normalHints.MinWidth))
+		flags &= ^xproto.ConfigWindowX
+	}
+	if g.Height() < int(w.normalHints.MinHeight) {
+		g.SetHeight(int(w.normalHints.MinHeight))
+		flags &= ^xproto.ConfigWindowY
+	}
+	w.Configure(flags, g.X(), g.Y(), g.Width(), g.Height())
 }
 
 func (w *Window) DragResizeEnd(rx, ry, ex, ey int) {
