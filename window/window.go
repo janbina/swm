@@ -37,22 +37,14 @@ type Directions struct {
 }
 
 func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
-
-	protocols, err := icccm.WmProtocolsGet(x, xWin)
-	if err != nil {
-		log.Println("Wm protocols not set")
-	}
-
-	win := xwindow.New(x, xWin)
-
-	err = util.SetBorder(win, 3, 0xff00ff)
-	if err != nil {
-		log.Printf("Cannot set window border")
-	}
-
 	window := &Window{
-		win:         win,
-		protocols:   protocols,
+		win: xwindow.New(x, xWin),
+	}
+
+	window.FetchXProperties()
+
+	if err := util.SetBorder(window.win, 3, 0xff00ff); err != nil {
+		log.Printf("Cannot set window border")
 	}
 
 	return window
@@ -123,4 +115,15 @@ func (w *Window) HasProtocol(x string) bool {
 }
 
 func (w *Window) WasUnmapped() {
+}
+
+func (w *Window) FetchXProperties() {
+	var err error
+	X := w.win.X
+	id := w.win.Id
+
+	w.protocols, err = icccm.WmProtocolsGet(X, id)
+	if err != nil {
+		log.Println("Wm protocols not set")
+	}
 }
