@@ -21,6 +21,7 @@ var RootGeometry xrect.Rect
 var Heads xinerama.Heads
 
 var moveDragShortcut = "Mod1-1"
+var resizeDragShortcut = "Mod1-3"
 
 var managedWindows []*window.Window
 var activeWindow *window.Window
@@ -248,11 +249,11 @@ func manageWindow(w xproto.Window) {
 		destroyNotify(win)
 	}).Connect(X, w)
 	win.Focus()
-	win.SetupMouseEvents(moveDragShortcut)
+	win.SetupMouseEvents(moveDragShortcut, resizeDragShortcut)
 }
 
 func moveDragShortcutChanged() {
 	for _, win := range managedWindows {
-		win.SetupMouseEvents(moveDragShortcut)
+		win.SetupMouseEvents(moveDragShortcut, resizeDragShortcut)
 	}
 }

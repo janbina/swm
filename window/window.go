@@ -4,10 +4,8 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/icccm"
-	"github.com/BurntSushi/xgbutil/mousebind"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xwindow"
-	"github.com/janbina/swm/cursors"
 	"github.com/janbina/swm/geometry"
 	"github.com/janbina/swm/util"
 	"log"
@@ -17,11 +15,18 @@ type Window struct {
 	win         *xwindow.Window
 	protocols   []string
 	moveState   *MoveState
+	resizeState *ResizeState
 }
 
 type MoveState struct {
-	Moving bool
-	dX, dY int
+	rx, ry    int
+	startGeom geometry.Geometry
+}
+
+type ResizeState struct {
+	rx, ry    int
+	direction int
+	startGeom geometry.Geometry
 }
 
 type Directions struct {
@@ -48,11 +53,6 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 	window := &Window{
 		win:         win,
 		protocols:   protocols,
-		moveState: &MoveState{
-			Moving: false,
-			dX:     0,
-			dY:     0,
-		},
 	}
 
 	return window
@@ -123,57 +123,4 @@ func (w *Window) HasProtocol(x string) bool {
 }
 
 func (w *Window) WasUnmapped() {
-}
-
-func (w *Window) DragMoveBegin(rx, ry, ex, ey int) bool {
-	log.Printf("Drag move begin: %d, %d, %d, %d", rx, ry, ex, ey)
-
-	g, _ := w.Geometry()
-	w.moveState = &MoveState{
-		Moving: true,
-		dX:     g.X() - rx,
-		dY:     g.Y() - ry,
-	}
-
-	return true
-}
-
-func (w *Window) DragMoveStep(rx, ry, ex, ey int) {
-	log.Printf("Drag move step: %d, %d, %d, %d", rx, ry, ex, ey)
-
-	w.Move(w.moveState.dX+rx, w.moveState.dY+ry)
-}
-
-func (w *Window) DragMoveEnd(rx, ry, ex, ey int) {
-	log.Printf("Drag move end: %d, %d, %d, %d", rx, ry, ex, ey)
-
-	w.moveState = &MoveState{
-		Moving: false,
-		dX:     0,
-		dY:     0,
-	}
-}
-
-func (w *Window) SetupMouseEvents(moveShortcut string) {
-	X := w.win.X
-
-	// Detach old events
-	mousebind.Detach(X, w.win.Id)
-
-	if _, _, err := mousebind.ParseString(X, moveShortcut); err != nil {
-		return
-	}
-	dStart := xgbutil.MouseDragBeginFun(
-		func(X *xgbutil.XUtil, rx, ry, ex, ey int) (bool, xproto.Cursor) {
-			return w.DragMoveBegin(rx, ry, ex, ey), cursors.Fleur
-		})
-	dStep := xgbutil.MouseDragFun(
-		func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
-			w.DragMoveStep(rx, ry, ex, ey)
-		})
-	dEnd := xgbutil.MouseDragFun(
-		func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
-			w.DragMoveEnd(rx, ry, ex, ey)
-		})
-	mousebind.Drag(X, X.Dummy(), w.win.Id, moveShortcut, true, dStart, dStep, dEnd)
 }

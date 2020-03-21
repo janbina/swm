@@ -41,6 +41,42 @@ func (g *Geometry) TotalHeight() int {
 	return g.h + g.border
 }
 
+func (g *Geometry) SetX(v int) {
+	g.x = v
+}
+
+func (g *Geometry) SetY(v int) {
+	g.y = v
+}
+
+func (g *Geometry) SetWidth(v int) {
+	g.w = v
+}
+
+func (g *Geometry) SetHeight(v int) {
+	g.h = v
+}
+
+func (g *Geometry) AddX(v int) {
+	g.x += v
+}
+
+func (g *Geometry) AddY(v int) {
+	g.y += v
+}
+
+func (g *Geometry) AddWidth(v int) {
+	g.w += v
+}
+
+func (g *Geometry) AddHeight(v int) {
+	g.h += v
+}
+
+func (g *Geometry) Pieces() (int, int, int, int) {
+	return g.X(), g.Y(), g.Width(), g.Height()
+}
+
 func Get(win *xwindow.Window) (*Geometry, error) {
 	g, err := xproto.GetGeometry(win.X.Conn(), xproto.Drawable(win.Id)).Reply()
 	if err != nil {
