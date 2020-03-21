@@ -10,6 +10,7 @@ import (
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"github.com/janbina/swm/cursors"
+	"github.com/janbina/swm/geometry"
 	"github.com/janbina/swm/window"
 	"log"
 )
@@ -183,14 +184,14 @@ func GetCurrentScreenGeometry() xrect.Rect {
 	return Heads[0]
 }
 
-func GetActiveWindowGeometry() (xrect.Rect, error) {
+func GetActiveWindowGeometry() (*geometry.Geometry, error) {
 	if activeWindow != nil {
 		return GetWindowGeometry(activeWindow.Id())
 	}
 	return nil, fmt.Errorf("no active window")
 }
 
-func GetWindowGeometry(id uint32) (xrect.Rect, error) {
+func GetWindowGeometry(id uint32) (*geometry.Geometry, error) {
 	win := FindWindowById(id)
 	if win == nil {
 		return nil, fmt.Errorf("cannot find window with id %d", id)

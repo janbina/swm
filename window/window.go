@@ -6,9 +6,9 @@ import (
 	"github.com/BurntSushi/xgbutil/icccm"
 	"github.com/BurntSushi/xgbutil/mousebind"
 	"github.com/BurntSushi/xgbutil/xevent"
-	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"github.com/janbina/swm/cursors"
+	"github.com/janbina/swm/geometry"
 	"github.com/janbina/swm/util"
 	"log"
 )
@@ -65,8 +65,8 @@ func (w *Window) Id() uint32 {
 	return uint32(w.win.Id)
 }
 
-func (w *Window) Geometry() (xrect.Rect, error) {
-	return w.win.Geometry()
+func (w *Window) Geometry() (*geometry.Geometry, error) {
+	return geometry.Get(w.win)
 }
 
 func (w *Window) Listen(evMasks ...int) error {

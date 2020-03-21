@@ -2,7 +2,6 @@ package util
 
 import (
 	"github.com/BurntSushi/xgb/xproto"
-	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
 )
 
@@ -40,17 +39,4 @@ func GetBorderWidth(win *xwindow.Window) uint16 {
 		return 0
 	}
 	return g.BorderWidth
-}
-
-func GeometryIncludingBorder(win *xwindow.Window) (xrect.Rect, error) {
-	g, err := xproto.GetGeometry(win.X.Conn(), xproto.Drawable(win.Id)).Reply()
-	if err != nil {
-		return nil, err
-	}
-	return xrect.New(
-		int(g.X),
-		int(g.Y),
-		int(g.Width + g.BorderWidth * 2),
-		int(g.Height + g.BorderWidth * 2),
-	), nil
 }
