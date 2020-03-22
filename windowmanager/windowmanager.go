@@ -7,6 +7,7 @@ import (
 	"github.com/BurntSushi/xgbutil/mousebind"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xinerama"
+	"github.com/BurntSushi/xgbutil/xprop"
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"github.com/janbina/swm/cursors"
@@ -261,7 +262,17 @@ func manageWindow(w xproto.Window) {
 		destroyNotify(win)
 	}).Connect(X, w)
 	xevent.ClientMessageFun(func(x *xgbutil.XUtil, e xevent.ClientMessageEvent) {
-		win.HandleClientMessage(e)
+		name, err := xprop.AtomName(x, e.Type)
+		if err != nil {
+			log.Printf("Cannot get property atom name for clientMessage event: %s", err)
+			return
+		}
+		win.HandleClientMessage(name, e.Data.Data32)
+	}).Connect(X, w)
+	xevent.DestroyNotifyFun(func(x *xgbutil.XUtil, e xevent.DestroyNotifyEvent) {
+		mousebind.Detach(x, w)
+		xevent.Detach(x, w)
+		win.Destroyed()
 	}).Connect(X, w)
 	win.Focus()
 	win.SetupMouseEvents(moveDragShortcut, resizeDragShortcut)

@@ -90,6 +90,9 @@ func (w *Window) Destroy() {
 	}
 }
 
+func (w *Window) Destroyed() {
+}
+
 func (w *Window) Resize(d Directions) {
 	g, _ := w.Geometry()
 	x := g.X() + d.Left
@@ -146,6 +149,6 @@ func (w *Window) FetchXProperties() {
 	}
 }
 
-func (w *Window) HandleClientMessage(e xevent.ClientMessageEvent) {
-	log.Printf("Handle client message: %s", e)
+func (w *Window) HandleClientMessage(name string, data []uint32) {
+	log.Printf("Handle client message: %s", name)
 }
