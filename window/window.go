@@ -145,3 +145,7 @@ func (w *Window) FetchXProperties() {
 		w.normalHints = &icccm.NormalHints{}
 	}
 }
+
+func (w *Window) HandleClientMessage(e xevent.ClientMessageEvent) {
+	log.Printf("Handle client message: %s", e)
+}

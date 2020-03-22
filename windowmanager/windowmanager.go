@@ -51,6 +51,8 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 		Heads = xinerama.Heads{RootGeometry}
 	}
 
+	setEwmhSupported(X)
+
 	return nil
 }
 
@@ -65,6 +67,7 @@ func SetupRoot() error {
 
 	xevent.ConfigureRequestFun(configureRequestFun).Connect(X, Root.Id)
 	xevent.MapRequestFun(mapRequestFun).Connect(X, Root.Id)
+	xevent.ClientMessageFun(handleClientMessage).Connect(X, Root.Id)
 
 	return nil
 }
@@ -256,6 +259,9 @@ func manageWindow(w xproto.Window) {
 	xevent.UnmapNotifyFun(func(x *xgbutil.XUtil, e xevent.UnmapNotifyEvent) {
 		log.Printf("UNMAP notify: %s", e)
 		destroyNotify(win)
+	}).Connect(X, w)
+	xevent.ClientMessageFun(func(x *xgbutil.XUtil, e xevent.ClientMessageEvent) {
+		win.HandleClientMessage(e)
 	}).Connect(X, w)
 	win.Focus()
 	win.SetupMouseEvents(moveDragShortcut, resizeDragShortcut)
