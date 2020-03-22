@@ -1,6 +1,7 @@
 package window
 
 import (
+	"github.com/BurntSushi/xgbutil/ewmh"
 	"log"
 )
 
@@ -23,7 +24,11 @@ func handleMoveResizeMessage(win *Window, data []uint32) {
 	yr := data[1]
 	dir := data[2]
 	log.Printf("Move resize client message: %d, %d, %d", xr, yr, dir)
-	if dir == 8 { //_NET_WM_MOVERESIZE_MOVE - movement only
-		win.DragBegin(int16(xr), int16(yr))
+	if dir <= ewmh.SizeLeft {
+		win.DragResizeBegin(int16(xr), int16(yr), int(dir))
+	} else if dir == ewmh.Move {
+		win.DragMoveBegin(int16(xr), int16(yr))
+	} else {
+		log.Printf("Unsupported direction: %d", dir)
 	}
 }

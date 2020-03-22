@@ -108,73 +108,81 @@ func getCursorForDirection(d int) xproto.Cursor {
 	}
 }
 
-func (w *Window) DragResizeBegin(rx, ry, ex, ey int) (bool, xproto.Cursor) {
-	log.Printf("Drag resize begin: %d, %d, %d, %d", rx, ry, ex, ey)
+func dragResizeBegin(w *Window, direction int) xgbutil.MouseDragBeginFun {
+	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) (bool, xproto.Cursor) {
+		log.Printf("Drag resize begin: %d, %d, %d, %d", rx, ry, ex, ey)
 
-	direction := getDragDirection(w, ex, ey)
-	cursor := getCursorForDirection(direction)
+		if direction == ewmh.Infer {
+			direction = getDragDirection(w, ex, ey)
+		}
+		cursor := getCursorForDirection(direction)
 
-	g, _ := w.Geometry()
+		g, _ := w.Geometry()
 
-	w.resizeState = &ResizeState{
-		rx:        rx,
-		ry:        ry,
-		direction: direction,
-		startGeom: *g,
+		w.resizeState = &ResizeState{
+			rx:        rx,
+			ry:        ry,
+			direction: direction,
+			startGeom: *g,
+		}
+
+		return true, cursor
 	}
-
-	return true, cursor
 }
 
-func (w *Window) DragResizeStep(rx, ry, ex, ey int) {
-	log.Printf("Drag resize step: %d, %d, %d, %d", rx, ry, ex, ey)
+func dragResizeStep(w *Window) xgbutil.MouseDragFun {
+	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
+		log.Printf("Drag resize step: %d, %d, %d, %d", rx, ry, ex, ey)
 
-	d := w.resizeState.direction
-	changeX := d == ewmh.SizeLeft || d == ewmh.SizeTopLeft || d == ewmh.SizeBottomLeft
-	changeY := d == ewmh.SizeTop || d == ewmh.SizeTopLeft || d == ewmh.SizeTopRight
-	changeW := d != ewmh.SizeTop && d != ewmh.SizeBottom
-	changeH := d != ewmh.SizeLeft && d != ewmh.SizeRight
+		d := w.resizeState.direction
+		changeX := d == ewmh.SizeLeft || d == ewmh.SizeTopLeft || d == ewmh.SizeBottomLeft
+		changeY := d == ewmh.SizeTop || d == ewmh.SizeTopLeft || d == ewmh.SizeTopRight
+		changeW := d != ewmh.SizeTop && d != ewmh.SizeBottom
+		changeH := d != ewmh.SizeLeft && d != ewmh.SizeRight
 
-	xDiff := rx - w.resizeState.rx
-	yDiff := ry - w.resizeState.ry
+		xDiff := rx - w.resizeState.rx
+		yDiff := ry - w.resizeState.ry
 
-	g := w.resizeState.startGeom
-	if changeX {
-		g.AddX(xDiff)
-	}
-	if changeY {
-		g.AddY(yDiff)
-	}
-	if changeW {
+		g := w.resizeState.startGeom
 		if changeX {
-			g.AddWidth(-xDiff)
-		} else {
-			g.AddWidth(xDiff)
+			g.AddX(xDiff)
 		}
-	}
-	if changeH {
 		if changeY {
-			g.AddHeight(-yDiff)
-		} else {
-			g.AddHeight(yDiff)
+			g.AddY(yDiff)
 		}
-	}
+		if changeW {
+			if changeX {
+				g.AddWidth(-xDiff)
+			} else {
+				g.AddWidth(xDiff)
+			}
+		}
+		if changeH {
+			if changeY {
+				g.AddHeight(-yDiff)
+			} else {
+				g.AddHeight(yDiff)
+			}
+		}
 
-	flags := xproto.ConfigWindowX | xproto.ConfigWindowY | xproto.ConfigWindowWidth | xproto.ConfigWindowHeight
-	if g.Width() < int(w.normalHints.MinWidth) {
-		g.SetWidth(int(w.normalHints.MinWidth))
-		flags &= ^xproto.ConfigWindowX
+		flags := xproto.ConfigWindowX | xproto.ConfigWindowY | xproto.ConfigWindowWidth | xproto.ConfigWindowHeight
+		if g.Width() < int(w.normalHints.MinWidth) {
+			g.SetWidth(int(w.normalHints.MinWidth))
+			flags &= ^xproto.ConfigWindowX
+		}
+		if g.Height() < int(w.normalHints.MinHeight) {
+			g.SetHeight(int(w.normalHints.MinHeight))
+			flags &= ^xproto.ConfigWindowY
+		}
+		w.Configure(flags, g.X(), g.Y(), g.Width(), g.Height())
 	}
-	if g.Height() < int(w.normalHints.MinHeight) {
-		g.SetHeight(int(w.normalHints.MinHeight))
-		flags &= ^xproto.ConfigWindowY
-	}
-	w.Configure(flags, g.X(), g.Y(), g.Width(), g.Height())
 }
 
-func (w *Window) DragResizeEnd(rx, ry, ex, ey int) {
-	log.Printf("Drag resize end: %d, %d, %d, %d", rx, ry, ex, ey)
-	w.resizeState = nil
+func dragResizeEnd(w *Window) xgbutil.MouseDragFun {
+	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
+		log.Printf("Drag resize end: %d, %d, %d, %d", rx, ry, ex, ey)
+		w.resizeState = nil
+	}
 }
 
 func (w *Window) SetupMouseEvents(moveShortcut string, resizeShortcut string) {
@@ -191,23 +199,14 @@ func (w *Window) SetupMouseEvents(moveShortcut string, resizeShortcut string) {
 	}
 
 	if _, _, err := mousebind.ParseString(X, resizeShortcut); err == nil {
-		dStart := xgbutil.MouseDragBeginFun(
-			func(X *xgbutil.XUtil, rx, ry, ex, ey int) (bool, xproto.Cursor) {
-				return w.DragResizeBegin(rx, ry, ex, ey)
-			})
-		dStep := xgbutil.MouseDragFun(
-			func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
-				w.DragResizeStep(rx, ry, ex, ey)
-			})
-		dEnd := xgbutil.MouseDragFun(
-			func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
-				w.DragResizeEnd(rx, ry, ex, ey)
-			})
-		mousebind.Drag(X, X.Dummy(), w.win.Id, resizeShortcut, true, dStart, dStep, dEnd)
+		mousebind.Drag(
+			X, X.Dummy(), w.win.Id, resizeShortcut, true,
+			dragResizeBegin(w, ewmh.Infer), dragResizeStep(w), dragResizeEnd(w),
+		)
 	}
 }
 
-func (w *Window) DragBegin(xr, yr int16) {
+func (w *Window) DragMoveBegin(xr, yr int16) {
 	X := w.win.X
 	mousebind.DragBegin(
 		X,
@@ -220,5 +219,21 @@ func (w *Window) DragBegin(xr, yr int16) {
 		X.Dummy(),
 		w.win.Id,
 		dragMoveBegin(w), dragMoveStep(w), dragMoveEnd(w),
+	)
+}
+
+func (w *Window) DragResizeBegin(xr, yr int16, dir int) {
+	X := w.win.X
+	mousebind.DragBegin(
+		X,
+		xevent.ButtonPressEvent{
+			ButtonPressEvent: &xproto.ButtonPressEvent{
+				RootX: xr,
+				RootY: yr,
+			},
+		},
+		X.Dummy(),
+		w.win.Id,
+		dragResizeBegin(w, dir), dragResizeStep(w), dragResizeEnd(w),
 	)
 }
