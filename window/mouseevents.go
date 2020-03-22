@@ -5,37 +5,43 @@ import (
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/mousebind"
+	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/janbina/swm/cursors"
 	"log"
 )
 
-func (w *Window) DragMoveBegin(rx, ry, ex, ey int) bool {
-	log.Printf("Drag move begin: %d, %d, %d, %d", rx, ry, ex, ey)
+func dragMoveBegin(w *Window) xgbutil.MouseDragBeginFun {
+	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) (bool, xproto.Cursor) {
+		log.Printf("Drag move begin: %d, %d, %d, %d", rx, ry, ex, ey)
 
-	g, _ := w.Geometry()
-	w.moveState = &MoveState{
-		rx:        rx,
-		ry:        ry,
-		startGeom: *g,
+		g, _ := w.Geometry()
+		w.moveState = &MoveState{
+			rx:        rx,
+			ry:        ry,
+			startGeom: *g,
+		}
+
+		return true, cursors.Fleur
 	}
-
-	return true
 }
 
-func (w *Window) DragMoveStep(rx, ry, ex, ey int) {
-	log.Printf("Drag move step: %d, %d, %d, %d", rx, ry, ex, ey)
+func dragMoveStep(w *Window) xgbutil.MouseDragFun {
+	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
+		log.Printf("Drag move step: %d, %d, %d, %d", rx, ry, ex, ey)
 
-	g := w.moveState.startGeom
-	g.AddX(rx - w.moveState.rx)
-	g.AddY(ry - w.moveState.ry)
+		g := w.moveState.startGeom
+		g.AddX(rx - w.moveState.rx)
+		g.AddY(ry - w.moveState.ry)
 
-	w.Move(g.X(), g.Y())
+		w.Move(g.X(), g.Y())
+	}
 }
 
-func (w *Window) DragMoveEnd(rx, ry, ex, ey int) {
-	log.Printf("Drag move end: %d, %d, %d, %d", rx, ry, ex, ey)
-
-	w.moveState = nil
+func dragMoveEnd(w *Window) xgbutil.MouseDragFun {
+	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
+		log.Printf("Drag move end: %d, %d, %d, %d", rx, ry, ex, ey)
+		w.moveState = nil
+	}
 }
 
 func getDragDirection(win *Window, ex, ey int) int {
@@ -69,7 +75,7 @@ func getDragDirection(win *Window, ex, ey int) int {
 			direction = ewmh.SizeBottom
 		}
 	} else {
-		if ex < w / 2 {
+		if ex < w/2 {
 			direction = ewmh.SizeLeft
 		} else {
 			direction = ewmh.SizeRight
@@ -178,19 +184,10 @@ func (w *Window) SetupMouseEvents(moveShortcut string, resizeShortcut string) {
 	mousebind.Detach(X, w.win.Id)
 
 	if _, _, err := mousebind.ParseString(X, moveShortcut); err == nil {
-		dStart := xgbutil.MouseDragBeginFun(
-			func(X *xgbutil.XUtil, rx, ry, ex, ey int) (bool, xproto.Cursor) {
-				return w.DragMoveBegin(rx, ry, ex, ey), cursors.Fleur
-			})
-		dStep := xgbutil.MouseDragFun(
-			func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
-				w.DragMoveStep(rx, ry, ex, ey)
-			})
-		dEnd := xgbutil.MouseDragFun(
-			func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
-				w.DragMoveEnd(rx, ry, ex, ey)
-			})
-		mousebind.Drag(X, X.Dummy(), w.win.Id, moveShortcut, true, dStart, dStep, dEnd)
+		mousebind.Drag(
+			X, X.Dummy(), w.win.Id, moveShortcut, true,
+			dragMoveBegin(w), dragMoveStep(w), dragMoveEnd(w),
+		)
 	}
 
 	if _, _, err := mousebind.ParseString(X, resizeShortcut); err == nil {
@@ -208,4 +205,20 @@ func (w *Window) SetupMouseEvents(moveShortcut string, resizeShortcut string) {
 			})
 		mousebind.Drag(X, X.Dummy(), w.win.Id, resizeShortcut, true, dStart, dStep, dEnd)
 	}
+}
+
+func (w *Window) DragBegin(xr, yr int16) {
+	X := w.win.X
+	mousebind.DragBegin(
+		X,
+		xevent.ButtonPressEvent{
+			ButtonPressEvent: &xproto.ButtonPressEvent{
+				RootX: xr,
+				RootY: yr,
+			},
+		},
+		X.Dummy(),
+		w.win.Id,
+		dragMoveBegin(w), dragMoveStep(w), dragMoveEnd(w),
+	)
 }
