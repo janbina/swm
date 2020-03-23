@@ -3,7 +3,9 @@ package window
 import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
+	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/icccm"
+	"github.com/BurntSushi/xgbutil/motif"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"github.com/janbina/swm/geometry"
@@ -15,9 +17,13 @@ type Window struct {
 	win         *xwindow.Window
 	moveState   *MoveState
 	resizeState *ResizeState
+	maxedVert   bool
+	maxedHorz   bool
 
-	protocols   []string
+	protocols   util.StringSet
 	normalHints *icccm.NormalHints
+	states      util.StringSet
+	types       util.StringSet
 }
 
 type MoveState struct {
@@ -45,8 +51,10 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 
 	window.FetchXProperties()
 
-	if err := util.SetBorder(window.win, 3, 0xff00ff); err != nil {
-		log.Printf("Cannot set window border")
+	if window.shouldDecorate() {
+		if err := util.SetBorder(window.win, 3, 0xff00ff); err != nil {
+			log.Printf("Cannot set window border")
+		}
 	}
 
 	return window
@@ -76,7 +84,7 @@ func (w *Window) Focus() {
 }
 
 func (w *Window) Destroy() {
-	if w.HasProtocol("WM_DELETE_WINDOW") {
+	if w.protocols["WM_DELETE_WINDOW"] {
 		atoms, err := util.Atoms(w.win.X, "WM_PROTOCOLS", "WM_DELETE_WINDOW")
 
 		cm, err := xevent.NewClientMessage(32, w.win.Id, atoms[0], int(atoms[1]))
@@ -120,15 +128,6 @@ func (w *Window) Configure(flags, x, y, width, height int) {
 	w.win.Configure(flags, x, y, width, height, 0, 0)
 }
 
-func (w *Window) HasProtocol(x string) bool {
-	for _, p := range w.protocols {
-		if x == p {
-			return true
-		}
-	}
-	return false
-}
-
 func (w *Window) WasUnmapped() {
 }
 
@@ -137,9 +136,11 @@ func (w *Window) FetchXProperties() {
 	X := w.win.X
 	id := w.win.Id
 
-	w.protocols, err = icccm.WmProtocolsGet(X, id)
-	if err != nil {
+	w.protocols = make(util.StringSet)
+	if protocols, err := icccm.WmProtocolsGet(X, id); err != nil {
 		log.Printf("Wm protocols not set: %s", err)
+	} else {
+		w.protocols.SetAll(protocols)
 	}
 
 	w.normalHints, err = icccm.WmNormalHintsGet(X, id)
@@ -147,4 +148,122 @@ func (w *Window) FetchXProperties() {
 		log.Printf("Error getting normal hints: %s", err)
 		w.normalHints = &icccm.NormalHints{}
 	}
+
+	w.states = make(util.StringSet)
+	states, _ := ewmh.WmStateGet(X, id)
+	w.states.SetAll(states)
+
+	w.types = make(util.StringSet)
+	if types, err := ewmh.WmWindowTypeGet(X, id); err != nil {
+		w.types["_NET_WM_WINDOW_TYPE_NORMAL"] = true
+	} else {
+		w.types.SetAll(types)
+	}
+}
+
+func (w *Window) shouldDecorate() bool {
+	if w.types.Any("_NET_WM_WINDOW_TYPE_DESKTOP", "_NET_WM_WINDOW_TYPE_DOCK", "_NET_WM_WINDOW_TYPE_SPLASH") {
+		return false
+	}
+
+	mh, err := motif.WmHintsGet(w.win.X, w.win.Id)
+	if err == nil && !motif.Decor(mh) {
+		return false
+	}
+
+	return true
+}
+
+func (w *Window) UpdateState(action int, state string) {
+	switch state {
+	case "_NET_WM_STATE_MAXIMIZED_VERT":
+		switch action {
+		case ewmh.StateRemove:
+			w.UnMaximizeVert()
+		case ewmh.StateAdd:
+			w.MaximizeVert()
+		case ewmh.StateToggle:
+			w.MaximizeVertToggle()
+		}
+	case "_NET_WM_STATE_MAXIMIZED_HORZ":
+		switch action {
+		case ewmh.StateRemove:
+			w.UnMaximizeHorz()
+		case ewmh.StateAdd:
+			w.MaximizeHorz()
+		case ewmh.StateToggle:
+			w.MaximizeHorzToggle()
+		}
+	default:
+		log.Printf("Unsupported state: %s", state)
+	}
+}
+
+func (w *Window) MaximizeVert() {
+	if w.maxedVert {
+		return
+	}
+	w.maxedVert = true
+	w.addStates("_NET_WM_STATE_MAXIMIZED_VERT")
+
+	g, _ := xwindow.New(w.win.X, w.win.X.RootWin()).Geometry() // TODO: get real geometry
+	log.Printf("GEOM: %s", g)
+	w.Configure(xproto.ConfigWindowY|xproto.ConfigWindowHeight, 0, g.Y(), 0, g.Height())
+}
+
+func (w *Window) UnMaximizeVert() {
+	if !w.maxedVert {
+		return
+	}
+	w.maxedVert = false
+	w.removeStates("_NET_WM_STATE_MAXIMIZED_VERT")
+
+	// TODO: alter the geometry
+}
+
+func (w *Window) MaximizeVertToggle() {
+	if w.maxedVert {
+		w.UnMaximizeVert()
+	} else {
+		w.MaximizeVert()
+	}
+}
+
+func (w *Window) MaximizeHorz() {
+	if w.maxedHorz {
+		return
+	}
+	w.maxedHorz = true
+	w.addStates("_NET_WM_STATE_MAXIMIZED_HORZ")
+
+	g, _ := xwindow.New(w.win.X, w.win.X.RootWin()).Geometry() // TODO: get real geometry
+	w.Configure(xproto.ConfigWindowX|xproto.ConfigWindowWidth, g.X(), 0, g.Width(), 0)
+}
+
+func (w *Window) UnMaximizeHorz() {
+	if !w.maxedHorz {
+		return
+	}
+	w.maxedHorz = false
+	w.removeStates("_NET_WM_STATE_MAXIMIZED_HORZ")
+
+	// TODO: alter the geometry
+}
+
+func (w *Window) MaximizeHorzToggle() {
+	if w.maxedHorz {
+		w.UnMaximizeHorz()
+	} else {
+		w.MaximizeHorz()
+	}
+}
+
+func (w *Window) addStates(states ...string) {
+	w.states.SetAll(states)
+	ewmh.WmStateSet(w.win.X, w.win.Id, w.states.GetActive())
+}
+
+func (w *Window) removeStates(states ...string) {
+	w.states.UnSetAll(states)
+	ewmh.WmStateSet(w.win.X, w.win.Id, w.states.GetActive())
 }
