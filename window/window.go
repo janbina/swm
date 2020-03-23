@@ -109,8 +109,9 @@ func (w *Window) Resize(d Directions) {
 	g, _ := w.Geometry()
 	x := g.X() + d.Left
 	y := g.Y() + d.Top
-	width := g.Width() + d.Right - d.Left
-	height := g.Height() + d.Bottom - d.Top
+
+	width := g.TotalWidth() + d.Right - d.Left
+	height := g.TotalHeight() + d.Bottom - d.Top
 	w.MoveResize(x, y, width, height)
 }
 
@@ -119,17 +120,31 @@ func (w *Window) Move(x, y int) {
 }
 
 func (w *Window) MoveResize(x, y, width, height int) {
-	if width < int(w.normalHints.MinWidth) {
-		width = int(w.normalHints.MinWidth)
+	g, _ := w.Geometry()
+	realWidth := width - 2 * g.BorderWidth()
+	realHeight := height - 2 * g.BorderWidth()
+
+	if realWidth < int(w.normalHints.MinWidth) {
+		realWidth = int(w.normalHints.MinWidth)
 	}
-	if height < int(w.normalHints.MinHeight) {
-		height = int(w.normalHints.MinHeight)
+	if realHeight < int(w.normalHints.MinHeight) {
+		realHeight = int(w.normalHints.MinHeight)
 	}
-	w.win.MoveResize(x, y, width, height)
+	w.win.MoveResize(x, y, realWidth, realHeight)
 }
 
 func (w *Window) Configure(flags, x, y, width, height int) {
-	w.win.Configure(flags, x, y, width, height, 0, 0)
+	g, _ := w.Geometry()
+	realWidth := width - 2 * g.BorderWidth()
+	realHeight := height - 2 * g.BorderWidth()
+
+	if realWidth < int(w.normalHints.MinWidth) {
+		realWidth = int(w.normalHints.MinWidth)
+	}
+	if realHeight < int(w.normalHints.MinHeight) {
+		realHeight = int(w.normalHints.MinHeight)
+	}
+	w.win.Configure(flags, x, y, realWidth, realHeight, 0, 0)
 }
 
 func (w *Window) WasUnmapped() {

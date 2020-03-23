@@ -127,11 +127,11 @@ func moveResizeCommand(args []string) string {
 	}
 
 	if *w == 0  {
-		*w = int(*wr * float64(screenGeom.Width())) - 2 * winGeom.BorderWidth()
+		*w = int(*wr * float64(screenGeom.Width()))
 	}
 
 	if *h == 0  {
-		*h = int(*hr * float64(screenGeom.Height())) - 2 * winGeom.BorderWidth()
+		*h = int(*hr * float64(screenGeom.Height()))
 	}
 
 	if *w <= 0 {
@@ -146,18 +146,18 @@ func moveResizeCommand(args []string) string {
 	if strings.Contains(*anchor, "t") {
 		realY = screenGeom.Y() + *y
 	} else if strings.Contains(*anchor, "b") {
-		realY = screenGeom.Y() + screenGeom.Height() - *y - *h - 2 * winGeom.BorderWidth()
+		realY = screenGeom.Y() + screenGeom.Height() - *y - *h
 	} else { //center
-		realY = screenGeom.Y() + screenGeom.Height() / 2 - *h / 2 + *y - winGeom.BorderWidth()
+		realY = screenGeom.Y() + screenGeom.Height() / 2 - *h / 2 + *y
 	}
 
 	var realX int
 	if strings.Contains(*anchor, "l") {
 		realX = screenGeom.X() + *x
 	} else if strings.Contains(*anchor, "r") {
-		realX = screenGeom.X() + screenGeom.Width() - *x - *w - 2 * winGeom.BorderWidth()
+		realX = screenGeom.X() + screenGeom.Width() - *x - *w
 	} else { //center
-		realX = screenGeom.X() + screenGeom.Width() / 2 - *w / 2 + *x - winGeom.BorderWidth()
+		realX = screenGeom.X() + screenGeom.Width() / 2 - *w / 2 + *x
 	}
 
 	windowmanager.MoveResizeActiveWindow(realX, realY, *w, *h)

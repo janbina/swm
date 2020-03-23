@@ -34,11 +34,11 @@ func (g *Geometry) BorderWidth() int {
 }
 
 func (g *Geometry) TotalWidth() int {
-	return g.w + g.border
+	return g.w + 2 * g.border
 }
 
 func (g *Geometry) TotalHeight() int {
-	return g.h + g.border
+	return g.h + 2 * g.border
 }
 
 func (g *Geometry) SetX(v int) {
