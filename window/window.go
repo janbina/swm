@@ -57,6 +57,10 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 		}
 	}
 
+	for _, s := range window.states.GetActive() {
+		window.UpdateState(ewmh.StateAdd, s)
+	}
+
 	return window
 }
 
