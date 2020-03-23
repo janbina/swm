@@ -112,17 +112,18 @@ func dragResizeBegin(w *Window, direction int) xgbutil.MouseDragBeginFun {
 	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) (bool, xproto.Cursor) {
 		log.Printf("Drag resize begin: %d, %d, %d, %d", rx, ry, ex, ey)
 
-		if direction == ewmh.Infer {
-			direction = getDragDirection(w, ex, ey)
+		dir := direction
+		if dir == ewmh.Infer {
+			dir = getDragDirection(w, ex, ey)
 		}
-		cursor := getCursorForDirection(direction)
+		cursor := getCursorForDirection(dir)
 
 		g, _ := w.Geometry()
 
 		w.resizeState = &ResizeState{
 			rx:        rx,
 			ry:        ry,
-			direction: direction,
+			direction: dir,
 			startGeom: *g,
 		}
 
