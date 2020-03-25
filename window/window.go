@@ -326,6 +326,12 @@ func (w *Window) MaximizeHorzToggle() {
 	}
 }
 
+func (w *Window) UnsetMaximized() {
+	w.maxedVert = false
+	w.maxedHorz = false
+	w.removeStates("_NET_WM_STATE_MAXIMIZED_HORZ", "_NET_WM_STATE_MAXIMIZED_VERT")
+}
+
 func (w *Window) addStates(states ...string) {
 	w.states.SetAll(states)
 	ewmh.WmStateSet(w.win.X, w.win.Id, w.states.GetActive())

@@ -33,6 +33,10 @@ func dragMoveStep(w *Window) xgbutil.MouseDragFun {
 		g.AddX(rx - w.moveState.rx)
 		g.AddY(ry - w.moveState.ry)
 
+		if w.maxedHorz || w.maxedVert {
+			w.UnMaximize()
+		}
+
 		w.Move(g.X(), g.Y())
 	}
 }
@@ -183,6 +187,7 @@ func dragResizeEnd(w *Window) xgbutil.MouseDragFun {
 	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
 		log.Printf("Drag resize end: %d, %d, %d, %d", rx, ry, ex, ey)
 		w.resizeState = nil
+		w.UnsetMaximized()
 	}
 }
 
