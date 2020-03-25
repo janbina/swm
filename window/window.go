@@ -124,6 +124,7 @@ func (w *Window) Resize(d Directions) {
 }
 
 func (w *Window) Move(x, y int) {
+	w.UnsetMaximized()
 	w.win.Move(x, y)
 }
 
@@ -138,6 +139,7 @@ func (w *Window) MoveResize(x, y, width, height int) {
 	if realHeight < int(w.normalHints.MinHeight) {
 		realHeight = int(w.normalHints.MinHeight)
 	}
+	w.UnsetMaximized()
 	w.win.MoveResize(x, y, realWidth, realHeight)
 }
 
