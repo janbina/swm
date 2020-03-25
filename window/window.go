@@ -17,6 +17,7 @@ type Window struct {
 	win         *xwindow.Window
 	moveState   *MoveState
 	resizeState *ResizeState
+	savedStates map[string]windowState
 	maxedVert   bool
 	maxedHorz   bool
 
@@ -51,12 +52,19 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 
 	window.FetchXProperties()
 
+	window.savedStates = make(map[string]windowState)
+
 	if window.shouldDecorate() {
 		if err := util.SetBorder(window.win, 3, 0xff00ff); err != nil {
 			log.Printf("Cannot set window border")
 		}
 	}
 
+	if window.states["_NET_WM_STATE_MAXIMIZED_VERT"] && window.states["_NET_WM_STATE_MAXIMIZED_HORZ"] {
+		window.states["_NET_WM_STATE_MAXIMIZED_VERT"] = false
+		window.states["_NET_WM_STATE_MAXIMIZED_HORZ"] = false
+		window.states["MAXIMIZED"] = true
+	}
 	for _, s := range window.states.GetActive() {
 		window.UpdateState(ewmh.StateAdd, s)
 	}
@@ -121,8 +129,8 @@ func (w *Window) Move(x, y int) {
 
 func (w *Window) MoveResize(x, y, width, height int) {
 	g, _ := w.Geometry()
-	realWidth := width - 2 * g.BorderWidth()
-	realHeight := height - 2 * g.BorderWidth()
+	realWidth := width - 2*g.BorderWidth()
+	realHeight := height - 2*g.BorderWidth()
 
 	if realWidth < int(w.normalHints.MinWidth) {
 		realWidth = int(w.normalHints.MinWidth)
@@ -135,8 +143,8 @@ func (w *Window) MoveResize(x, y, width, height int) {
 
 func (w *Window) Configure(flags, x, y, width, height int) {
 	g, _ := w.Geometry()
-	realWidth := width - 2 * g.BorderWidth()
-	realHeight := height - 2 * g.BorderWidth()
+	realWidth := width - 2*g.BorderWidth()
+	realHeight := height - 2*g.BorderWidth()
 
 	if realWidth < int(w.normalHints.MinWidth) {
 		realWidth = int(w.normalHints.MinWidth)
@@ -193,8 +201,29 @@ func (w *Window) shouldDecorate() bool {
 	return true
 }
 
+func (w *Window) UpdateStates(action int, s1 string, s2 string) {
+	if (s1 == "_NET_WM_STATE_MAXIMIZED_VERT" && s2 == "_NET_WM_STATE_MAXIMIZED_HORZ") ||
+		(s2 == "_NET_WM_STATE_MAXIMIZED_VERT" && s1 == "_NET_WM_STATE_MAXIMIZED_HORZ") {
+		w.UpdateState(action, "MAXIMIZED")
+	} else {
+		w.UpdateState(action, s1)
+		if len(s2) > 0 {
+			w.UpdateState(action, s2)
+		}
+	}
+}
+
 func (w *Window) UpdateState(action int, state string) {
 	switch state {
+	case "MAXIMIZED":
+		switch action {
+		case ewmh.StateRemove:
+			w.UnMaximize()
+		case ewmh.StateAdd:
+			w.Maximize()
+		case ewmh.StateToggle:
+			w.MaximizeToggle()
+		}
 	case "_NET_WM_STATE_MAXIMIZED_VERT":
 		switch action {
 		case ewmh.StateRemove:
@@ -218,6 +247,24 @@ func (w *Window) UpdateState(action int, state string) {
 	}
 }
 
+func (w *Window) Maximize() {
+	w.MaximizeHorz()
+	w.MaximizeVert()
+}
+
+func (w *Window) UnMaximize() {
+	w.UnMaximizeVert()
+	w.UnMaximizeHorz()
+}
+
+func (w *Window) MaximizeToggle() {
+	if w.maxedVert && w.maxedHorz {
+		w.UnMaximize()
+	} else {
+		w.Maximize()
+	}
+}
+
 func (w *Window) MaximizeVert() {
 	if w.maxedVert {
 		return
@@ -225,6 +272,7 @@ func (w *Window) MaximizeVert() {
 	w.maxedVert = true
 	w.addStates("_NET_WM_STATE_MAXIMIZED_VERT")
 
+	w.SaveWindowState("prior_maxVert")
 	g, _ := xwindow.New(w.win.X, w.win.X.RootWin()).Geometry() // TODO: get real geometry
 	log.Printf("GEOM: %s", g)
 	w.Configure(xproto.ConfigWindowY|xproto.ConfigWindowHeight, 0, g.Y(), 0, g.Height())
@@ -237,7 +285,7 @@ func (w *Window) UnMaximizeVert() {
 	w.maxedVert = false
 	w.removeStates("_NET_WM_STATE_MAXIMIZED_VERT")
 
-	// TODO: alter the geometry
+	w.LoadWindowState("prior_maxVert")
 }
 
 func (w *Window) MaximizeVertToggle() {
@@ -255,6 +303,7 @@ func (w *Window) MaximizeHorz() {
 	w.maxedHorz = true
 	w.addStates("_NET_WM_STATE_MAXIMIZED_HORZ")
 
+	w.SaveWindowState("prior_maxHorz")
 	g, _ := xwindow.New(w.win.X, w.win.X.RootWin()).Geometry() // TODO: get real geometry
 	w.Configure(xproto.ConfigWindowX|xproto.ConfigWindowWidth, g.X(), 0, g.Width(), 0)
 }
@@ -266,7 +315,7 @@ func (w *Window) UnMaximizeHorz() {
 	w.maxedHorz = false
 	w.removeStates("_NET_WM_STATE_MAXIMIZED_HORZ")
 
-	// TODO: alter the geometry
+	w.LoadWindowState("prior_maxHorz")
 }
 
 func (w *Window) MaximizeHorzToggle() {

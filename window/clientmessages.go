@@ -41,8 +41,6 @@ func handleWmStateMessage(win *Window, data []uint32) {
 	p1, _ := xprop.AtomName(win.win.X, xproto.Atom(data[1]))
 	p2, _ := xprop.AtomName(win.win.X, xproto.Atom(data[2]))
 	log.Printf("Wm state client message: %d, %s, %s", action, p1, p2)
-	win.UpdateState(int(action), p1)
-	if len(p2) > 0 {
-		win.UpdateState(int(action), p2)
-	}
+
+	win.UpdateStates(int(action), p1, p2)
 }

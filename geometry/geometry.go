@@ -77,6 +77,10 @@ func (g *Geometry) Pieces() (int, int, int, int) {
 	return g.X(), g.Y(), g.Width(), g.Height()
 }
 
+func (g *Geometry) PiecesTotal() (int, int, int, int) {
+	return g.X(), g.Y(), g.TotalWidth(), g.TotalHeight()
+}
+
 func Get(win *xwindow.Window) (*Geometry, error) {
 	g, err := xproto.GetGeometry(win.X.Conn(), xproto.Drawable(win.Id)).Reply()
 	if err != nil {
