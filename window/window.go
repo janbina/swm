@@ -91,6 +91,10 @@ func (w *Window) Map() {
 	w.win.Map()
 }
 
+func (w *Window) Unmap() {
+	w.win.Unmap()
+}
+
 func (w *Window) Focus() {
 	w.win.Focus()
 }

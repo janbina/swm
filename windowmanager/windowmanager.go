@@ -290,23 +290,37 @@ func manageWindow(w xproto.Window) {
 }
 
 func setNumberOfDesktops(num int) {
+	if num < 1 {
+		num = 1
+	}
 	currentNum := len(desktops)
+	newLast := num -1
 	if num < currentNum {
-		// TODO: Move windows from removed desktops
+		for i := num; i < currentNum; i++ {
+			for _, x := range desktopToWins[i] {
+				ewmh.WmDesktopSet(X, x, uint(newLast))
+			}
+			desktopToWins[newLast] = append(desktopToWins[newLast], desktopToWins[i]...)
+		}
 		desktops = desktops[:num]
 		setDesktops()
-		if currentDesktop >= num {
-			currentDesktop = num - 1
-			setCurrentDesktop()
+		if currentDesktop > newLast {
+			switchToDesktop(newLast)
 		}
 	} else if num > currentNum {
-		desktops = append(desktops, getDesktopNames(currentNum, num - 1)...)
+		desktops = append(desktops, getDesktopNames(currentNum, newLast)...)
 		setDesktops()
 	}
 }
 
 func switchToDesktop(index int) {
 	if currentDesktop != index && index < len(desktops) {
+		for _, w := range desktopToWins[currentDesktop] {
+			managedWindows[w].Unmap()
+		}
+		for _, w := range desktopToWins[index] {
+			managedWindows[w].Map()
+		}
 		currentDesktop = index
 		setCurrentDesktop()
 	}
@@ -326,16 +340,17 @@ func SetDesktopNames(names []string) {
 }
 
 func getDesktopForWindow(win xproto.Window) int {
-	d, err := ewmh.WmDesktopGet(X, win)
+	_d, err := ewmh.WmDesktopGet(X, win)
+	d := int(_d)
 	if err != nil {
 		// not specified
 		return currentDesktop
 	}
-	if int(d) >= len(desktops) {
-		// TODO: Current, last, create additional desktops, or what?
-		return len(desktops) - 1
+	if d == 0xFFFFFFFF || d < len(desktops) {
+		return d
 	}
-	return int(d)
+	// TODO: Current, last, create additional desktops, or what?
+	return len(desktops) - 1
 }
 
 func dragShortcutChanged() {
