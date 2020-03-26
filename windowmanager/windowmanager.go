@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
+	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/mousebind"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xinerama"
@@ -24,7 +25,10 @@ var Heads xinerama.Heads
 var moveDragShortcut = "Mod1-1"
 var resizeDragShortcut = "Mod1-3"
 
-var managedWindows []*window.Window
+var desktops []string
+var desktopToWins map[int][]xproto.Window
+var currentDesktop int
+var managedWindows map[xproto.Window]*window.Window
 var activeWindow *window.Window
 
 // Initialize connection to x server, take wm ownership and initialize variables
@@ -51,6 +55,14 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 	if err != nil || len(Heads) == 0 {
 		Heads = xinerama.Heads{RootGeometry}
 	}
+
+	managedWindows = make(map[xproto.Window]*window.Window)
+	desktopToWins = make(map[int][]xproto.Window)
+
+	desktops = getDesktops() // init desktops
+	currentDesktop = getCurrentDesktop()
+	setDesktops()
+	setCurrentDesktop()
 
 	setEwmhSupported(X)
 
@@ -231,22 +243,19 @@ func mapRequestFun(x *xgbutil.XUtil, e xevent.MapRequestEvent) {
 	manageWindow(e.Window)
 }
 
-func destroyNotify(w *window.Window) {
-	w.WasUnmapped()
-	for i, win := range managedWindows {
-		if win.Id() == w.Id() {
-			managedWindows = append(managedWindows[0:i], managedWindows[i+1:]...)
-			if activeWindow != nil && activeWindow.Id() == w.Id() {
-				activeWindow = nil
-			}
-			return
-		}
-	}
+func destroyNotify(w xproto.Window) {
+	delete(managedWindows, w)
+	updateClientList()
 }
 
 func manageWindow(w xproto.Window) {
 	win := window.New(X, w)
-	managedWindows = append(managedWindows, win)
+	managedWindows[w] = win
+	d := getDesktopForWindow(w)
+	desktopToWins[d] = append(desktopToWins[d], w)
+	ewmh.WmDesktopSet(X, w, uint(d))
+
+	updateClientList()
 	win.Map()
 	win.Listen(
 		xproto.EventMaskStructureNotify,
@@ -259,7 +268,7 @@ func manageWindow(w xproto.Window) {
 	}).Connect(X, w)
 	xevent.UnmapNotifyFun(func(x *xgbutil.XUtil, e xevent.UnmapNotifyEvent) {
 		log.Printf("UNMAP notify: %s", e)
-		destroyNotify(win)
+		//destroyNotify(win)
 	}).Connect(X, w)
 	xevent.ClientMessageFun(func(x *xgbutil.XUtil, e xevent.ClientMessageEvent) {
 		name, err := xprop.AtomName(x, e.Type)
@@ -270,12 +279,63 @@ func manageWindow(w xproto.Window) {
 		win.HandleClientMessage(name, e.Data.Data32)
 	}).Connect(X, w)
 	xevent.DestroyNotifyFun(func(x *xgbutil.XUtil, e xevent.DestroyNotifyEvent) {
+		log.Printf("Destroy notify: %s", e)
 		mousebind.Detach(x, w)
 		xevent.Detach(x, w)
 		win.Destroyed()
+		destroyNotify(w)
 	}).Connect(X, w)
 	win.Focus()
 	win.SetupMouseEvents(moveDragShortcut, resizeDragShortcut)
+}
+
+func setNumberOfDesktops(num int) {
+	currentNum := len(desktops)
+	if num < currentNum {
+		// TODO: Move windows from removed desktops
+		desktops = desktops[:num]
+		setDesktops()
+		if currentDesktop >= num {
+			currentDesktop = num - 1
+			setCurrentDesktop()
+		}
+	} else if num > currentNum {
+		desktops = append(desktops, getDesktopNames(currentNum, num - 1)...)
+		setDesktops()
+	}
+}
+
+func switchToDesktop(index int) {
+	if currentDesktop != index && index < len(desktops) {
+		currentDesktop = index
+		setCurrentDesktop()
+	}
+}
+
+func SetDesktopNames(names []string) {
+	for i, name := range names {
+		if i < len(desktops) {
+			desktops[i] = name
+		}
+	}
+	if len(names) > len(desktops) {
+		setDesktopNames(names)
+	} else {
+		setDesktopNames(desktops)
+	}
+}
+
+func getDesktopForWindow(win xproto.Window) int {
+	d, err := ewmh.WmDesktopGet(X, win)
+	if err != nil {
+		// not specified
+		return currentDesktop
+	}
+	if int(d) >= len(desktops) {
+		// TODO: Current, last, create additional desktops, or what?
+		return len(desktops) - 1
+	}
+	return int(d)
 }
 
 func dragShortcutChanged() {

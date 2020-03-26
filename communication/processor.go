@@ -20,6 +20,7 @@ var commands = map[string]commandFunc{
 	"resize-drag-shortcut": resizeDragShortcutCommand,
 	"moveresize":           moveResizeCommand,
 	"move":                 moveCommand,
+	"set-desktop-names":    setDesktopNamesCommand,
 }
 
 func processCommand(msg string) string {
@@ -186,5 +187,10 @@ func moveCommand(args []string) string {
 
 	windowmanager.MoveActiveWindow(winGeom.X() + dx, winGeom.Y() + dy)
 
+	return ""
+}
+
+func setDesktopNamesCommand(args []string) string {
+	windowmanager.SetDesktopNames(args)
 	return ""
 }

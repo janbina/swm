@@ -1,6 +1,8 @@
 package windowmanager
 
 import (
+	"fmt"
+	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/xevent"
@@ -8,20 +10,81 @@ import (
 	"log"
 )
 
+const minDesktops = 1
+
+func defaultDesktopName(pos int) string {
+	return fmt.Sprintf("D.%d", pos + 1)
+}
+
+func updateClientList() {
+	ids := make([]xproto.Window, 0, len(managedWindows))
+	for window := range managedWindows {
+		ids = append(ids, window)
+	}
+	_ = ewmh.ClientListSet(X, ids)
+}
+
+func getDesktopNames(from, to int) []string {
+	if from > to {
+		return nil
+	}
+	names := make([]string, to - from + 1)
+	fromEwmh, _ := ewmh.DesktopNamesGet(X)
+	for i := range names {
+		i2 := i + from
+		if i2 < len(fromEwmh) {
+			names[i] = fromEwmh[i2]
+		} else {
+			names[i] = defaultDesktopName(i2)
+		}
+	}
+	return names
+}
+
+func getDesktops() []string {
+	num, _ := ewmh.NumberOfDesktopsGet(X)
+	if num < minDesktops {
+		num = minDesktops
+	}
+	return getDesktopNames(0, int(num) - 1)
+}
+
+func setDesktops() {
+	_ = ewmh.NumberOfDesktopsSet(X, uint(len(desktops)))
+	fromEwmh, _ := ewmh.DesktopNamesGet(X)
+	if len(fromEwmh) < len(desktops) {
+		// dont set names when shrinking
+		setDesktopNames(desktops)
+	}
+}
+
+func setDesktopNames(names []string) {
+	_ = ewmh.DesktopNamesSet(X, names)
+}
+
+func getCurrentDesktop() int {
+	d, _ := ewmh.CurrentDesktopGet(X)
+	return int(d)
+}
+
+func setCurrentDesktop() {
+	_ = ewmh.CurrentDesktopSet(X, uint(currentDesktop))
+}
+
 func handleClientMessage(X *xgbutil.XUtil, ev xevent.ClientMessageEvent) {
-	log.Printf("Handle root client message: %s", ev)
 	name, err := xprop.AtomName(X, ev.Type)
 	if err != nil {
 		log.Printf("Error getting atom name for client message %s: %s", ev, err)
 		return
 	}
+	log.Printf("Handle root client message: %s (%s)", name, ev)
 	switch name {
 	case "_NET_NUMBER_OF_DESKTOPS":
-		index := int(ev.Data.Data32[0])
-		log.Printf("Set number of desktops: %d", index)
+		num := int(ev.Data.Data32[0])
+		setNumberOfDesktops(num)
 	case "_NET_CURRENT_DESKTOP":
 		index := int(ev.Data.Data32[0])
-		log.Printf("Set current desktop: %d", index)
+		switchToDesktop(index)
 	}
 }
 
