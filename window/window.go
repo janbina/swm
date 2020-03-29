@@ -20,6 +20,7 @@ type Window struct {
 	savedStates map[string]windowState
 	maxedVert   bool
 	maxedHorz   bool
+	iconified   bool
 
 	protocols   util.StringSet
 	normalHints *icccm.NormalHints
@@ -89,10 +90,12 @@ func (w *Window) Listen(evMasks ...int) error {
 
 func (w *Window) Map() {
 	w.win.Map()
+	_ = w.SetIcccmState(icccm.StateNormal)
 }
 
 func (w *Window) Unmap() {
 	w.win.Unmap()
+	_ = w.SetIcccmState(icccm.StateIconic)
 }
 
 func (w *Window) Focus() {
@@ -115,6 +118,7 @@ func (w *Window) Destroy() {
 }
 
 func (w *Window) Destroyed() {
+	_ = w.SetIcccmState(icccm.StateWithdrawn)
 }
 
 func (w *Window) Resize(d Directions) {
@@ -338,6 +342,18 @@ func (w *Window) UnsetMaximized() {
 	w.removeStates("_NET_WM_STATE_MAXIMIZED_HORZ", "_NET_WM_STATE_MAXIMIZED_VERT")
 }
 
+func (w *Window) IconifyToggle() {
+	if w.iconified {
+		w.iconified = false
+		w.Map()
+		w.removeStates("_NET_WM_STATE_HIDDEN")
+	} else {
+		w.iconified = true
+		w.Unmap()
+		w.addStates("_NET_WM_STATE_HIDDEN")
+	}
+}
+
 func (w *Window) addStates(states ...string) {
 	w.states.SetAll(states)
 	ewmh.WmStateSet(w.win.X, w.win.Id, w.states.GetActive())
@@ -346,4 +362,8 @@ func (w *Window) addStates(states ...string) {
 func (w *Window) removeStates(states ...string) {
 	w.states.UnSetAll(states)
 	ewmh.WmStateSet(w.win.X, w.win.Id, w.states.GetActive())
+}
+
+func (w *Window) SetIcccmState(state uint) error {
+	return icccm.WmStateSet(w.win.X, w.win.Id, &icccm.WmState{State: state})
 }

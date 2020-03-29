@@ -13,7 +13,7 @@ import (
 const minDesktops = 1
 
 func defaultDesktopName(pos int) string {
-	return fmt.Sprintf("D.%d", pos + 1)
+	return fmt.Sprintf("D.%d", pos+1)
 }
 
 func updateClientList() {
@@ -28,7 +28,7 @@ func getDesktopNames(from, to int) []string {
 	if from > to {
 		return nil
 	}
-	names := make([]string, to - from + 1)
+	names := make([]string, to-from+1)
 	fromEwmh, _ := ewmh.DesktopNamesGet(X)
 	for i := range names {
 		i2 := i + from
@@ -46,7 +46,7 @@ func getDesktops() []string {
 	if num < minDesktops {
 		num = minDesktops
 	}
-	return getDesktopNames(0, int(num) - 1)
+	return getDesktopNames(0, int(num)-1)
 }
 
 func setDesktops() {
@@ -56,6 +56,7 @@ func setDesktops() {
 		// dont set names when shrinking
 		setDesktopNames(desktops)
 	}
+	setWorkArea()
 }
 
 func setDesktopNames(names []string) {
@@ -69,6 +70,34 @@ func getCurrentDesktop() int {
 
 func setCurrentDesktop() {
 	_ = ewmh.CurrentDesktopSet(X, uint(currentDesktop))
+}
+
+func setDesktopGeometry() {
+	_ = ewmh.DesktopGeometrySet(
+		X,
+		&ewmh.DesktopGeometry{
+			Width:  RootGeometry.Width(),
+			Height: RootGeometry.Height(),
+		},
+	)
+}
+
+func setDesktopViewport() {
+	_ = ewmh.DesktopViewportSet(X, []ewmh.DesktopViewport{{0, 0}})
+}
+
+func setWorkArea() {
+	n := len(desktops)
+	areas := make([]ewmh.Workarea, n)
+	for i := range areas {
+		areas[i] = ewmh.Workarea{
+			X:      RootGeometryStruts.X(),
+			Y:      RootGeometryStruts.Y(),
+			Width:  uint(RootGeometryStruts.Width()),
+			Height: uint(RootGeometryStruts.Height()),
+		}
+	}
+	_ = ewmh.WorkareaSet(X, areas)
 }
 
 func handleClientMessage(X *xgbutil.XUtil, ev xevent.ClientMessageEvent) {
@@ -85,6 +114,8 @@ func handleClientMessage(X *xgbutil.XUtil, ev xevent.ClientMessageEvent) {
 	case "_NET_CURRENT_DESKTOP":
 		index := int(ev.Data.Data32[0])
 		switchToDesktop(index)
+	default:
+		log.Printf("Unsupported root message: %s, %s", name, ev)
 	}
 }
 

@@ -20,7 +20,9 @@ import (
 var X *xgbutil.XUtil
 var Root *xwindow.Window
 var RootGeometry xrect.Rect
+var RootGeometryStruts xrect.Rect
 var Heads xinerama.Heads
+var HeadsStruts xinerama.Heads
 
 var moveDragShortcut = "Mod1-1"
 var resizeDragShortcut = "Mod1-3"
@@ -30,14 +32,14 @@ var desktopToWins map[int][]xproto.Window
 var currentDesktop int
 var managedWindows map[xproto.Window]*window.Window
 var activeWindow *window.Window
+var strutWindows map[xproto.Window]bool
 
-// Initialize connection to x server, take wm ownership and initialize variables
+// Take wm ownership and initialize variables
 func Initialize(x *xgbutil.XUtil, replace bool) error {
 	var err error
 	X = x
 
 	if err = takeWmOwnership(X, replace); err != nil {
-		X.Conn().Close()
 		return err
 	}
 
@@ -47,9 +49,10 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 
 	RootGeometry, err = Root.Geometry()
 	if err != nil {
-		X.Conn().Close()
 		return err
 	}
+	setDesktopGeometry()
+	setDesktopViewport()
 
 	Heads, err = xinerama.PhysicalHeads(X)
 	if err != nil || len(Heads) == 0 {
@@ -58,9 +61,11 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 
 	managedWindows = make(map[xproto.Window]*window.Window)
 	desktopToWins = make(map[int][]xproto.Window)
+	strutWindows = make(map[xproto.Window]bool)
 
 	desktops = getDesktops() // init desktops
 	currentDesktop = getCurrentDesktop()
+	applyStruts()
 	setDesktops()
 	setCurrentDesktop()
 
@@ -245,7 +250,12 @@ func mapRequestFun(x *xgbutil.XUtil, e xevent.MapRequestEvent) {
 
 func destroyNotify(w xproto.Window) {
 	delete(managedWindows, w)
+	xproto.ChangeSaveSetChecked(X.Conn(), xproto.SetModeDelete, w).Check()
 	updateClientList()
+	if strutWindows[w] {
+		delete(strutWindows, w)
+		applyStruts()
+	}
 }
 
 func manageWindow(w xproto.Window) {
@@ -254,6 +264,13 @@ func manageWindow(w xproto.Window) {
 	d := getDesktopForWindow(w)
 	desktopToWins[d] = append(desktopToWins[d], w)
 	ewmh.WmDesktopSet(X, w, uint(d))
+
+	_ = xproto.ChangeSaveSetChecked(X.Conn(), xproto.SetModeInsert, w).Check()
+
+	if strut, _ := ewmh.WmStrutPartialGet(X, w); strut != nil {
+		strutWindows[w] = true
+		applyStruts()
+	}
 
 	updateClientList()
 	win.Map()
@@ -294,7 +311,7 @@ func setNumberOfDesktops(num int) {
 		num = 1
 	}
 	currentNum := len(desktops)
-	newLast := num -1
+	newLast := num - 1
 	if num < currentNum {
 		for i := num; i < currentNum; i++ {
 			for _, x := range desktopToWins[i] {
@@ -357,4 +374,39 @@ func dragShortcutChanged() {
 	for _, win := range managedWindows {
 		win.SetupMouseEvents(moveDragShortcut, resizeDragShortcut)
 	}
+}
+
+func applyStruts() {
+	wh := make(xinerama.Heads, len(Heads))
+	for i, head := range Heads {
+		wh[i] = xrect.New(head.Pieces())
+	}
+
+	rootG := xwindow.RootGeometry(X)
+	wa := []xrect.Rect{xrect.New(rootG.Pieces())}
+	for w := range managedWindows {
+		strut, _ := ewmh.WmStrutPartialGet(X, w)
+		if strut == nil {
+			continue
+		}
+		xrect.ApplyStrut(wh, uint(rootG.Width()), uint(rootG.Height()),
+			strut.Left, strut.Right, strut.Top, strut.Bottom,
+			strut.LeftStartY, strut.LeftEndY,
+			strut.RightStartY, strut.RightEndY,
+			strut.TopStartX, strut.TopEndX,
+			strut.BottomStartX, strut.BottomEndX,
+		)
+		xrect.ApplyStrut(wa, uint(rootG.Width()), uint(rootG.Height()),
+			strut.Left, strut.Right, strut.Top, strut.Bottom,
+			strut.LeftStartY, strut.LeftEndY,
+			strut.RightStartY, strut.RightEndY,
+			strut.TopStartX, strut.TopEndX,
+			strut.BottomStartX, strut.BottomEndX,
+		)
+	}
+
+	HeadsStruts = wh
+	RootGeometryStruts = wa[0]
+
+	setWorkArea()
 }
