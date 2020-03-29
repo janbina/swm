@@ -5,12 +5,8 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
-	"github.com/BurntSushi/xgbutil/xevent"
-	"github.com/BurntSushi/xgbutil/xprop"
 	"log"
 )
-
-const minDesktops = 1
 
 func defaultDesktopName(pos int) string {
 	return fmt.Sprintf("D.%d", pos+1)
@@ -98,25 +94,6 @@ func setWorkArea() {
 		}
 	}
 	_ = ewmh.WorkareaSet(X, areas)
-}
-
-func handleClientMessage(X *xgbutil.XUtil, ev xevent.ClientMessageEvent) {
-	name, err := xprop.AtomName(X, ev.Type)
-	if err != nil {
-		log.Printf("Error getting atom name for client message %s: %s", ev, err)
-		return
-	}
-	log.Printf("Handle root client message: %s (%s)", name, ev)
-	switch name {
-	case "_NET_NUMBER_OF_DESKTOPS":
-		num := int(ev.Data.Data32[0])
-		setNumberOfDesktops(num)
-	case "_NET_CURRENT_DESKTOP":
-		index := int(ev.Data.Data32[0])
-		switchToDesktop(index)
-	default:
-		log.Printf("Unsupported root message: %s, %s", name, ev)
-	}
 }
 
 func setEwmhSupported(X *xgbutil.XUtil) {

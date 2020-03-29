@@ -4,6 +4,7 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/icccm"
+	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xprop"
 	"log"
 )
@@ -17,11 +18,16 @@ var handlers = map[string]handlerFunc{
 	"_NET_ACTIVE_WINDOW": handleActiveWindowMessage,
 }
 
-func (w *Window) HandleClientMessage(name string, data []uint32) {
+func (w *Window) HandleClientMessage(e xevent.ClientMessageEvent) {
+	name, err := xprop.AtomName(w.win.X, e.Type)
+	if err != nil {
+		log.Printf("Cannot get property atom name for clientMessage event: %s", err)
+		return
+	}
 	if f, ok := handlers[name]; !ok {
 		log.Printf("Unsupported client message: %s", name)
 	} else {
-		f(w, data)
+		f(w, e.Data.Data32)
 	}
 }
 

@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/keybind"
-	"github.com/BurntSushi/xgbutil/mousebind"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/janbina/swm/communication"
-	"github.com/janbina/swm/cursors"
 	"github.com/janbina/swm/windowmanager"
 	"log"
 	"os"
@@ -33,10 +31,6 @@ func main() {
 		os.Exit(0)
 	}
 
-	keybind.Initialize(X)
-	mousebind.Initialize(X)
-	cursors.Initialize(X)
-
 	if err := windowmanager.Initialize(X, *replace); err != nil {
 		log.Fatalf("Cannot initialize window manager: %s", err)
 	}
@@ -55,7 +49,5 @@ func main() {
 		},
 	).Connect(windowmanager.X, windowmanager.Root.Id, "Mod1-return", true)
 
-	if err := windowmanager.Run(); err != nil {
-		log.Fatalf("Error running window manager: %s", err)
-	}
+	windowmanager.Run()
 }

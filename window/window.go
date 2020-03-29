@@ -367,3 +367,8 @@ func (w *Window) removeStates(states ...string) {
 func (w *Window) SetIcccmState(state uint) error {
 	return icccm.WmStateSet(w.win.X, w.win.Id, &icccm.WmState{State: state})
 }
+
+func (w *Window) GetStruts() *ewmh.WmStrutPartial {
+	strut, _ := ewmh.WmStrutPartialGet(w.win.X, w.win.Id)
+	return strut
+}
