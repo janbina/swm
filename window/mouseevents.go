@@ -10,6 +10,59 @@ import (
 	"log"
 )
 
+func (w *Window) SetupMouseEvents(moveShortcut string, resizeShortcut string) {
+	X := w.win.X
+
+	// Detach old events
+	mousebind.Detach(X, w.win.Id)
+
+	if _, _, err := mousebind.ParseString(X, moveShortcut); err == nil {
+		mousebind.Drag(
+			X, X.Dummy(), w.win.Id, moveShortcut, true,
+			dragMoveBegin(w), dragMoveStep(w), dragMoveEnd(w),
+		)
+	}
+
+	if _, _, err := mousebind.ParseString(X, resizeShortcut); err == nil {
+		mousebind.Drag(
+			X, X.Dummy(), w.win.Id, resizeShortcut, true,
+			dragResizeBegin(w, ewmh.Infer), dragResizeStep(w), dragResizeEnd(w),
+		)
+	}
+}
+
+func (w *Window) DragMoveBegin(xr, yr int16) {
+	X := w.win.X
+	mousebind.DragBegin(
+		X,
+		xevent.ButtonPressEvent{
+			ButtonPressEvent: &xproto.ButtonPressEvent{
+				RootX: xr,
+				RootY: yr,
+			},
+		},
+		X.Dummy(),
+		w.win.Id,
+		dragMoveBegin(w), dragMoveStep(w), dragMoveEnd(w),
+	)
+}
+
+func (w *Window) DragResizeBegin(xr, yr int16, dir int) {
+	X := w.win.X
+	mousebind.DragBegin(
+		X,
+		xevent.ButtonPressEvent{
+			ButtonPressEvent: &xproto.ButtonPressEvent{
+				RootX: xr,
+				RootY: yr,
+			},
+		},
+		X.Dummy(),
+		w.win.Id,
+		dragResizeBegin(w, dir), dragResizeStep(w), dragResizeEnd(w),
+	)
+}
+
 func dragMoveBegin(w *Window) xgbutil.MouseDragBeginFun {
 	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) (bool, xproto.Cursor) {
 		log.Printf("Drag move begin: %d, %d, %d, %d", rx, ry, ex, ey)
@@ -189,57 +242,4 @@ func dragResizeEnd(w *Window) xgbutil.MouseDragFun {
 		w.resizeState = nil
 		w.UnsetMaximized()
 	}
-}
-
-func (w *Window) SetupMouseEvents(moveShortcut string, resizeShortcut string) {
-	X := w.win.X
-
-	// Detach old events
-	mousebind.Detach(X, w.win.Id)
-
-	if _, _, err := mousebind.ParseString(X, moveShortcut); err == nil {
-		mousebind.Drag(
-			X, X.Dummy(), w.win.Id, moveShortcut, true,
-			dragMoveBegin(w), dragMoveStep(w), dragMoveEnd(w),
-		)
-	}
-
-	if _, _, err := mousebind.ParseString(X, resizeShortcut); err == nil {
-		mousebind.Drag(
-			X, X.Dummy(), w.win.Id, resizeShortcut, true,
-			dragResizeBegin(w, ewmh.Infer), dragResizeStep(w), dragResizeEnd(w),
-		)
-	}
-}
-
-func (w *Window) DragMoveBegin(xr, yr int16) {
-	X := w.win.X
-	mousebind.DragBegin(
-		X,
-		xevent.ButtonPressEvent{
-			ButtonPressEvent: &xproto.ButtonPressEvent{
-				RootX: xr,
-				RootY: yr,
-			},
-		},
-		X.Dummy(),
-		w.win.Id,
-		dragMoveBegin(w), dragMoveStep(w), dragMoveEnd(w),
-	)
-}
-
-func (w *Window) DragResizeBegin(xr, yr int16, dir int) {
-	X := w.win.X
-	mousebind.DragBegin(
-		X,
-		xevent.ButtonPressEvent{
-			ButtonPressEvent: &xproto.ButtonPressEvent{
-				RootX: xr,
-				RootY: yr,
-			},
-		},
-		X.Dummy(),
-		w.win.Id,
-		dragResizeBegin(w, dir), dragResizeStep(w), dragResizeEnd(w),
-	)
 }

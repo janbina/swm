@@ -19,7 +19,7 @@ func manageWindow(w xproto.Window) {
 
 	xproto.ChangeSaveSet(X.Conn(), xproto.SetModeInsert, w)
 
-	if win.GetStruts() != nil {
+	if s, _ := ewmh.WmStrutPartialGet(X, w); s != nil {
 		strutWindows[w] = true
 		applyStruts()
 	}
