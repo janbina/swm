@@ -11,8 +11,22 @@ import (
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"github.com/janbina/swm/cursors"
 	"github.com/janbina/swm/focus"
+	"github.com/janbina/swm/geometry"
 	"github.com/janbina/swm/window"
 )
+
+type ManagedWindow interface {
+	Destroy()
+	Resize(directions window.Directions)
+	Move(x int, y int)
+	MoveResize(x int, y int, width int, height int)
+	Geometry() (*geometry.Geometry, error)
+	Map()
+	Unmap()
+	IsHidden() bool
+	SetupMouseEvents(moveShortcut string, resizeShortcut string)
+	Destroyed()
+}
 
 const (
 	minDesktops   = 1 //minimum number of desktops created at startup
@@ -30,7 +44,7 @@ var (
 	desktops       []string
 	desktopToWins  map[int][]xproto.Window
 	currentDesktop int
-	managedWindows map[xproto.Window]*window.Window
+	managedWindows map[xproto.Window]ManagedWindow
 	strutWindows   map[xproto.Window]bool
 )
 
@@ -64,7 +78,7 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 		Heads = xinerama.Heads{RootGeometry}
 	}
 
-	managedWindows = make(map[xproto.Window]*window.Window)
+	managedWindows = make(map[xproto.Window]ManagedWindow)
 	desktopToWins = make(map[int][]xproto.Window)
 	strutWindows = make(map[xproto.Window]bool)
 

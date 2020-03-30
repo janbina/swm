@@ -15,7 +15,7 @@ import (
 var moveDragShortcut = "Mod1-1"
 var resizeDragShortcut = "Mod1-3"
 
-func FindWindowById(id uint32) *window.Window {
+func FindWindowById(id uint32) ManagedWindow {
 	return managedWindows[xproto.Window(id)]
 }
 
