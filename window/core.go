@@ -8,9 +8,15 @@ import (
 	"github.com/BurntSushi/xgbutil/motif"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xwindow"
+	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/geometry"
 	"github.com/janbina/swm/util"
 	"log"
+)
+
+const (
+	borderColorActive = 0x00BCD4
+	borderColorInactive = 0xCDDC39
 )
 
 type Window struct {
@@ -21,8 +27,11 @@ type Window struct {
 	maxedVert   bool
 	maxedHorz   bool
 	iconified   bool
+	focused     bool
+	mapped      bool
 
 	protocols   util.StringSet
+	hints       *icccm.Hints
 	normalHints *icccm.NormalHints
 	states      util.StringSet
 	types       util.StringSet
@@ -49,7 +58,7 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 	window.savedStates = make(map[string]windowState)
 
 	if window.shouldDecorate() {
-		if err := util.SetBorder(window.win, 3, 0xff00ff); err != nil {
+		if err := util.SetBorder(window.win, 2, borderColorInactive); err != nil {
 			log.Printf("Cannot set window border")
 		}
 	}
@@ -61,6 +70,10 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 	}
 	for _, s := range window.states.GetActive() {
 		window.UpdateState(ewmh.StateAdd, s)
+	}
+
+	if !window.types.Any("_NET_WM_WINDOW_TYPE_DESKTOP", "_NET_WM_WINDOW_TYPE_DOCK") {
+		focus.InitialAdd(window)
 	}
 
 	return window
@@ -83,11 +96,13 @@ func (w *Window) Listen(evMasks ...int) error {
 
 func (w *Window) Map() {
 	w.win.Map()
+	w.mapped = true
 	_ = w.SetIcccmState(icccm.StateNormal)
 }
 
 func (w *Window) Unmap() {
 	w.win.Unmap()
+	w.mapped = false
 	_ = w.SetIcccmState(icccm.StateIconic)
 }
 
@@ -108,12 +123,26 @@ func (w *Window) Destroy() {
 
 func (w *Window) Destroyed() {
 	_ = w.SetIcccmState(icccm.StateWithdrawn)
+	focus.Remove(w)
+}
+
+func (w *Window) IsHidden() bool {
+	return w.states["_NET_WM_STATE_HIDDEN"]
 }
 
 func (w *Window) fetchXProperties() {
 	var err error
 	X := w.win.X
 	id := w.win.Id
+
+	w.hints, err = icccm.WmHintsGet(X, id)
+	if err != nil {
+		w.hints = &icccm.Hints{
+			Flags:        icccm.HintInput | icccm.HintState,
+			Input:        1,
+			InitialState: icccm.StateNormal,
+		}
+	}
 
 	w.protocols = make(util.StringSet)
 	if protocols, err := icccm.WmProtocolsGet(X, id); err != nil {

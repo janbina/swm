@@ -4,6 +4,7 @@ import (
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xprop"
+	"github.com/janbina/swm/focus"
 	"log"
 )
 
@@ -34,4 +35,5 @@ func handleNumberOfDesktops(data []uint32) {
 
 func handleCurrentDesktop(data []uint32) {
 	switchToDesktop(int(data[0]))
+	focus.FocusLast()
 }

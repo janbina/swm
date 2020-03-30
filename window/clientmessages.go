@@ -14,8 +14,8 @@ type handlerFunc func(win *Window, data []uint32)
 var handlers = map[string]handlerFunc{
 	"_NET_WM_MOVERESIZE": handleMoveResizeMessage,
 	"_NET_WM_STATE":      handleWmStateMessage,
-	"WM_CHANGE_STATE":    handleWmChangeStateMessage,
 	"_NET_ACTIVE_WINDOW": handleActiveWindowMessage,
+	"WM_CHANGE_STATE":    handleWmChangeStateMessage,
 }
 
 func (w *Window) HandleClientMessage(e xevent.ClientMessageEvent) {
@@ -24,6 +24,7 @@ func (w *Window) HandleClientMessage(e xevent.ClientMessageEvent) {
 		log.Printf("Cannot get property atom name for clientMessage event: %s", err)
 		return
 	}
+	log.Printf("Client message %s: %s", name, e)
 	if f, ok := handlers[name]; !ok {
 		log.Printf("Unsupported client message: %s", name)
 	} else {
@@ -60,7 +61,6 @@ func handleWmChangeStateMessage(win *Window, data []uint32) {
 	}
 }
 
-func handleActiveWindowMessage(win *Window, data []uint32) {
-	win.IconifyToggle()
-	ewmh.ActiveWindowSet(win.win.X, win.win.Id)
+func handleActiveWindowMessage(win *Window, _ []uint32) {
+	win.Focus()
 }

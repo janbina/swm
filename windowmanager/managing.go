@@ -6,6 +6,7 @@ import (
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/mousebind"
 	"github.com/BurntSushi/xgbutil/xevent"
+	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/window"
 	"log"
 )
@@ -26,6 +27,7 @@ func manageWindow(w xproto.Window) {
 
 	updateClientList()
 	win.Map()
+	win.Focus()
 	setupListeners(w, win)
 }
 
@@ -38,6 +40,7 @@ func unmanageWindow(w xproto.Window) {
 	xevent.Detach(X, w)
 	xproto.ChangeSaveSet(X.Conn(), xproto.SetModeDelete, w)
 	win.Destroyed()
+	focus.FocusLast()
 	delete(managedWindows, w)
 	updateClientList()
 	if strutWindows[w] {
@@ -63,6 +66,9 @@ func setupListeners(w xproto.Window, win *window.Window) {
 		log.Printf("Destroy notify: %s", e)
 		unmanageWindow(e.Window)
 	}).Connect(X, w)
+
+	win.HandleFocusIn().Connect(X, w)
+	win.HandleFocusOut().Connect(X, w)
 }
 
 func getDesktopForWindow(win xproto.Window) int {
@@ -72,7 +78,7 @@ func getDesktopForWindow(win xproto.Window) int {
 		// not specified
 		return currentDesktop
 	}
-	if d == 0xFFFFFFFF || d < len(desktops) {
+	if d == stickyDesktop || d < len(desktops) {
 		return d
 	}
 	// TODO: Current, last, create additional desktops, or what?

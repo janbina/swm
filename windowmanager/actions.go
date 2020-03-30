@@ -2,9 +2,11 @@ package windowmanager
 
 import (
 	"fmt"
+	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/mousebind"
 	"github.com/BurntSushi/xgbutil/xrect"
+	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/geometry"
 	"github.com/janbina/swm/window"
 	"log"
@@ -14,17 +16,16 @@ var moveDragShortcut = "Mod1-1"
 var resizeDragShortcut = "Mod1-3"
 
 func FindWindowById(id uint32) *window.Window {
-	for _, win := range managedWindows {
-		if win.Id() == id {
-			return win
-		}
-	}
-	return nil
+	return managedWindows[xproto.Window(id)]
+}
+
+func getActiveWin() focus.FocusableWindow {
+	return focus.Current()
 }
 
 func DestroyActiveWindow() {
-	if activeWindow != nil {
-		DestroyWindow(activeWindow.Id())
+	if w := getActiveWin(); w != nil {
+		DestroyWindow(w.Id())
 	}
 }
 
@@ -38,8 +39,8 @@ func DestroyWindow(id uint32) {
 }
 
 func ResizeActiveWindow(directions window.Directions) {
-	if activeWindow != nil {
-		ResizeWindow(activeWindow.Id(), directions)
+	if w := getActiveWin(); w != nil {
+		ResizeWindow(w.Id(), directions)
 	}
 }
 
@@ -52,8 +53,8 @@ func ResizeWindow(id uint32, directions window.Directions) {
 }
 
 func MoveActiveWindow(x, y int) {
-	if activeWindow != nil {
-		MoveWindow(activeWindow.Id(), x, y)
+	if w := getActiveWin(); w != nil {
+		MoveWindow(w.Id(), x, y)
 	}
 }
 
@@ -66,8 +67,8 @@ func MoveWindow(id uint32, x, y int) {
 }
 
 func MoveResizeActiveWindow(x, y, width, height int) {
-	if activeWindow != nil {
-		MoveResizeWindow(activeWindow.Id(), x, y, width, height)
+	if w := getActiveWin(); w != nil {
+		MoveResizeWindow(w.Id(), x, y, width, height)
 	}
 }
 
@@ -102,8 +103,8 @@ func GetCurrentScreenGeometry() xrect.Rect {
 }
 
 func GetActiveWindowGeometry() (*geometry.Geometry, error) {
-	if activeWindow != nil {
-		return GetWindowGeometry(activeWindow.Id())
+	if w := getActiveWin(); w != nil {
+		return GetWindowGeometry(w.Id())
 	}
 	return nil, fmt.Errorf("no active window")
 }
@@ -146,7 +147,10 @@ func switchToDesktop(index int) {
 			managedWindows[w].Unmap()
 		}
 		for _, w := range desktopToWins[index] {
-			managedWindows[w].Map()
+			win := managedWindows[w]
+			if !win.IsHidden() {
+				managedWindows[w].Map()
+			}
 		}
 		currentDesktop = index
 		setCurrentDesktop()

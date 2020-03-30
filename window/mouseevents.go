@@ -29,6 +29,11 @@ func (w *Window) SetupMouseEvents(moveShortcut string, resizeShortcut string) {
 			dragResizeBegin(w, ewmh.Infer), dragResizeStep(w), dragResizeEnd(w),
 		)
 	}
+
+	_ = mousebind.ButtonPressFun(func(X *xgbutil.XUtil, ev xevent.ButtonPressEvent) {
+		w.Focus()
+		xevent.ReplayPointer(X)
+	}).Connect(X, w.win.Id, "1", true, true)
 }
 
 func (w *Window) DragMoveBegin(xr, yr int16) {

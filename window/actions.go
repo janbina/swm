@@ -3,6 +3,7 @@ package window
 import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/xwindow"
+	"github.com/janbina/swm/focus"
 	"log"
 )
 
@@ -152,4 +153,5 @@ func (w *Window) IconifyToggle() {
 		w.Unmap()
 		w.addStates("_NET_WM_STATE_HIDDEN")
 	}
+	focus.FocusLast()
 }

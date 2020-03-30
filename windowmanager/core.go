@@ -10,11 +10,13 @@ import (
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"github.com/janbina/swm/cursors"
+	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/window"
 )
 
 const (
-	minDesktops = 1 //minimum number of desktops created at startup
+	minDesktops   = 1 //minimum number of desktops created at startup
+	stickyDesktop = 0xFFFFFFFF
 )
 
 var (
@@ -29,7 +31,6 @@ var (
 	desktopToWins  map[int][]xproto.Window
 	currentDesktop int
 	managedWindows map[xproto.Window]*window.Window
-	activeWindow   *window.Window
 	strutWindows   map[xproto.Window]bool
 )
 
@@ -41,6 +42,7 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 	keybind.Initialize(X)
 	mousebind.Initialize(X)
 	cursors.Initialize(X)
+	focus.Initialize(X)
 
 	if err = takeWmOwnership(X, replace); err != nil {
 		return err
