@@ -12,6 +12,7 @@ import (
 	"github.com/janbina/swm/cursors"
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/geometry"
+	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/window"
 )
 
@@ -38,8 +39,7 @@ var (
 	Root               *xwindow.Window
 	RootGeometry       xrect.Rect
 	RootGeometryStruts xrect.Rect
-	Heads              xinerama.Heads
-	HeadsStruts        xinerama.Heads
+
 
 	desktops       []string
 	desktopToWins  map[int][]xproto.Window
@@ -73,9 +73,9 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 	setDesktopGeometry()
 	setDesktopViewport()
 
-	Heads, err = xinerama.PhysicalHeads(X)
-	if err != nil || len(Heads) == 0 {
-		Heads = xinerama.Heads{RootGeometry}
+	heads.Heads, err = xinerama.PhysicalHeads(X)
+	if err != nil || len(heads.Heads) == 0 {
+		heads.Heads = xinerama.Heads{RootGeometry}
 	}
 
 	managedWindows = make(map[xproto.Window]ManagedWindow)

@@ -114,7 +114,10 @@ func moveResizeCommand(args []string) string {
 		return fmt.Sprintf("Error parsing arguments: %s", err)
 	}
 
-	screenGeom := windowmanager.GetCurrentScreenGeometry()
+	screenGeom, err := windowmanager.GetCurrentScreenGeometryStruts()
+	if err != nil {
+		return fmt.Sprintf("Cannot get window screen geometry: %s", err)
+	}
 	winGeom, err := windowmanager.GetActiveWindowGeometry()
 	if err != nil {
 		return fmt.Sprintf("Cannot get active window geometry: %s", err)

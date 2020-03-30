@@ -2,6 +2,7 @@ package geometry
 
 import (
 	"github.com/BurntSushi/xgb/xproto"
+	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
 )
 
@@ -79,6 +80,14 @@ func (g *Geometry) Pieces() (int, int, int, int) {
 
 func (g *Geometry) PiecesTotal() (int, int, int, int) {
 	return g.X(), g.Y(), g.TotalWidth(), g.TotalHeight()
+}
+
+func (g *Geometry) Rect() xrect.Rect {
+	return xrect.New(g.Pieces())
+}
+
+func (g *Geometry) RectTotal() xrect.Rect {
+	return xrect.New(g.PiecesTotal())
 }
 
 func Get(win *xwindow.Window) (*Geometry, error) {

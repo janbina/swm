@@ -2,8 +2,8 @@ package window
 
 import (
 	"github.com/BurntSushi/xgb/xproto"
-	"github.com/BurntSushi/xgbutil/xwindow"
 	"github.com/janbina/swm/focus"
+	"github.com/janbina/swm/heads"
 	"log"
 )
 
@@ -84,8 +84,14 @@ func (w *Window) MaximizeVert() {
 	w.addStates("_NET_WM_STATE_MAXIMIZED_VERT")
 
 	w.SaveWindowState("prior_maxVert")
-	g, _ := xwindow.New(w.win.X, w.win.X.RootWin()).Geometry() // TODO: get real geometry
-	log.Printf("GEOM: %s", g)
+	winG, err := w.Geometry()
+	if err != nil {
+		log.Printf("Cannot get window geometry: %s", err)
+	}
+	g, err := heads.GetHeadForRectStruts(winG.RectTotal())
+	if err != nil {
+		log.Printf("Cannot get screen geometry: %s", err)
+	}
 	w.Configure(xproto.ConfigWindowY|xproto.ConfigWindowHeight, 0, g.Y(), 0, g.Height())
 }
 
@@ -115,7 +121,14 @@ func (w *Window) MaximizeHorz() {
 	w.addStates("_NET_WM_STATE_MAXIMIZED_HORZ")
 
 	w.SaveWindowState("prior_maxHorz")
-	g, _ := xwindow.New(w.win.X, w.win.X.RootWin()).Geometry() // TODO: get real geometry
+	winG, err := w.Geometry()
+	if err != nil {
+		log.Printf("Cannot get window geometry: %s", err)
+	}
+	g, err := heads.GetHeadForRectStruts(winG.RectTotal())
+	if err != nil {
+		log.Printf("Cannot get screen geometry: %s", err)
+	}
 	w.Configure(xproto.ConfigWindowX|xproto.ConfigWindowWidth, g.X(), 0, g.Width(), 0)
 }
 

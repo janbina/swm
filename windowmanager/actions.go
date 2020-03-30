@@ -8,6 +8,7 @@ import (
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/geometry"
+	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/window"
 	"log"
 )
@@ -98,8 +99,34 @@ func SetResizeDragShortcut(s string) error {
 	return nil
 }
 
-func GetCurrentScreenGeometry() xrect.Rect {
-	return Heads[0]
+func GetCurrentScreenGeometry() (xrect.Rect, error) {
+	if w := getActiveWin(); w != nil {
+		return GetWindowScreenGeometry(w.Id())
+	}
+	return nil, fmt.Errorf("no active window")
+}
+
+func GetWindowScreenGeometry(id uint32) (xrect.Rect, error) {
+	winGeom, err := GetWindowGeometry(id)
+	if err != nil {
+		return nil, err
+	}
+	return heads.GetHeadForRect(winGeom.RectTotal())
+}
+
+func GetCurrentScreenGeometryStruts() (xrect.Rect, error) {
+	if w := getActiveWin(); w != nil {
+		return GetWindowScreenGeometryStruts(w.Id())
+	}
+	return nil, fmt.Errorf("no active window")
+}
+
+func GetWindowScreenGeometryStruts(id uint32) (xrect.Rect, error) {
+	winGeom, err := GetWindowGeometry(id)
+	if err != nil {
+		return nil, err
+	}
+	return heads.GetHeadForRectStruts(winGeom.RectTotal())
 }
 
 func GetActiveWindowGeometry() (*geometry.Geometry, error) {

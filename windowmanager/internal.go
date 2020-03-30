@@ -7,6 +7,7 @@ import (
 	"github.com/BurntSushi/xgbutil/xinerama"
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
+	"github.com/janbina/swm/heads"
 	"log"
 )
 
@@ -35,9 +36,9 @@ func mapRequestFun(_ *xgbutil.XUtil, e xevent.MapRequestEvent) {
 
 func applyStruts() {
 	rootG := xwindow.RootGeometry(X)
-	wh := make(xinerama.Heads, len(Heads) + 1)
+	wh := make(xinerama.Heads, len(heads.Heads) + 1)
 	wh[0] = xrect.New(rootG.Pieces())
-	for i, head := range Heads {
+	for i, head := range heads.Heads {
 		wh[i+1] = xrect.New(head.Pieces())
 	}
 
@@ -56,7 +57,7 @@ func applyStruts() {
 	}
 
 	RootGeometryStruts = wh[0]
-	HeadsStruts = wh[1:]
+	heads.HeadsStruts = wh[1:]
 
 	setWorkArea()
 }
