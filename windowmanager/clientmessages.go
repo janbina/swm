@@ -8,9 +8,7 @@ import (
 	"log"
 )
 
-type handlerFunc func(data []uint32)
-
-var handlers = map[string]handlerFunc{
+var handlers = map[string]func(data []uint32){
 	"_NET_NUMBER_OF_DESKTOPS": handleNumberOfDesktops,
 	"_NET_CURRENT_DESKTOP":    handleCurrentDesktop,
 }

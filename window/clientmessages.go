@@ -9,9 +9,7 @@ import (
 	"log"
 )
 
-type handlerFunc func(win *Window, data []uint32)
-
-var handlers = map[string]handlerFunc{
+var handlers = map[string]func(win *Window, data []uint32){
 	"_NET_WM_MOVERESIZE": handleMoveResizeMessage,
 	"_NET_WM_STATE":      handleWmStateMessage,
 	"_NET_ACTIVE_WINDOW": handleActiveWindowMessage,

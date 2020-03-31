@@ -6,6 +6,13 @@ import (
 	"log"
 )
 
+var stateHandlers = map[string][3]func(window *Window){
+	//                              {StateRemove, StateAdd, StateToggle}
+	"MAXIMIZED":                    {(*Window).UnMaximize, (*Window).Maximize, (*Window).MaximizeToggle},
+	"_NET_WM_STATE_MAXIMIZED_VERT": {(*Window).UnMaximizeVert, (*Window).MaximizeVert, (*Window).MaximizeVertToggle},
+	"_NET_WM_STATE_MAXIMIZED_HORZ": {(*Window).UnMaximizeHorz, (*Window).MaximizeHorz, (*Window).MaximizeHorzToggle},
+}
+
 func (w *Window) UpdateStates(action int, s1 string, s2 string) {
 	if (s1 == "_NET_WM_STATE_MAXIMIZED_VERT" && s2 == "_NET_WM_STATE_MAXIMIZED_HORZ") ||
 		(s2 == "_NET_WM_STATE_MAXIMIZED_VERT" && s1 == "_NET_WM_STATE_MAXIMIZED_HORZ") {
@@ -19,36 +26,10 @@ func (w *Window) UpdateStates(action int, s1 string, s2 string) {
 }
 
 func (w *Window) UpdateState(action int, state string) {
-	switch state {
-	case "MAXIMIZED":
-		switch action {
-		case ewmh.StateRemove:
-			w.UnMaximize()
-		case ewmh.StateAdd:
-			w.Maximize()
-		case ewmh.StateToggle:
-			w.MaximizeToggle()
-		}
-	case "_NET_WM_STATE_MAXIMIZED_VERT":
-		switch action {
-		case ewmh.StateRemove:
-			w.UnMaximizeVert()
-		case ewmh.StateAdd:
-			w.MaximizeVert()
-		case ewmh.StateToggle:
-			w.MaximizeVertToggle()
-		}
-	case "_NET_WM_STATE_MAXIMIZED_HORZ":
-		switch action {
-		case ewmh.StateRemove:
-			w.UnMaximizeHorz()
-		case ewmh.StateAdd:
-			w.MaximizeHorz()
-		case ewmh.StateToggle:
-			w.MaximizeHorzToggle()
-		}
-	default:
-		log.Printf("Unsupported state: %s", state)
+	if fs, ok := stateHandlers[state]; !ok {
+		log.Printf("Unsupported window state: %s", state)
+	} else {
+		fs[action](w)
 	}
 }
 
