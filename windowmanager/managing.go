@@ -28,6 +28,7 @@ func manageWindow(w xproto.Window) {
 	updateClientList()
 	win.Map()
 	win.Focus()
+	win.Raise()
 	setupListeners(w, win)
 }
 

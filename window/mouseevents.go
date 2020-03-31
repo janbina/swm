@@ -32,6 +32,7 @@ func (w *Window) SetupMouseEvents(moveShortcut string, resizeShortcut string) {
 
 	_ = mousebind.ButtonPressFun(func(X *xgbutil.XUtil, ev xevent.ButtonPressEvent) {
 		w.Focus()
+		w.Raise()
 		xevent.ReplayPointer(X)
 	}).Connect(X, w.win.Id, "1", true, true)
 }

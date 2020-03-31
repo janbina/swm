@@ -10,12 +10,13 @@ import (
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/geometry"
+	"github.com/janbina/swm/stack"
 	"github.com/janbina/swm/util"
 	"log"
 )
 
 const (
-	borderColorActive = 0x00BCD4
+	borderColorActive   = 0x00BCD4
 	borderColorInactive = 0xCDDC39
 )
 
@@ -29,12 +30,14 @@ type Window struct {
 	iconified   bool
 	focused     bool
 	mapped      bool
+	layer       int
 
-	protocols   util.StringSet
-	hints       *icccm.Hints
-	normalHints *icccm.NormalHints
-	states      util.StringSet
-	types       util.StringSet
+	protocols    util.StringSet
+	hints        *icccm.Hints
+	normalHints  *icccm.NormalHints
+	states       util.StringSet
+	types        util.StringSet
+	transientFor xproto.Window
 }
 
 type MoveState struct {
@@ -76,14 +79,19 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 		focus.InitialAdd(window)
 	}
 
+	if window.types["_NET_WM_WINDOW_TYPE_DESKTOP"] {
+		window.layer = stack.LayerDesktop
+	} else if window.types["_NET_WM_WINDOW_TYPE_DOCK"] {
+		window.layer = stack.LayerDock
+	} else {
+		window.layer = stack.LayerDefault
+	}
+
 	return window
 }
 
-// Unique id of this window
-// It is backed by window Id, but we don't want to expose that
-// so all manipulations which needs xproto.Window must happen here
-func (w *Window) Id() uint32 {
-	return uint32(w.win.Id)
+func (w *Window) Id() xproto.Window {
+	return w.win.Id
 }
 
 func (w *Window) Geometry() (*geometry.Geometry, error) {
@@ -124,6 +132,7 @@ func (w *Window) Destroy() {
 func (w *Window) Destroyed() {
 	_ = w.SetIcccmState(icccm.StateWithdrawn)
 	focus.Remove(w)
+	stack.Remove(w)
 }
 
 func (w *Window) IsHidden() bool {

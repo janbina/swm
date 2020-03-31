@@ -1,12 +1,13 @@
 package focus
 
 import (
+	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/xwindow"
 )
 
 type FocusableWindow interface {
-	Id() uint32
+	Id() xproto.Window
 
 	IsFocusable() bool // whether the window is in state it can be focused (mapped)
 	IsFocused() bool

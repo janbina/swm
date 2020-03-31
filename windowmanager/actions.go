@@ -16,8 +16,8 @@ import (
 var moveDragShortcut = "Mod1-1"
 var resizeDragShortcut = "Mod1-3"
 
-func FindWindowById(id uint32) ManagedWindow {
-	return managedWindows[xproto.Window(id)]
+func FindWindowById(id xproto.Window) ManagedWindow {
+	return managedWindows[id]
 }
 
 func getActiveWin() focus.FocusableWindow {
@@ -30,7 +30,7 @@ func DestroyActiveWindow() {
 	}
 }
 
-func DestroyWindow(id uint32) {
+func DestroyWindow(id xproto.Window) {
 	win := FindWindowById(id)
 	if win == nil {
 		return
@@ -45,7 +45,7 @@ func ResizeActiveWindow(directions window.Directions) {
 	}
 }
 
-func ResizeWindow(id uint32, directions window.Directions) {
+func ResizeWindow(id xproto.Window, directions window.Directions) {
 	win := FindWindowById(id)
 	if win == nil {
 		return
@@ -59,7 +59,7 @@ func MoveActiveWindow(x, y int) {
 	}
 }
 
-func MoveWindow(id uint32, x, y int) {
+func MoveWindow(id xproto.Window, x, y int) {
 	win := FindWindowById(id)
 	if win == nil {
 		return
@@ -73,7 +73,7 @@ func MoveResizeActiveWindow(x, y, width, height int) {
 	}
 }
 
-func MoveResizeWindow(id uint32, x, y, width, height int) {
+func MoveResizeWindow(id xproto.Window, x, y, width, height int) {
 	win := FindWindowById(id)
 	if win == nil {
 		return
@@ -106,7 +106,7 @@ func GetCurrentScreenGeometry() (xrect.Rect, error) {
 	return nil, fmt.Errorf("no active window")
 }
 
-func GetWindowScreenGeometry(id uint32) (xrect.Rect, error) {
+func GetWindowScreenGeometry(id xproto.Window) (xrect.Rect, error) {
 	winGeom, err := GetWindowGeometry(id)
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func GetCurrentScreenGeometryStruts() (xrect.Rect, error) {
 	return nil, fmt.Errorf("no active window")
 }
 
-func GetWindowScreenGeometryStruts(id uint32) (xrect.Rect, error) {
+func GetWindowScreenGeometryStruts(id xproto.Window) (xrect.Rect, error) {
 	winGeom, err := GetWindowGeometry(id)
 	if err != nil {
 		return nil, err
@@ -136,7 +136,7 @@ func GetActiveWindowGeometry() (*geometry.Geometry, error) {
 	return nil, fmt.Errorf("no active window")
 }
 
-func GetWindowGeometry(id uint32) (*geometry.Geometry, error) {
+func GetWindowGeometry(id xproto.Window) (*geometry.Geometry, error) {
 	win := FindWindowById(id)
 	if win == nil {
 		return nil, fmt.Errorf("cannot find window with id %d", id)

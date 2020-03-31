@@ -13,6 +13,7 @@ import (
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/geometry"
 	"github.com/janbina/swm/heads"
+	"github.com/janbina/swm/stack"
 	"github.com/janbina/swm/window"
 )
 
@@ -57,6 +58,7 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 	mousebind.Initialize(X)
 	cursors.Initialize(X)
 	focus.Initialize(X)
+	stack.Initialize(X)
 
 	if err = takeWmOwnership(X, replace); err != nil {
 		return err

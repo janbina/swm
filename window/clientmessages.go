@@ -63,4 +63,5 @@ func handleWmChangeStateMessage(win *Window, data []uint32) {
 
 func handleActiveWindowMessage(win *Window, _ []uint32) {
 	win.Focus()
+	win.Raise()
 }
