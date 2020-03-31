@@ -11,6 +11,8 @@ var stateHandlers = map[string][3]func(window *Window){
 	"MAXIMIZED":                    {(*Window).UnMaximize, (*Window).Maximize, (*Window).MaximizeToggle},
 	"_NET_WM_STATE_MAXIMIZED_VERT": {(*Window).UnMaximizeVert, (*Window).MaximizeVert, (*Window).MaximizeVertToggle},
 	"_NET_WM_STATE_MAXIMIZED_HORZ": {(*Window).UnMaximizeHorz, (*Window).MaximizeHorz, (*Window).MaximizeHorzToggle},
+	"_NET_WM_STATE_ABOVE":          {(*Window).UnStackAbove, (*Window).StackAbove, (*Window).StackAboveToggle},
+	"_NET_WM_STATE_BELOW":          {(*Window).UnStackBelow, (*Window).StackBelow, (*Window).StackBelowToggle},
 }
 
 func (w *Window) UpdateStates(action int, s1 string, s2 string) {

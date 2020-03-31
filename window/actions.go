@@ -4,6 +4,7 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/heads"
+	"github.com/janbina/swm/stack"
 	"log"
 )
 
@@ -167,4 +168,44 @@ func (w *Window) IconifyToggle() {
 		w.addStates("_NET_WM_STATE_HIDDEN")
 	}
 	focus.FocusLast()
+}
+
+func (w *Window) UnStackAbove() {
+	w.layer = stack.LayerDefault
+	w.Raise()
+	w.removeStates("_NET_WM_STATE_ABOVE")
+}
+
+func (w *Window) StackAbove() {
+	w.layer = stack.LayerAbove
+	w.Raise()
+	w.addStates("_NET_WM_STATE_ABOVE")
+}
+
+func (w *Window) StackAboveToggle() {
+	if w.layer == stack.LayerAbove {
+		w.UnStackAbove()
+	} else {
+		w.StackAbove()
+	}
+}
+
+func (w *Window) UnStackBelow() {
+	w.layer = stack.LayerDefault
+	w.Raise()
+	w.removeStates("_NET_WM_STATE_BELOW")
+}
+
+func (w *Window) StackBelow() {
+	w.layer = stack.LayerBelow
+	w.Raise()
+	w.addStates("_NET_WM_STATE_BELOW")
+}
+
+func (w *Window) StackBelowToggle() {
+	if w.layer == stack.LayerBelow {
+		w.UnStackBelow()
+	} else {
+		w.StackBelow()
+	}
 }
