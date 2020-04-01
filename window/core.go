@@ -106,13 +106,28 @@ func (w *Window) Listen(evMasks ...int) error {
 func (w *Window) Map() {
 	w.win.Map()
 	w.mapped = true
+	w.iconified = false
 	_ = w.SetIcccmState(icccm.StateNormal)
 }
 
 func (w *Window) Unmap() {
 	w.win.Unmap()
 	w.mapped = false
+	w.iconified = true
 	_ = w.SetIcccmState(icccm.StateIconic)
+}
+
+func (w *Window) Hide() {
+	w.Unmap()
+	w.addStates("_NET_WM_STATE_HIDDEN")
+	focus.FocusLast() // Todo: how to do this better
+}
+
+func (w *Window) Show() {
+	w.Map()
+	w.removeStates("_NET_WM_STATE_HIDDEN")
+	w.Focus()
+	w.Raise()
 }
 
 func (w *Window) Destroy() {

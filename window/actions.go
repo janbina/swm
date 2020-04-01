@@ -159,13 +159,9 @@ func (w *Window) UnsetMaximized() {
 
 func (w *Window) IconifyToggle() {
 	if w.iconified {
-		w.iconified = false
-		w.Map()
-		w.removeStates("_NET_WM_STATE_HIDDEN")
+		w.Show()
 	} else {
-		w.iconified = true
-		w.Unmap()
-		w.addStates("_NET_WM_STATE_HIDDEN")
+		w.Hide()
 	}
 	focus.FocusLast()
 }

@@ -13,8 +13,8 @@ ctrl + super + alt + {h, j, k, l}
 	swmctl move {-l 10, -b 10, -t 10, -r 10}
 
 # Tile window bottom/top
-super + alt + {Down, Up}
-	swmctl moveresize -anchor {b, t} -wr 1 -hr .5
+# super + alt + {Down, Up}
+#	swmctl moveresize -anchor {b, t} -wr 1 -hr .5
 
 # Tile window left/right
 super + alt + {Left, Right}
@@ -27,3 +27,9 @@ super + alt + c
 # Tile window to bottom right
 super + alt + d
 	swmctl moveresize -anchor br -wr .5 -hr .5
+
+super + alt + Up
+	swmctl maximize
+
+super + alt + Down
+	swmctl minimize

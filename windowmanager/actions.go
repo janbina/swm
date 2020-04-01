@@ -24,6 +24,19 @@ func getActiveWin() focus.FocusableWindow {
 	return focus.Current()
 }
 
+func DoOnActiveWindow(f func(*window.Window)) {
+	if w := getActiveWin(); w != nil {
+		DoOnWindow(w.Id(), f)
+	}
+}
+
+func DoOnWindow(id xproto.Window, f func(*window.Window)) {
+	win := FindWindowById(id).(*window.Window)
+	if win != nil {
+		f(win)
+	}
+}
+
 func DestroyActiveWindow() {
 	if w := getActiveWin(); w != nil {
 		DestroyWindow(w.Id())

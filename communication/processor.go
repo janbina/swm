@@ -22,6 +22,10 @@ var commands = map[string]commandFunc{
 	"moveresize":           moveResizeCommand,
 	"move":                 moveCommand,
 	"set-desktop-names":    setDesktopNamesCommand,
+	"stack-above":          stackAboveCommand,
+	"stack-below":          stackBelowCommand,
+	"minimize":             minimizeCommand,
+	"maximize":          	maximizeCommand,
 }
 
 func processCommand(msg string) string {
@@ -196,5 +200,33 @@ func moveCommand(args []string) string {
 
 func setDesktopNamesCommand(args []string) string {
 	windowmanager.SetDesktopNames(args)
+	return ""
+}
+
+func stackAboveCommand(_ []string) string {
+	windowmanager.DoOnActiveWindow(func(w *window.Window) {
+		w.StackAboveToggle()
+	})
+	return ""
+}
+
+func stackBelowCommand(_ []string) string {
+	windowmanager.DoOnActiveWindow(func(w *window.Window) {
+		w.StackBelowToggle()
+	})
+	return ""
+}
+
+func minimizeCommand(_ []string) string {
+	windowmanager.DoOnActiveWindow(func(w *window.Window) {
+		w.Hide()
+	})
+	return ""
+}
+
+func maximizeCommand(_ []string) string {
+	windowmanager.DoOnActiveWindow(func(w *window.Window) {
+		w.MaximizeToggle()
+	})
 	return ""
 }
