@@ -26,10 +26,15 @@ func manageWindow(w xproto.Window) {
 	}
 
 	updateClientList()
-	win.Map()
-	win.Focus()
-	win.Raise()
 	setupListeners(w, win)
+
+	if !win.IsHidden() && (d == currentDesktop || d == stickyDesktop) {
+		win.Map()
+		win.Focus()
+		win.Raise()
+	} else {
+		win.Unmap()
+	}
 }
 
 func unmanageWindow(w xproto.Window) {
