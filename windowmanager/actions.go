@@ -171,11 +171,14 @@ func setNumberOfDesktops(num int) {
 func switchToDesktop(index int) {
 	if currentDesktop != index && index < len(desktops) {
 		for _, w := range desktopToWins[currentDesktop] {
-			managedWindows[w].Unmap()
+			win := managedWindows[w]
+			if win != nil {
+				win.Unmap()
+			}
 		}
 		for _, w := range desktopToWins[index] {
 			win := managedWindows[w]
-			if !win.IsHidden() {
+			if win != nil && !win.IsHidden() {
 				managedWindows[w].Map()
 			}
 		}
