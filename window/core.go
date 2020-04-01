@@ -32,6 +32,7 @@ type Window struct {
 	mapped      bool
 	layer       int
 
+	name         string
 	protocols    util.StringSet
 	hints        *icccm.Hints
 	normalHints  *icccm.NormalHints
@@ -144,14 +145,7 @@ func (w *Window) fetchXProperties() {
 	X := w.win.X
 	id := w.win.Id
 
-	w.hints, err = icccm.WmHintsGet(X, id)
-	if err != nil {
-		w.hints = &icccm.Hints{
-			Flags:        icccm.HintInput | icccm.HintState,
-			Input:        1,
-			InitialState: icccm.StateNormal,
-		}
-	}
+	w.hints = getHintsForWindow(X, id)
 
 	w.protocols = make(util.StringSet)
 	if protocols, err := icccm.WmProtocolsGet(X, id); err != nil {
@@ -170,12 +164,9 @@ func (w *Window) fetchXProperties() {
 	states, _ := ewmh.WmStateGet(X, id)
 	w.states.SetAll(states)
 
-	w.types = make(util.StringSet)
-	if types, err := ewmh.WmWindowTypeGet(X, id); err != nil {
-		w.types["_NET_WM_WINDOW_TYPE_NORMAL"] = true
-	} else {
-		w.types.SetAll(types)
-	}
+	w.types = getTypesForWindow(X, id)
+
+	w.name = w.loadName()
 }
 
 func (w *Window) shouldDecorate() bool {
@@ -189,4 +180,40 @@ func (w *Window) shouldDecorate() bool {
 	}
 
 	return true
+}
+
+func getHintsForWindow(X *xgbutil.XUtil, win xproto.Window) *icccm.Hints {
+	hints, err := icccm.WmHintsGet(X, win)
+	if err != nil {
+		hints = &icccm.Hints{
+			Flags:        icccm.HintInput | icccm.HintState,
+			Input:        1,
+			InitialState: icccm.StateNormal,
+		}
+	}
+	return hints
+}
+
+func getTypesForWindow(X *xgbutil.XUtil, win xproto.Window) util.StringSet {
+	typesSet := make(util.StringSet)
+	if types, err := ewmh.WmWindowTypeGet(X, win); err != nil {
+		typesSet["_NET_WM_WINDOW_TYPE_NORMAL"] = true
+	} else {
+		typesSet.SetAll(types)
+	}
+	return typesSet
+}
+
+func (w *Window) loadName() string {
+	name, _ := ewmh.WmNameGet(w.win.X, w.win.Id)
+	if len(name) > 0 {
+		return name
+	}
+
+	name, _ = icccm.WmNameGet(w.win.X, w.win.Id)
+	if len(name) > 0 {
+		return name
+	}
+
+	return ""
 }
