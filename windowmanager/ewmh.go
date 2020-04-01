@@ -109,7 +109,7 @@ func setEwmhSupported(X *xgbutil.XUtil) {
 	if err := ewmh.SupportingWmCheckSet(X, X.Dummy(), X.Dummy()); err != nil {
 		log.Println(err)
 	}
-	if err := ewmh.WmNameSet(X, X.Dummy(), "Swm"); err != nil {
+	if err := ewmh.WmNameSet(X, X.Dummy(), "LG3D"); err != nil {
 		log.Println(err)
 	}
 }
