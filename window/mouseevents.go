@@ -80,6 +80,9 @@ func dragMoveBegin(w *Window) xgbutil.MouseDragBeginFun {
 			startGeom: *g,
 		}
 
+		w.Focus()
+		w.Raise()
+
 		return true, cursors.Fleur
 	}
 }
@@ -189,6 +192,9 @@ func dragResizeBegin(w *Window, direction int) xgbutil.MouseDragBeginFun {
 			direction: dir,
 			startGeom: *g,
 		}
+
+		w.Focus()
+		w.Raise()
 
 		return true, cursor
 	}
