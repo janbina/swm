@@ -231,5 +231,7 @@ func CycleWinRev() {
 
 func CycleWinEnd() {
 	cycleState = 0
-	focus.CyclingEnded()
+	if win, ok := focus.CyclingEnded().(*window.Window); ok {
+		win.Raise()
+	}
 }

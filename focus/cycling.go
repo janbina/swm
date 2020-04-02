@@ -1,6 +1,5 @@
 package focus
 
-
 var cyclingState []FocusableWindow
 var cyclableWindows []FocusableWindow
 
@@ -27,7 +26,12 @@ func CyclingFocus(state int) {
 	Focus(win)
 }
 
-func CyclingEnded() {
+func CyclingEnded() FocusableWindow {
+	if len(windows) == 0 {
+		return nil
+	}
+	ret := windows[len(windows)-1]
 	cyclingState = nil
 	cyclableWindows = nil
+	return ret
 }
