@@ -98,3 +98,21 @@ func updateEwmhStacking() {
 	}
 	_ = ewmh.ClientListStackingSet(X, ids)
 }
+
+func TempRaise(win StackingWindow) {
+	if len(windows) <= 1 {
+		return
+	}
+	tmpWins := make([]StackingWindow, 0, len(windows))
+	for _, w := range windows {
+		if w.Id() != win.Id() {
+			tmpWins = append(tmpWins, w)
+		}
+	}
+	tmpWins = append(tmpWins, win)
+
+	tmpWins[0].StackSibling(tmpWins[1], xproto.StackModeBelow)
+	for i := 1; i < len(tmpWins); i++ {
+		tmpWins[i].StackSibling(tmpWins[i-1], xproto.StackModeAbove)
+	}
+}

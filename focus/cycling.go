@@ -3,7 +3,7 @@ package focus
 var cyclingState []FocusableWindow
 var cyclableWindows []FocusableWindow
 
-func CyclingFocus(state int) {
+func CyclingFocus(state int) FocusableWindow {
 	if cyclingState == nil {
 		cyclingState = make([]FocusableWindow, len(windows))
 		copy(cyclingState, windows)
@@ -16,7 +16,7 @@ func CyclingFocus(state int) {
 	}
 
 	if len(cyclableWindows) < 2 { // nothing to cycle
-		return
+		return nil
 	}
 
 	index := (len(cyclableWindows) - 1 + (state % len(cyclableWindows))) % len(cyclableWindows)
@@ -24,6 +24,12 @@ func CyclingFocus(state int) {
 
 	copy(windows, cyclingState)
 	Focus(win)
+
+	if len(windows) == 0 {
+		return nil
+	} else {
+		return windows[len(windows)-1]
+	}
 }
 
 func CyclingEnded() FocusableWindow {

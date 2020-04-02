@@ -9,6 +9,7 @@ import (
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/geometry"
 	"github.com/janbina/swm/heads"
+	"github.com/janbina/swm/stack"
 	"github.com/janbina/swm/window"
 	"log"
 )
@@ -221,12 +222,16 @@ func mouseShortcutsChanged() {
 
 func CycleWin() {
 	cycleState--
-	focus.CyclingFocus(cycleState)
+	if win, ok := focus.CyclingFocus(cycleState).(*window.Window); ok {
+		stack.TempRaise(win)
+	}
 }
 
 func CycleWinRev() {
 	cycleState++
-	focus.CyclingFocus(cycleState)
+	if win, ok := focus.CyclingFocus(cycleState).(*window.Window); ok {
+		stack.TempRaise(win)
+	}
 }
 
 func CycleWinEnd() {
