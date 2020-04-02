@@ -1,3 +1,6 @@
+ctrl + space
+	rofi -show drun
+
 # Destroy active window
 alt + x
 	swmctl destroywin
