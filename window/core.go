@@ -16,8 +16,9 @@ import (
 )
 
 const (
-	borderColorActive   = 0x00BCD4
-	borderColorInactive = 0xCDDC39
+	borderColorActive    = 0x00BCD4
+	borderColorInactive  = 0xCDDC39
+	borderColorAttention = 0xF44336
 )
 
 type Window struct {
@@ -26,12 +27,14 @@ type Window struct {
 	moveState   *MoveState
 	resizeState *ResizeState
 	savedStates map[string]windowState
-	maxedVert   bool
-	maxedHorz   bool
-	iconified   bool
-	focused     bool
-	mapped      bool
-	layer       int
+
+	maxedVert        bool
+	maxedHorz        bool
+	iconified        bool
+	focused          bool
+	mapped           bool
+	layer            int
+	demandsAttention bool
 
 	name         string
 	protocols    util.StringSet

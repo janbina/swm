@@ -36,6 +36,7 @@ func (w *Window) PrepareForFocus() {
 }
 
 func (w *Window) Focused() {
+	w.StopAttention()
 	w.focused = true
 	focus.SetFocus(w)
 	_ = util.SetBorderColor(w.parent, borderColorActive)

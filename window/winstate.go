@@ -7,12 +7,13 @@ import (
 )
 
 var stateHandlers = map[string][3]func(window *Window){
-	//                              {StateRemove, StateAdd, StateToggle}
-	"MAXIMIZED":                    {(*Window).UnMaximize, (*Window).Maximize, (*Window).MaximizeToggle},
-	"_NET_WM_STATE_MAXIMIZED_VERT": {(*Window).UnMaximizeVert, (*Window).MaximizeVert, (*Window).MaximizeVertToggle},
-	"_NET_WM_STATE_MAXIMIZED_HORZ": {(*Window).UnMaximizeHorz, (*Window).MaximizeHorz, (*Window).MaximizeHorzToggle},
-	"_NET_WM_STATE_ABOVE":          {(*Window).UnStackAbove, (*Window).StackAbove, (*Window).StackAboveToggle},
-	"_NET_WM_STATE_BELOW":          {(*Window).UnStackBelow, (*Window).StackBelow, (*Window).StackBelowToggle},
+	//                                 {StateRemove, StateAdd, StateToggle}
+	"MAXIMIZED":                       {(*Window).UnMaximize, (*Window).Maximize, (*Window).MaximizeToggle},
+	"_NET_WM_STATE_MAXIMIZED_VERT":    {(*Window).UnMaximizeVert, (*Window).MaximizeVert, (*Window).MaximizeVertToggle},
+	"_NET_WM_STATE_MAXIMIZED_HORZ":    {(*Window).UnMaximizeHorz, (*Window).MaximizeHorz, (*Window).MaximizeHorzToggle},
+	"_NET_WM_STATE_ABOVE":             {(*Window).UnStackAbove, (*Window).StackAbove, (*Window).StackAboveToggle},
+	"_NET_WM_STATE_BELOW":             {(*Window).UnStackBelow, (*Window).StackBelow, (*Window).StackBelowToggle},
+	"_NET_WM_STATE_DEMANDS_ATTENTION": {(*Window).StopAttention, (*Window).StartAttention, (*Window).ToggleAttention},
 }
 
 func (w *Window) UpdateStates(action int, s1 string, s2 string) {

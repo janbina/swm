@@ -5,6 +5,7 @@ import (
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
+	"github.com/janbina/swm/util"
 	"log"
 )
 
@@ -205,5 +206,25 @@ func (w *Window) StackBelowToggle() {
 		w.UnStackBelow()
 	} else {
 		w.StackBelow()
+	}
+}
+
+func (w *Window) StopAttention() {
+	w.demandsAttention = false
+	_ = util.SetBorderColor(w.parent, borderColorInactive)
+	w.removeStates("_NET_WM_STATE_DEMANDS_ATTENTION")
+}
+
+func (w *Window) StartAttention() {
+	w.demandsAttention = true
+	_ = util.SetBorderColor(w.parent, borderColorAttention)
+	w.addStates("_NET_WM_STATE_DEMANDS_ATTENTION")
+}
+
+func (w *Window) ToggleAttention() {
+	if w.demandsAttention {
+		w.StopAttention()
+	} else {
+		w.StartAttention()
 	}
 }
