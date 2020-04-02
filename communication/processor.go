@@ -26,6 +26,9 @@ var commands = map[string]commandFunc{
 	"stack-below":          stackBelowCommand,
 	"minimize":             minimizeCommand,
 	"maximize":          	maximizeCommand,
+	"cycle-win":          	cycleWinCommand,
+	"cycle-win-rev":      	cycleWinRevCommand,
+	"cycle-win-end":       	cycleWinEndCommand,
 }
 
 func processCommand(msg string) string {
@@ -228,5 +231,20 @@ func maximizeCommand(_ []string) string {
 	windowmanager.DoOnActiveWindow(func(w *window.Window) {
 		w.MaximizeToggle()
 	})
+	return ""
+}
+
+func cycleWinCommand(_ []string) string {
+	windowmanager.CycleWin()
+	return ""
+}
+
+func cycleWinRevCommand(_ []string) string {
+	windowmanager.CycleWinRev()
+	return ""
+}
+
+func cycleWinEndCommand(_ []string) string {
+	windowmanager.CycleWinEnd()
 	return ""
 }

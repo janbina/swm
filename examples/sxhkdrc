@@ -33,3 +33,16 @@ super + alt + Up
 
 super + alt + Down
 	swmctl minimize
+
+alt + Tab
+	swmctl cycle-win
+
+alt + ctrl + Tab
+	swmctl cycle-win-rev
+
+@Alt_L
+	swmctl cycle-win-end
+
+
+
+

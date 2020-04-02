@@ -218,3 +218,18 @@ func mouseShortcutsChanged() {
 		win.SetupMouseEvents(moveDragShortcut, resizeDragShortcut)
 	}
 }
+
+func CycleWin() {
+	cycleState--
+	focus.CyclingFocus(cycleState)
+}
+
+func CycleWinRev() {
+	cycleState++
+	focus.CyclingFocus(cycleState)
+}
+
+func CycleWinEnd() {
+	cycleState = 0
+	focus.CyclingEnded()
+}

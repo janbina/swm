@@ -41,12 +41,13 @@ var (
 	RootGeometry       xrect.Rect
 	RootGeometryStruts xrect.Rect
 
-
 	desktops       []string
 	desktopToWins  map[int][]xproto.Window
 	currentDesktop int
 	managedWindows map[xproto.Window]ManagedWindow
 	strutWindows   map[xproto.Window]bool
+
+	cycleState int
 )
 
 // Take wm ownership and initialize variables
