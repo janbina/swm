@@ -71,6 +71,10 @@ func setupListeners(w xproto.Window, win *window.Window) {
 		log.Printf("Destroy notify: %s", e)
 		unmanageWindow(e.Window)
 	}).Connect(X, w)
+
+	xevent.PropertyNotifyFun(func(x *xgbutil.XUtil, e xevent.PropertyNotifyEvent) {
+		win.HandlePropertyNotify(e)
+	}).Connect(X, w)
 }
 
 func getDesktopForWindow(win xproto.Window) int {
