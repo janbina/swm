@@ -4,7 +4,6 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
-	"github.com/BurntSushi/xgbutil/mousebind"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/window"
@@ -42,10 +41,8 @@ func unmanageWindow(w xproto.Window) {
 	if win == nil {
 		return
 	}
-	mousebind.Detach(X, w)
-	xevent.Detach(X, w)
-	xproto.ChangeSaveSet(X.Conn(), xproto.SetModeDelete, w)
 	win.Destroyed()
+	xproto.ChangeSaveSet(X.Conn(), xproto.SetModeDelete, w)
 	focus.FocusLast()
 	delete(managedWindows, w)
 	updateClientList()
@@ -64,6 +61,8 @@ func setupListeners(w xproto.Window, win *window.Window) {
 		xproto.EventMaskFocusChange,
 	)
 
+	win.SetupFocusListeners()
+
 	xevent.ClientMessageFun(func(x *xgbutil.XUtil, e xevent.ClientMessageEvent) {
 		win.HandleClientMessage(e)
 	}).Connect(X, w)
@@ -72,9 +71,6 @@ func setupListeners(w xproto.Window, win *window.Window) {
 		log.Printf("Destroy notify: %s", e)
 		unmanageWindow(e.Window)
 	}).Connect(X, w)
-
-	win.HandleFocusIn().Connect(X, w)
-	win.HandleFocusOut().Connect(X, w)
 }
 
 func getDesktopForWindow(win xproto.Window) int {

@@ -27,7 +27,7 @@ func (w *Window) Resize(d Directions) {
 
 func (w *Window) Move(x, y int) {
 	w.UnsetMaximized()
-	w.win.Move(x, y)
+	w.parent.Move(x, y)
 }
 
 func (w *Window) MoveResize(x, y, width, height int) {
@@ -42,7 +42,8 @@ func (w *Window) MoveResize(x, y, width, height int) {
 		realHeight = int(w.normalHints.MinHeight)
 	}
 	w.UnsetMaximized()
-	w.win.MoveResize(x, y, realWidth, realHeight)
+	w.parent.MoveResize(x, y, realWidth, realHeight)
+	w.win.Resize(realWidth, realHeight)
 }
 
 func (w *Window) Configure(flags, x, y, width, height int) {
@@ -56,7 +57,8 @@ func (w *Window) Configure(flags, x, y, width, height int) {
 	if realHeight < int(w.normalHints.MinHeight) {
 		realHeight = int(w.normalHints.MinHeight)
 	}
-	w.win.Configure(flags, x, y, realWidth, realHeight, 0, 0)
+	w.parent.Configure(flags, x, y, realWidth, realHeight, 0, 0)
+	w.win.Configure(flags, 0, 0, realWidth, realHeight, 0, 0)
 }
 
 func (w *Window) Maximize() {

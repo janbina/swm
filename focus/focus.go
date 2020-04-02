@@ -91,3 +91,8 @@ func LastFocused() FocusableWindow {
 func add(w FocusableWindow) {
 	windows = append(windows, w)
 }
+
+func AcceptClientFocus(mode, detail byte) bool {
+	return (mode == xproto.NotifyModeNormal || mode == xproto.NotifyModeWhileGrabbed) &&
+		(detail == xproto.NotifyDetailVirtual || detail == xproto.NotifyDetailNonlinearVirtual)
+}

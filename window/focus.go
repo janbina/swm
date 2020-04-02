@@ -38,7 +38,7 @@ func (w *Window) PrepareForFocus() {
 func (w *Window) Focused() {
 	w.focused = true
 	focus.SetFocus(w)
-	_ = util.SetBorderColor(w.win, borderColorActive)
+	_ = util.SetBorderColor(w.parent, borderColorActive)
 	_ = ewmh.ActiveWindowSet(w.win.X, w.win.Id)
 	w.addStates("_NET_WM_STATE_FOCUSED")
 
@@ -46,7 +46,7 @@ func (w *Window) Focused() {
 
 func (w *Window) Unfocused() {
 	w.focused = false
-	_ = util.SetBorderColor(w.win, borderColorInactive)
+	_ = util.SetBorderColor(w.parent, borderColorInactive)
 	_ = ewmh.ActiveWindowSet(w.win.X, 0)
 	w.removeStates("_NET_WM_STATE_FOCUSED")
 }
@@ -74,17 +74,22 @@ func (w *Window) Focus() {
 	focus.Focus(w)
 }
 
-func (w *Window) HandleFocusIn() xevent.FocusInFun {
-	return func(X *xgbutil.XUtil, ev xevent.FocusInEvent) {
-		if w.CanFocus() {
+func (w *Window) SetupFocusListeners() {
+	w.handleFocusIn().Connect(w.win.X, w.parent.Id)
+	w.handleFocusOut().Connect(w.win.X, w.parent.Id)
+}
+
+func (w *Window) handleFocusIn() xevent.FocusInFun {
+	return func(X *xgbutil.XUtil, e xevent.FocusInEvent) {
+		if focus.AcceptClientFocus(e.Mode, e.Detail) {
 			w.Focused()
 		}
 	}
 }
 
-func (w *Window) HandleFocusOut() xevent.FocusOutFun {
-	return func(X *xgbutil.XUtil, ev xevent.FocusOutEvent) {
-		if w.CanFocus() {
+func (w *Window) handleFocusOut() xevent.FocusOutFun {
+	return func(X *xgbutil.XUtil, e xevent.FocusOutEvent) {
+		if focus.AcceptClientFocus(e.Mode, e.Detail) {
 			w.Unfocused()
 		}
 	}

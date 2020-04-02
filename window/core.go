@@ -22,6 +22,7 @@ const (
 
 type Window struct {
 	win         *xwindow.Window
+	parent      *xwindow.Window
 	moveState   *MoveState
 	resizeState *ResizeState
 	savedStates map[string]windowState
@@ -61,8 +62,16 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 
 	window.savedStates = make(map[string]windowState)
 
+	_ = util.SetBorderWidth(window.win, 0)
+
+	g, _ := window.win.Geometry()
+
+	window.parent, _ = reparent(x, xWin)
+
+	window.parent.MoveResize(g.Pieces())
+
 	if window.shouldDecorate() {
-		if err := util.SetBorder(window.win, 2, borderColorInactive); err != nil {
+		if err := util.SetBorder(window.parent, 2, borderColorInactive); err != nil {
 			log.Printf("Cannot set window border")
 		}
 	}
@@ -91,12 +100,36 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 	return window
 }
 
+func reparent(X *xgbutil.XUtil, xWin xproto.Window) (*xwindow.Window, error) {
+	parent, err := xwindow.Generate(X)
+	if err != nil {
+		return nil, err
+	}
+
+	err = parent.CreateChecked(X.RootWin(), 0, 0, 1, 1, xproto.CwEventMask,
+		xproto.EventMaskSubstructureRedirect|
+			xproto.EventMaskButtonPress|
+			xproto.EventMaskButtonRelease|
+			xproto.EventMaskFocusChange,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = xproto.ReparentWindowChecked(X.Conn(), xWin, parent.Id, 0, 0).Check()
+	if err != nil {
+		return nil, err
+	}
+
+	return parent, nil
+}
+
 func (w *Window) Id() xproto.Window {
 	return w.win.Id
 }
 
 func (w *Window) Geometry() (*geometry.Geometry, error) {
-	return geometry.Get(w.win)
+	return geometry.Get(w.parent)
 }
 
 func (w *Window) Listen(evMasks ...int) error {
@@ -104,6 +137,7 @@ func (w *Window) Listen(evMasks ...int) error {
 }
 
 func (w *Window) Map() {
+	w.parent.Map()
 	w.win.Map()
 	w.mapped = true
 	w.iconified = false
@@ -111,6 +145,7 @@ func (w *Window) Map() {
 }
 
 func (w *Window) Unmap() {
+	w.parent.Unmap()
 	w.win.Unmap()
 	w.mapped = false
 	w.iconified = true
@@ -149,6 +184,9 @@ func (w *Window) Destroyed() {
 	_ = w.SetIcccmState(icccm.StateWithdrawn)
 	focus.Remove(w)
 	stack.Remove(w)
+	xproto.ReparentWindow(w.win.X.Conn(), w.win.Id, w.win.X.RootWin(), 0, 0)
+	w.win.Destroy()
+	w.parent.Destroy()
 }
 
 func (w *Window) IsHidden() bool {

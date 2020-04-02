@@ -41,7 +41,7 @@ func (w *Window) TransientFor(otherId xproto.Window) bool {
 
 func (w *Window) StackSibling(sibling stack.StackingWindow, mode byte) {
 	if sW, ok := sibling.(*Window); ok {
-		w.win.StackSibling(sW.win.Id, mode)
+		w.parent.StackSibling(sW.parent.Id, mode)
 	}
 }
 
