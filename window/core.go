@@ -84,9 +84,6 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 		window.states["_NET_WM_STATE_MAXIMIZED_HORZ"] = false
 		window.states["MAXIMIZED"] = true
 	}
-	for _, s := range window.states.GetActive() {
-		window.UpdateState(ewmh.StateAdd, s)
-	}
 
 	if !window.types.Any("_NET_WM_WINDOW_TYPE_DESKTOP", "_NET_WM_WINDOW_TYPE_DOCK") {
 		focus.InitialAdd(window)
@@ -194,6 +191,10 @@ func (w *Window) Destroyed() {
 
 func (w *Window) IsHidden() bool {
 	return w.states["_NET_WM_STATE_HIDDEN"]
+}
+
+func (w *Window) IsIconified() bool {
+	return w.iconified
 }
 
 func (w *Window) fetchXProperties() {

@@ -107,7 +107,7 @@ func SetupRoot() error {
 
 	xevent.ConfigureRequestFun(configureRequestFun).Connect(X, Root.Id)
 	xevent.MapRequestFun(mapRequestFun).Connect(X, Root.Id)
-	xevent.ClientMessageFun(handleClientMessage).Connect(X, Root.Id)
+	xevent.ClientMessageFun(handleRootClientMessage).Connect(X, Root.Id)
 
 	return nil
 }
