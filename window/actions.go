@@ -228,3 +228,47 @@ func (w *Window) ToggleAttention() {
 		w.StartAttention()
 	}
 }
+
+func (w *Window) UnFullscreen() {
+	if !w.fullscreen {
+		return
+	}
+	w.fullscreen = false
+	w.removeStates("_NET_WM_STATE_FULLSCREEN")
+
+	w.LoadWindowState("prior_fullscreen")
+
+	w.layer = stack.LayerDefault
+	w.Raise()
+}
+
+func (w *Window) Fullscreen() {
+	if w.fullscreen {
+		return
+	}
+	w.fullscreen = true
+	w.addStates("_NET_WM_STATE_FULLSCREEN")
+
+	w.SaveWindowState("prior_fullscreen")
+	winG, err := w.Geometry()
+	if err != nil {
+		log.Printf("Cannot get window geometry: %s", err)
+	}
+	g, err := heads.GetHeadForRect(winG.RectTotal())
+	if err != nil {
+		log.Printf("Cannot get screen geometry: %s", err)
+	}
+	util.SetBorderWidth(w.parent, 0)
+	w.MoveResize(g.X(), g.Y(), g.Width(), g.Height())
+
+	w.layer = stack.LayerFullscreen
+	w.Raise()
+}
+
+func (w *Window) FullscreenToggle() {
+	if w.fullscreen {
+		w.UnFullscreen()
+	} else {
+		w.Fullscreen()
+	}
+}

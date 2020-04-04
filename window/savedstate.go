@@ -2,6 +2,7 @@ package window
 
 import (
 	"github.com/janbina/swm/geometry"
+	"github.com/janbina/swm/util"
 )
 
 type windowState struct {
@@ -19,4 +20,5 @@ func (w *Window) LoadWindowState(name string) {
 		return
 	}
 	w.MoveResize(s.geom.PiecesTotal())
+	util.SetBorderWidth(w.parent, uint32(s.geom.BorderWidth()))
 }

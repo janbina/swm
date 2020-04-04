@@ -35,6 +35,7 @@ type Window struct {
 	mapped           bool
 	layer            int
 	demandsAttention bool
+	fullscreen       bool
 
 	name         string
 	protocols    util.StringSet

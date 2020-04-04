@@ -12,6 +12,7 @@ type StackingWindow interface {
 	Layer() int
 	TransientFor(win xproto.Window) bool
 	StackSibling(sibling StackingWindow, mode byte)
+	IsFocused() bool
 }
 
 const (
@@ -43,6 +44,12 @@ func Raise(win StackingWindow) {
 	sort.SliceStable(windows, func(i, j int) bool {
 		a := windows[i]
 		b := windows[j]
+		if a.Layer() == LayerDock && b.Layer() == LayerFullscreen {
+			return b.IsFocused()
+		}
+		if a.Layer() == LayerFullscreen && b.Layer() == LayerDock {
+			return !a.IsFocused()
+		}
 		if a.Layer() < b.Layer() {
 			return true
 		}
