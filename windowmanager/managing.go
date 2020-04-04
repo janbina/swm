@@ -5,6 +5,7 @@ import (
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/xevent"
+	"github.com/janbina/swm/desktopmanager"
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/window"
 	"log"
@@ -13,9 +14,7 @@ import (
 func manageWindow(w xproto.Window) {
 	win := window.New(X, w)
 	managedWindows[w] = win
-	d := getDesktopForWindow(w)
-	desktopToWins[d] = append(desktopToWins[d], w)
-	_ = ewmh.WmDesktopSet(X, w, uint(d))
+	desktopmanager.AddWindow(w)
 
 	xproto.ChangeSaveSet(X.Conn(), xproto.SetModeInsert, w)
 
@@ -31,7 +30,7 @@ func manageWindow(w xproto.Window) {
 		updateWinState(win, ewmh.StateAdd, s)
 	}
 
-	if !win.IsHidden() && (d == currentDesktop || d == stickyDesktop) {
+	if !win.IsHidden() && desktopmanager.IsWinDesktopVisible(w) {
 		win.Map()
 		win.Focus()
 		win.Raise()
@@ -46,6 +45,7 @@ func unmanageWindow(w xproto.Window) {
 		return
 	}
 	win.Destroyed()
+	desktopmanager.RemoveWindow(w)
 	xproto.ChangeSaveSet(X.Conn(), xproto.SetModeDelete, w)
 	focus.FocusLast()
 	delete(managedWindows, w)
@@ -77,18 +77,4 @@ func setupListeners(w xproto.Window, win *window.Window) {
 	xevent.PropertyNotifyFun(func(x *xgbutil.XUtil, e xevent.PropertyNotifyEvent) {
 		win.HandlePropertyNotify(e)
 	}).Connect(X, w)
-}
-
-func getDesktopForWindow(win xproto.Window) int {
-	_d, err := ewmh.WmDesktopGet(X, win)
-	d := int(_d)
-	if err != nil {
-		// not specified
-		return currentDesktop
-	}
-	if d == stickyDesktop || d < len(desktops) {
-		return d
-	}
-	// TODO: Current, last, create additional desktops, or what?
-	return len(desktops) - 1
 }

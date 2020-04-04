@@ -3,9 +3,9 @@ package windowmanager
 import (
 	"fmt"
 	"github.com/BurntSushi/xgb/xproto"
-	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/mousebind"
 	"github.com/BurntSushi/xgbutil/xrect"
+	"github.com/janbina/swm/desktopmanager"
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/geometry"
 	"github.com/janbina/swm/heads"
@@ -159,58 +159,34 @@ func GetWindowGeometry(id xproto.Window) (*geometry.Geometry, error) {
 }
 
 func setNumberOfDesktops(num int) {
-	if num < 1 {
-		num = 1
-	}
-	currentNum := len(desktops)
-	newLast := num - 1
-	if num < currentNum {
-		for i := num; i < currentNum; i++ {
-			for _, x := range desktopToWins[i] {
-				ewmh.WmDesktopSet(X, x, uint(newLast))
-			}
-			desktopToWins[newLast] = append(desktopToWins[newLast], desktopToWins[i]...)
-		}
-		desktops = desktops[:num]
-		setDesktops()
-		if currentDesktop > newLast {
-			switchToDesktop(newLast)
-		}
-	} else if num > currentNum {
-		desktops = append(desktops, getDesktopNames(currentNum, newLast)...)
-		setDesktops()
-	}
+	changes := desktopmanager.SetNumberOfDesktops(num)
+	applyChanges(changes)
+	setWorkArea(desktopmanager.GetNumDesktops())
+	focus.FocusLast()
 }
 
 func switchToDesktop(index int) {
-	if currentDesktop != index && index < len(desktops) {
-		for _, w := range desktopToWins[currentDesktop] {
-			win := managedWindows[w]
-			if win != nil {
-				win.Unmap()
-			}
-		}
-		for _, w := range desktopToWins[index] {
-			win := managedWindows[w]
-			if win != nil && !win.IsHidden() {
-				managedWindows[w].Map()
-			}
-		}
-		currentDesktop = index
-		setCurrentDesktop()
-	}
+	changes := desktopmanager.SwitchToDesktop(index)
+	applyChanges(changes)
+	focus.FocusLast()
 }
 
-func SetDesktopNames(names []string) {
-	for i, name := range names {
-		if i < len(desktops) {
-			desktops[i] = name
+func applyChanges(changes *desktopmanager.Changes) {
+	for _, w := range changes.Invisible {
+		win := managedWindows[w]
+		if win == nil {
+			panic("This shouldnt happen anymore")
 		}
+		win.Unmap()
 	}
-	if len(names) > len(desktops) {
-		setDesktopNames(names)
-	} else {
-		setDesktopNames(desktops)
+	for _, w := range changes.Visible {
+		win := managedWindows[w]
+		if win == nil {
+			panic("This shouldnt happen anymore")
+		}
+		if !win.IsHidden() {
+			win.Map()
+		}
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/BurntSushi/xgb/xproto"
+	"github.com/janbina/swm/desktopmanager"
 	"github.com/janbina/swm/window"
 	"github.com/janbina/swm/windowmanager"
 	"github.com/mattn/go-shellwords"
@@ -202,7 +203,7 @@ func moveCommand(args []string) string {
 }
 
 func setDesktopNamesCommand(args []string) string {
-	windowmanager.SetDesktopNames(args)
+	desktopmanager.SetDesktopNames(args)
 	return ""
 }
 

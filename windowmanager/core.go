@@ -10,6 +10,7 @@ import (
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"github.com/janbina/swm/cursors"
+	"github.com/janbina/swm/desktopmanager"
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/geometry"
 	"github.com/janbina/swm/heads"
@@ -30,20 +31,12 @@ type ManagedWindow interface {
 	Destroyed()
 }
 
-const (
-	minDesktops   = 1 //minimum number of desktops created at startup
-	stickyDesktop = 0xFFFFFFFF
-)
-
 var (
 	X                  *xgbutil.XUtil
 	Root               *xwindow.Window
 	RootGeometry       xrect.Rect
 	RootGeometryStruts xrect.Rect
 
-	desktops       []string
-	desktopToWins  map[int][]xproto.Window
-	currentDesktop int
 	managedWindows map[xproto.Window]ManagedWindow
 	strutWindows   map[xproto.Window]bool
 
@@ -60,6 +53,7 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 	cursors.Initialize(X)
 	focus.Initialize(X)
 	stack.Initialize(X)
+	desktopmanager.Initialize(X)
 
 	if err = takeWmOwnership(X, replace); err != nil {
 		return err
@@ -82,14 +76,12 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 	}
 
 	managedWindows = make(map[xproto.Window]ManagedWindow)
-	desktopToWins = make(map[int][]xproto.Window)
 	strutWindows = make(map[xproto.Window]bool)
 
-	desktops = getDesktops() // init desktops
-	currentDesktop = getCurrentDesktop()
 	applyStruts()
-	setDesktops()
-	setCurrentDesktop()
+	desktopmanager.SetDesktops()
+	desktopmanager.SetCurrentDesktop()
+	setWorkArea(desktopmanager.GetNumDesktops())
 
 	setEwmhSupported(X)
 
