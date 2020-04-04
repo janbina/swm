@@ -28,6 +28,7 @@ var windowStateHandlers = map[string][3]func(window *win){
 	"_NET_WM_STATE_ABOVE":             {(*win).UnStackAbove, (*win).StackAbove, (*win).StackAboveToggle},
 	"_NET_WM_STATE_BELOW":             {(*win).UnStackBelow, (*win).StackBelow, (*win).StackBelowToggle},
 	"_NET_WM_STATE_DEMANDS_ATTENTION": {(*win).StopAttention, (*win).StartAttention, (*win).ToggleAttention},
+	"_NET_WM_STATE_STICKY":            {UnstickWindow, StickWindow, ToggleWindowSticky},
 }
 
 func handleWindowClientMessage(X *xgbutil.XUtil, e xevent.ClientMessageEvent) {

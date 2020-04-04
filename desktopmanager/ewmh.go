@@ -47,7 +47,7 @@ func setDesktopNames(names []string) {
 	_ = ewmh.DesktopNamesSet(X, names)
 }
 
-func getCurrentDesktop() int {
+func getCurrentDesktopEwmh() int {
 	d, _ := ewmh.CurrentDesktopGet(X)
 	return int(d)
 }

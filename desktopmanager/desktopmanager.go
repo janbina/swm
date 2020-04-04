@@ -13,7 +13,7 @@ type Changes struct {
 
 const (
 	minDesktops   = 1 //minimum number of desktops created at startup
-	stickyDesktop = 0xFFFFFFFF
+	StickyDesktop = 0xFFFFFFFF
 )
 
 var (
@@ -29,10 +29,10 @@ func Initialize(x *xgbutil.XUtil) {
 	X = x
 
 	desktopToWins = make(map[int]map[xproto.Window]bool)
-	desktopToWins[stickyDesktop] = make(map[xproto.Window]bool)
+	desktopToWins[StickyDesktop] = make(map[xproto.Window]bool)
 	winToDesktop = make(map[xproto.Window]int)
 	desktops = getDesktops()
-	currentDesktop = getCurrentDesktop()
+	currentDesktop = getCurrentDesktopEwmh()
 }
 
 func AddWindow(win xproto.Window) {
@@ -54,11 +54,23 @@ func GetNumDesktops() int {
 }
 
 func IsDesktopVisible(desktop int) bool {
-	return desktop == stickyDesktop || desktop == currentDesktop
+	return desktop == StickyDesktop || desktop == currentDesktop
 }
 
 func IsWinDesktopVisible(win xproto.Window) bool {
 	return IsDesktopVisible(winToDesktop[win])
+}
+
+func GetCurrentDesktop() int {
+	return currentDesktop
+}
+
+func GetWinDesktop(win xproto.Window) int {
+	return winToDesktop[win]
+}
+
+func IsWinSticky(win xproto.Window) bool {
+	return winToDesktop[win] == StickyDesktop
 }
 
 func SetDesktopNames(names []string) {
@@ -89,22 +101,19 @@ func SetNumberOfDesktops(num int) *Changes {
 		if currentDesktop > newLast {
 			return SwitchToDesktop(newLast)
 		} else if currentDesktop == newLast {
-			return &Changes{
-				Invisible: nil,
-				Visible:   winsOfDesktop(currentDesktop),
-			}
+			return createChanges(nil, winsOfDesktop(currentDesktop))
 		}
 	} else if num > currentNum {
 		desktops = append(desktops, getDesktopNames(currentNum, newLast)...)
 		SetDesktops()
 	}
 
-	return &Changes{}
+	return createChanges(nil, nil)
 }
 
 func SwitchToDesktop(index int) *Changes {
 	if currentDesktop == index || index >= len(desktops) {
-		return &Changes{}
+		return createChanges(nil, nil)
 	}
 
 	invisible := make([]xproto.Window, 0, len(desktopToWins[currentDesktop]))
@@ -119,10 +128,26 @@ func SwitchToDesktop(index int) *Changes {
 	currentDesktop = index
 	SetCurrentDesktop()
 
-	return &Changes{
-		Invisible: invisible,
-		Visible:   visible,
+	return createChanges(invisible, visible)
+}
+
+func MoveWindowToDesktop(win xproto.Window, desktop int) *Changes {
+	prev := winToDesktop[win]
+	if prev == desktop || (desktop >= len(desktops) && desktop != StickyDesktop) {
+		return createChanges(nil, nil)
 	}
+	delete(desktopToWins[prev], win)
+	ensureDesktop(desktop)
+	desktopToWins[desktop][win] = true
+	winToDesktop[win] = desktop
+	_ = ewmh.WmDesktopSet(X, win, uint(desktop))
+
+	if IsDesktopVisible(prev) && !IsDesktopVisible(desktop) {
+		return createChanges([]xproto.Window{win}, nil)
+	} else if !IsDesktopVisible(prev) && IsDesktopVisible(desktop) {
+		return createChanges(nil, []xproto.Window{win})
+	}
+	return createChanges(nil, nil)
 }
 
 func getInitialDesktopForWindow(win xproto.Window) int {
@@ -132,7 +157,7 @@ func getInitialDesktopForWindow(win xproto.Window) int {
 		// not specified
 		return currentDesktop
 	}
-	if d == stickyDesktop || d < len(desktops) {
+	if d == StickyDesktop || d < len(desktops) {
 		return d
 	}
 	// TODO: Current, last, create additional desktops, or what?
@@ -161,4 +186,8 @@ func winsOfDesktop(d int) []xproto.Window {
 		ret = append(ret, w)
 	}
 	return ret
+}
+
+func createChanges(invisible, visible []xproto.Window) *Changes {
+	return &Changes{Invisible: invisible, Visible: visible}
 }

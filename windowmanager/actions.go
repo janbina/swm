@@ -216,3 +216,26 @@ func CycleWinEnd() {
 		win.Raise()
 	}
 }
+
+func MoveWindowToDesktop(w *window.Window, desktop int) {
+	changes := desktopmanager.MoveWindowToDesktop(w.Id(), desktop)
+	applyChanges(changes)
+}
+
+func UnstickWindow(w *window.Window) {
+	if desktopmanager.IsWinSticky(w.Id()) {
+		MoveWindowToDesktop(w, desktopmanager.GetCurrentDesktop())
+	}
+}
+
+func StickWindow(w *window.Window) {
+	MoveWindowToDesktop(w, desktopmanager.StickyDesktop)
+}
+
+func ToggleWindowSticky(w *window.Window) {
+	if desktopmanager.IsWinSticky(w.Id()) {
+		UnstickWindow(w)
+	} else {
+		StickWindow(w)
+	}
+}
