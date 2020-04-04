@@ -30,7 +30,9 @@ func manageWindow(w xproto.Window) {
 		updateWinState(win, ewmh.StateAdd, s)
 	}
 
-	if !win.IsHidden() && desktopmanager.IsWinDesktopVisible(w) {
+	setWmAllowedActions(w)
+
+	if !win.IsIconified() && !win.IsHidden() && desktopmanager.IsWinDesktopVisible(w) {
 		win.Map()
 		win.Focus()
 		win.Raise()

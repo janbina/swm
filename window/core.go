@@ -97,6 +97,8 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 		window.layer = stack.LayerDefault
 	}
 
+	window.iconified = window.normalHints.Flags&icccm.HintState > 0 && window.hints.InitialState == icccm.StateIconic
+
 	return window
 }
 

@@ -42,6 +42,10 @@ func setWorkArea(numDesktops int) {
 	_ = ewmh.WorkareaSet(X, areas)
 }
 
+func setWmAllowedActions(win xproto.Window) {
+	_ = ewmh.WmAllowedActionsSet(X, win, windowAllowedActions)
+}
+
 func setEwmhSupported(X *xgbutil.XUtil) {
 	// Set supported atoms
 	if err := ewmh.SupportedSet(X, ewmhSupported); err != nil {
@@ -118,4 +122,19 @@ var ewmhSupported = []string{
 	"_NET_WM_ICON",
 	"_NET_FRAME_EXTENTS",
 	"WM_TRANSIENT_FOR",
+}
+
+var windowAllowedActions = []string{
+	"_NET_WM_ACTION_MOVE",
+	"_NET_WM_ACTION_RESIZE",
+	"_NET_WM_ACTION_MINIMIZE",
+	"_NET_WM_ACTION_SHADE",
+	"_NET_WM_ACTION_STICK",
+	"_NET_WM_ACTION_MAXIMIZE_HORZ",
+	"_NET_WM_ACTION_MAXIMIZE_VERT",
+	"_NET_WM_ACTION_FULLSCREEN",
+	"_NET_WM_ACTION_CHANGE_DESKTOP",
+	"_NET_WM_ACTION_CLOSE",
+	"_NET_WM_ACTION_ABOVE",
+	"_NET_WM_ACTION_BELOW",
 }
