@@ -16,6 +16,7 @@ type win = window.Window
 var windowCmHandlers = map[string]func(win *win, data []uint32){
 	"_NET_WM_MOVERESIZE": handleMoveResizeMessage,
 	"_NET_WM_STATE":      handleWmStateMessage,
+	"_NET_WM_DESKTOP":    handleWmDesktop,
 	"_NET_ACTIVE_WINDOW": handleActiveWindowMessage,
 	"WM_CHANGE_STATE":    handleWmChangeStateMessage,
 }
@@ -99,4 +100,8 @@ func updateWinState(win *win, action int, state string) {
 	} else {
 		fs[action](win)
 	}
+}
+
+func handleWmDesktop(win *win, data []uint32) {
+	MoveWindowToDesktop(win, int(data[0]))
 }

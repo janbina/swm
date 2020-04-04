@@ -220,6 +220,7 @@ func CycleWinEnd() {
 func MoveWindowToDesktop(w *window.Window, desktop int) {
 	changes := desktopmanager.MoveWindowToDesktop(w.Id(), desktop)
 	applyChanges(changes)
+	focus.FocusLast()
 }
 
 func UnstickWindow(w *window.Window) {
