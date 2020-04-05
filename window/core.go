@@ -200,6 +200,14 @@ func (w *Window) IsIconified() bool {
 	return w.iconified
 }
 
+func (w *Window) IsMouseMoveable() bool {
+	return !w.fullscreen
+}
+
+func (w *Window) IsMouseResizable() bool {
+	return !w.fullscreen
+}
+
 func (w *Window) fetchXProperties() {
 	var err error
 	X := w.win.X

@@ -71,6 +71,9 @@ func (w *Window) DragResizeBegin(xr, yr int16, dir int) {
 
 func dragMoveBegin(w *Window) xgbutil.MouseDragBeginFun {
 	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) (bool, xproto.Cursor) {
+		if !w.IsMouseMoveable() {
+			return false, 0
+		}
 		log.Printf("Drag move begin: %d, %d, %d, %d", rx, ry, ex, ey)
 
 		g, _ := w.Geometry()
@@ -176,6 +179,9 @@ func getCursorForDirection(d int) xproto.Cursor {
 
 func dragResizeBegin(w *Window, direction int) xgbutil.MouseDragBeginFun {
 	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) (bool, xproto.Cursor) {
+		if !w.IsMouseResizable() {
+			return false, 0
+		}
 		log.Printf("Drag resize begin: %d, %d, %d, %d", rx, ry, ex, ey)
 
 		dir := direction
