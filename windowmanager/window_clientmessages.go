@@ -14,12 +14,13 @@ import (
 type win = window.Window
 
 var windowCmHandlers = map[string]func(win *win, data []uint32){
-	"_NET_WM_MOVERESIZE": handleMoveResizeMessage,
-	"_NET_WM_STATE":      handleWmStateMessage,
-	"_NET_WM_DESKTOP":    handleWmDesktop,
-	"_NET_ACTIVE_WINDOW": handleActiveWindowMessage,
-	"_NET_CLOSE_WINDOW":  handleCloseWindowMessage,
-	"WM_CHANGE_STATE":    handleWmChangeStateMessage,
+	"_NET_WM_MOVERESIZE":     handleMoveResizeMessage,
+	"_NET_WM_STATE":          handleWmStateMessage,
+	"_NET_WM_DESKTOP":        handleWmDesktop,
+	"_NET_ACTIVE_WINDOW":     handleActiveWindowMessage,
+	"_NET_CLOSE_WINDOW":      handleCloseWindowMessage,
+	"_NET_MOVERESIZE_WINDOW": handleMoveResizeMessage2,
+	"WM_CHANGE_STATE":        handleWmChangeStateMessage,
 }
 
 var windowStateHandlers = map[string][3]func(window *win){
@@ -111,4 +112,11 @@ func handleWmDesktop(win *win, data []uint32) {
 
 func handleCloseWindowMessage(win *win, _ []uint32) {
 	win.Destroy()
+}
+
+func handleMoveResizeMessage2(win *win, data []uint32) {
+	//gravity := int(data[0] & 0xff)
+	//flags := int((data[0] >> 8) & 0xf)
+	x, y, w, h := int(data[1]), int(data[2]), int(data[3]), int(data[4])
+	win.MoveResize(x, y, w, h)
 }

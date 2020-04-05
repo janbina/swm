@@ -71,8 +71,8 @@ func (w *Window) moveResizeInternal(x, y, width, height int, flags ...int) {
 		if realHeight < int(w.normalHints.MinHeight) {
 			realHeight = int(w.normalHints.MinHeight)
 		}
-		w.parent.Configure(f, x, y, realWidth, realHeight, 0, 0)
-		w.win.Configure(f, 0, 0, realWidth, realHeight, 0, 0)
+		w.parent.MROpt(f, x, y, realWidth, realHeight)
+		w.win.MROpt(f, 0, 0, realWidth, realHeight)
 	}
 }
 
