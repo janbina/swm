@@ -201,11 +201,11 @@ func (w *Window) IsIconified() bool {
 }
 
 func (w *Window) IsMouseMoveable() bool {
-	return !w.fullscreen
+	return !w.fullscreen && !w.types.Any("_NET_WM_WINDOW_TYPE_DESKTOP", "_NET_WM_WINDOW_TYPE_DOCK")
 }
 
 func (w *Window) IsMouseResizable() bool {
-	return !w.fullscreen
+	return !w.fullscreen && !w.types.Any("_NET_WM_WINDOW_TYPE_DESKTOP", "_NET_WM_WINDOW_TYPE_DOCK")
 }
 
 func (w *Window) fetchXProperties() {
