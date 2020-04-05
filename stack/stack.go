@@ -5,6 +5,7 @@ import (
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"sort"
+	"time"
 )
 
 type StackingWindow interface {
@@ -12,7 +13,6 @@ type StackingWindow interface {
 	Layer() int
 	TransientFor(win xproto.Window) bool
 	StackSibling(sibling StackingWindow, mode byte)
-	IsFocused() bool
 }
 
 const (
@@ -24,89 +24,80 @@ const (
 	LayerFullscreen
 )
 
-var X *xgbutil.XUtil
-// windows in their stacking order, from lowest to highest
-var windows []StackingWindow
+var (
+	X *xgbutil.XUtil
+	// slice of all windows to be stacked
+	windows []StackingWindow
+	// maps win to timestamp it was raised last
+	// also used as indicator if win is present in windows slice - those two should be kept in sync
+	raiseTimestamp map[xproto.Window]int64
+	// flag which tells if we are currently inside tmp stacking,
+	// which is initiated by TmpRaise() and ended by Raise()
+	// while active, ReStack() does nothing so tmp stack order is not messed up
+	tmpStacking = false
+)
 
 func Initialize(x *xgbutil.XUtil) {
 	X = x
+	raiseTimestamp = make(map[xproto.Window]int64)
 }
 
 // Raise adds win to list of windows if its not there yet,
-// sorts windows by layer, putting win and its transients to the top of their layers,
-// and issues appropriate StackSibling commands
+// and updates raise timestamps for win and its transients
 func Raise(win StackingWindow) {
-	// remove win and add it to the end to make sure it is in the slice exactly once
-	remove(win)
-	windows = append(windows, win)
+	if _, ok := raiseTimestamp[win.Id()]; !ok {
+		windows = append(windows, win)
+	}
 
-	// sort windows by layer, win and its transients on top of their layers
+	t := time.Now().UnixNano()
+	raiseTimestamp[win.Id()] = t
+	for _, w := range windows {
+		if w.TransientFor(win.Id()) {
+			raiseTimestamp[w.Id()] = t + 1
+		}
+	}
+
+	tmpStacking = false
+
+	ReStack()
+}
+
+// ReStack sorts windows by stacking order (layer, raise timestamp)
+// and invokes realiseStacking(). Usually called from Raise() after raising window,
+// but can be also called standalone, typically when we change some windows layer
+// but we dont want to raise it - useful for fullscreen windows
+func ReStack() {
+	if tmpStacking {
+		return
+	}
+
 	sort.SliceStable(windows, func(i, j int) bool {
 		a := windows[i]
 		b := windows[j]
-		if a.Layer() == LayerDock && b.Layer() == LayerFullscreen {
-			return b.IsFocused()
+		if a.Layer() == b.Layer() {
+			return raiseTimestamp[a.Id()] < raiseTimestamp[b.Id()]
 		}
-		if a.Layer() == LayerFullscreen && b.Layer() == LayerDock {
-			return !a.IsFocused()
-		}
-		if a.Layer() < b.Layer() {
-			return true
-		}
-		if a.Layer() > b.Layer() {
-			return false
-		}
-		if b.TransientFor(win.Id()) {
-			return true
-		}
-		if a.TransientFor(win.Id()) {
-			return false
-		}
-		return b.Id() == win.Id()
+		return a.Layer() < b.Layer()
 	})
 
-	// now find win and its transients in the slice and issue StackSibling for them
-	// stack the last above the second last and all other below the next one
-	if len(windows) <= 1 {
-		return
-	}
-	last := len(windows) - 1
-	for i, w := range windows {
-		if w.Id() == win.Id() || w.TransientFor(win.Id()) {
-			if i == last {
-				w.StackSibling(windows[i - 1], xproto.StackModeAbove)
-			} else {
-				w.StackSibling(windows[i + 1], xproto.StackModeBelow)
-			}
-		}
-	}
+	realiseStacking(windows)
 
 	updateEwmhStacking()
 }
 
 func Remove(win StackingWindow) {
-	remove(win)
-	updateEwmhStacking()
-}
-
-func remove(win StackingWindow) {
 	for i, w := range windows {
 		if w.Id() == win.Id() {
 			windows = append(windows[:i], windows[i+1:]...)
 			return
 		}
 	}
+	delete(raiseTimestamp, win.Id())
+	updateEwmhStacking()
 }
 
-func updateEwmhStacking() {
-	ids := make([]xproto.Window, len(windows))
-	for i, win := range windows {
-		ids[i] = win.Id()
-	}
-	_ = ewmh.ClientListStackingSet(X, ids)
-}
-
-func TempRaise(win StackingWindow) {
+// temporarily raise win above all others, ignoring layers - used for cycling windows
+func TmpRaise(win StackingWindow) {
 	if len(windows) <= 1 {
 		return
 	}
@@ -118,8 +109,25 @@ func TempRaise(win StackingWindow) {
 	}
 	tmpWins = append(tmpWins, win)
 
-	tmpWins[0].StackSibling(tmpWins[1], xproto.StackModeBelow)
-	for i := 1; i < len(tmpWins); i++ {
-		tmpWins[i].StackSibling(tmpWins[i-1], xproto.StackModeAbove)
+	tmpStacking = true
+
+	realiseStacking(tmpWins)
+}
+
+func realiseStacking(wins []StackingWindow) {
+	if len(wins) <= 1 {
+		return
 	}
+	wins[0].StackSibling(wins[1], xproto.StackModeBelow)
+	for i := 1; i < len(wins); i++ {
+		wins[i].StackSibling(wins[i-1], xproto.StackModeAbove)
+	}
+}
+
+func updateEwmhStacking() {
+	ids := make([]xproto.Window, len(windows))
+	for i, win := range windows {
+		ids[i] = win.Id()
+	}
+	_ = ewmh.ClientListStackingSet(X, ids)
 }

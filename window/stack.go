@@ -12,6 +12,10 @@ func (w *Window) Raise() {
 }
 
 func (w *Window) Layer() int {
+	if w.layer == stack.LayerFullscreen && !w.focused {
+		// Effective layer of fullscreen window depends on its focus state
+		return stack.LayerDefault
+	}
 	return w.layer
 }
 

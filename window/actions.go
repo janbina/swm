@@ -81,7 +81,7 @@ func (w *Window) MaximizeToggle() {
 }
 
 func (w *Window) MaximizeVert() {
-	if w.maxedVert {
+	if w.maxedVert || w.fullscreen {
 		return
 	}
 	w.maxedVert = true
@@ -100,7 +100,7 @@ func (w *Window) MaximizeVert() {
 }
 
 func (w *Window) UnMaximizeVert() {
-	if !w.maxedVert {
+	if !w.maxedVert || w.fullscreen {
 		return
 	}
 	w.maxedVert = false
@@ -118,7 +118,7 @@ func (w *Window) MaximizeVertToggle() {
 }
 
 func (w *Window) MaximizeHorz() {
-	if w.maxedHorz {
+	if w.maxedHorz || w.fullscreen {
 		return
 	}
 	w.maxedHorz = true
@@ -137,7 +137,7 @@ func (w *Window) MaximizeHorz() {
 }
 
 func (w *Window) UnMaximizeHorz() {
-	if !w.maxedHorz {
+	if !w.maxedHorz || w.fullscreen {
 		return
 	}
 	w.maxedHorz = false
@@ -239,7 +239,7 @@ func (w *Window) UnFullscreen() {
 	w.LoadWindowState("prior_fullscreen")
 
 	w.layer = stack.LayerDefault
-	w.Raise()
+	stack.ReStack()
 }
 
 func (w *Window) Fullscreen() {
@@ -262,7 +262,7 @@ func (w *Window) Fullscreen() {
 	w.MoveResize(g.X(), g.Y(), g.Width(), g.Height())
 
 	w.layer = stack.LayerFullscreen
-	w.Raise()
+	stack.ReStack()
 }
 
 func (w *Window) FullscreenToggle() {

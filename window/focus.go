@@ -7,6 +7,7 @@ import (
 	"github.com/BurntSushi/xgbutil/icccm"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/janbina/swm/focus"
+	"github.com/janbina/swm/stack"
 	"github.com/janbina/swm/util"
 )
 
@@ -42,7 +43,11 @@ func (w *Window) Focused() {
 	_ = util.SetBorderColor(w.parent, borderColorActive)
 	_ = ewmh.ActiveWindowSet(w.win.X, w.win.Id)
 	w.addStates("_NET_WM_STATE_FOCUSED")
-
+	if w.layer == stack.LayerFullscreen {
+		// Effective layer of fullscreen window depends on its focus state (see Window.Layer()),
+		// so we have to restack after changing its focus state
+		stack.ReStack()
+	}
 }
 
 func (w *Window) Unfocused() {
@@ -50,6 +55,11 @@ func (w *Window) Unfocused() {
 	_ = util.SetBorderColor(w.parent, borderColorInactive)
 	_ = ewmh.ActiveWindowSet(w.win.X, 0)
 	w.removeStates("_NET_WM_STATE_FOCUSED")
+	if w.layer == stack.LayerFullscreen {
+		// Effective layer of fullscreen window depends on its focus state (see Window.Layer()),
+		// so we have to restack after changing its focus state
+		stack.ReStack()
+	}
 }
 
 func (w *Window) ApplyFocus() {

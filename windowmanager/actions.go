@@ -199,14 +199,14 @@ func mouseShortcutsChanged() {
 func CycleWin() {
 	cycleState--
 	if win, ok := focus.CyclingFocus(cycleState).(*window.Window); ok {
-		stack.TempRaise(win)
+		stack.TmpRaise(win)
 	}
 }
 
 func CycleWinRev() {
 	cycleState++
 	if win, ok := focus.CyclingFocus(cycleState).(*window.Window); ok {
-		stack.TempRaise(win)
+		stack.TmpRaise(win)
 	}
 }
 
