@@ -36,6 +36,8 @@ type Window struct {
 	layer            int
 	demandsAttention bool
 	fullscreen       bool
+	skipTaskbar      bool
+	skipPager        bool
 
 	name         string
 	protocols    util.StringSet

@@ -279,3 +279,39 @@ func (w *Window) FullscreenToggle() {
 		w.Fullscreen()
 	}
 }
+
+func (w *Window) UnSkipTaskbar() {
+	w.skipTaskbar = false
+	w.RemoveStates("_NET_WM_STATE_SKIP_TASKBAR")
+}
+
+func (w *Window) SkipTaskbar() {
+	w.skipTaskbar = true
+	w.AddStates("_NET_WM_STATE_SKIP_TASKBAR")
+}
+
+func (w *Window) ToggleSkipTaskbar() {
+	if w.skipTaskbar {
+		w.UnSkipTaskbar()
+	} else {
+		w.SkipTaskbar()
+	}
+}
+
+func (w *Window) UnSkipPager() {
+	w.skipPager = true
+	w.RemoveStates("_NET_WM_STATE_SKIP_PAGER")
+}
+
+func (w *Window) SkipPager() {
+	w.skipPager = true
+	w.AddStates("_NET_WM_STATE_SKIP_PAGER")
+}
+
+func (w *Window) ToggleSkipPager() {
+	if w.skipPager {
+		w.UnSkipPager()
+	} else {
+		w.SkipPager()
+	}
+}
