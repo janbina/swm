@@ -24,20 +24,14 @@ func CyclingFocus(state int) FocusableWindow {
 
 	copy(windows, cyclingState)
 	Focus(win)
-
-	if len(windows) == 0 {
-		return nil
-	} else {
-		return windows[len(windows)-1]
-	}
+	return win
 }
 
 func CyclingEnded() FocusableWindow {
 	if len(windows) == 0 {
 		return nil
 	}
-	ret := windows[len(windows)-1]
 	cyclingState = nil
 	cyclableWindows = nil
-	return ret
+	return windows[len(windows)-1]
 }
