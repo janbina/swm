@@ -34,6 +34,7 @@ var windowStateHandlers = map[string][3]func(window *win){
 	"_NET_WM_STATE_STICKY":            {UnstickWindow, StickWindow, ToggleWindowSticky},
 	"_NET_WM_STATE_FULLSCREEN":        {(*win).UnFullscreen, (*win).Fullscreen, (*win).FullscreenToggle},
 	"_NET_WM_STATE_MINIMIZE":          {(*win).DeIconify, (*win).Iconify, (*win).IconifyToggle},
+	"_NET_WM_STATE_FOCUSED":           {(*win).Unfocused, (*win).Focused, (*win).FocusToggle},
 }
 
 func handleWindowClientMessage(X *xgbutil.XUtil, e xevent.ClientMessageEvent) {

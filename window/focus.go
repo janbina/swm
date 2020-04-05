@@ -62,6 +62,14 @@ func (w *Window) Unfocused() {
 	}
 }
 
+func (w *Window) FocusToggle() {
+	if w.focused {
+		w.Unfocused()
+	} else {
+		w.Focused()
+	}
+}
+
 func (w *Window) ApplyFocus() {
 	if w.CanFocus() {
 		w.win.Focus()
