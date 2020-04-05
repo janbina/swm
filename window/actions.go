@@ -16,6 +16,16 @@ type Directions struct {
 	Top    int
 }
 
+const (
+	ConfigX        = xproto.ConfigWindowX
+	ConfigY        = xproto.ConfigWindowY
+	ConfigWidth    = xproto.ConfigWindowWidth
+	ConfigHeight   = xproto.ConfigWindowHeight
+	ConfigPosition = ConfigX | ConfigY
+	ConfigSize     = ConfigWidth | ConfigHeight
+	ConfigAll      = ConfigPosition | ConfigSize
+)
+
 func (w *Window) Resize(d Directions) {
 	g, _ := w.Geometry()
 	x := g.X() + d.Left
@@ -27,39 +37,44 @@ func (w *Window) Resize(d Directions) {
 }
 
 func (w *Window) Move(x, y int) {
-	w.UnsetMaximized()
-	w.parent.Move(x, y)
+	w.MoveResize(x, y, 0, 0, ConfigPosition)
 }
 
-func (w *Window) MoveResize(x, y, width, height int) {
-	g, _ := w.Geometry()
-	realWidth := width - 2*g.BorderWidth()
-	realHeight := height - 2*g.BorderWidth()
-
-	if realWidth < int(w.normalHints.MinWidth) {
-		realWidth = int(w.normalHints.MinWidth)
-	}
-	if realHeight < int(w.normalHints.MinHeight) {
-		realHeight = int(w.normalHints.MinHeight)
-	}
-	w.UnsetMaximized()
-	w.parent.MoveResize(x, y, realWidth, realHeight)
-	w.win.Resize(realWidth, realHeight)
+// single function for all moving and/or resizing, which also automatically cancel fullscreen and maximized state
+func (w *Window) MoveResize(x, y, width, height int, flags ...int) {
+	w.UnFullscreen()
+	w.UnMaximize()
+	w.moveResizeInternal(x, y, width, height, flags...)
 }
 
-func (w *Window) Configure(flags, x, y, width, height int) {
-	g, _ := w.Geometry()
-	realWidth := width - 2*g.BorderWidth()
-	realHeight := height - 2*g.BorderWidth()
+// single function for all moving and/or resizing, without any side effects
+// call this if you are sure you dont want any side effects (canceled fullscreen and maximized state), otherwise,
+// use MoveResize() or Move()
+func (w *Window) moveResizeInternal(x, y, width, height int, flags ...int) {
+	f := 0
+	for _, flag := range flags {
+		f |= flag
+	}
+	if len(flags) == 0 {
+		f = ConfigAll
+	}
+	onlyMove := f&ConfigSize == 0
+	if onlyMove {
+		w.parent.Move(x, y)
+	} else {
+		g, _ := w.Geometry()
+		realWidth := width - 2*g.BorderWidth()
+		realHeight := height - 2*g.BorderWidth()
 
-	if realWidth < int(w.normalHints.MinWidth) {
-		realWidth = int(w.normalHints.MinWidth)
+		if realWidth < int(w.normalHints.MinWidth) {
+			realWidth = int(w.normalHints.MinWidth)
+		}
+		if realHeight < int(w.normalHints.MinHeight) {
+			realHeight = int(w.normalHints.MinHeight)
+		}
+		w.parent.Configure(f, x, y, realWidth, realHeight, 0, 0)
+		w.win.Configure(f, 0, 0, realWidth, realHeight, 0, 0)
 	}
-	if realHeight < int(w.normalHints.MinHeight) {
-		realHeight = int(w.normalHints.MinHeight)
-	}
-	w.parent.Configure(flags, x, y, realWidth, realHeight, 0, 0)
-	w.win.Configure(flags, 0, 0, realWidth, realHeight, 0, 0)
 }
 
 func (w *Window) Maximize() {
@@ -96,7 +111,7 @@ func (w *Window) MaximizeVert() {
 	if err != nil {
 		log.Printf("Cannot get screen geometry: %s", err)
 	}
-	w.Configure(xproto.ConfigWindowY|xproto.ConfigWindowHeight, 0, g.Y(), 0, g.Height())
+	w.moveResizeInternal(0, g.Y(), 0, g.Height(), ConfigY, ConfigHeight)
 }
 
 func (w *Window) UnMaximizeVert() {
@@ -133,7 +148,7 @@ func (w *Window) MaximizeHorz() {
 	if err != nil {
 		log.Printf("Cannot get screen geometry: %s", err)
 	}
-	w.Configure(xproto.ConfigWindowX|xproto.ConfigWindowWidth, g.X(), 0, g.Width(), 0)
+	w.moveResizeInternal(g.X(), 0, g.Width(), 0, ConfigX, ConfigWidth)
 }
 
 func (w *Window) UnMaximizeHorz() {
@@ -152,12 +167,6 @@ func (w *Window) MaximizeHorzToggle() {
 	} else {
 		w.MaximizeHorz()
 	}
-}
-
-func (w *Window) UnsetMaximized() {
-	w.maxedVert = false
-	w.maxedHorz = false
-	w.removeStates("_NET_WM_STATE_MAXIMIZED_HORZ", "_NET_WM_STATE_MAXIMIZED_VERT", "MAXIMIZED")
 }
 
 func (w *Window) IconifyToggle() {
@@ -259,7 +268,7 @@ func (w *Window) Fullscreen() {
 		log.Printf("Cannot get screen geometry: %s", err)
 	}
 	util.SetBorderWidth(w.parent, 0)
-	w.MoveResize(g.X(), g.Y(), g.Width(), g.Height())
+	w.moveResizeInternal(g.X(), g.Y(), g.Width(), g.Height())
 
 	w.layer = stack.LayerFullscreen
 	stack.ReStack()

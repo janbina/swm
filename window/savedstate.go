@@ -19,6 +19,6 @@ func (w *Window) LoadWindowState(name string) {
 	if !ok {
 		return
 	}
-	w.MoveResize(s.geom.PiecesTotal())
+	w.moveResizeInternal(s.geom.PiecesTotal())
 	util.SetBorderWidth(w.parent, uint32(s.geom.BorderWidth()))
 }

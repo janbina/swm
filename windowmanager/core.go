@@ -22,7 +22,7 @@ type ManagedWindow interface {
 	Destroy()
 	Resize(directions window.Directions)
 	Move(x int, y int)
-	MoveResize(x int, y int, width int, height int)
+	MoveResize(x int, y int, width int, height int, flags ...int)
 	Geometry() (*geometry.Geometry, error)
 	Map()
 	Unmap()
