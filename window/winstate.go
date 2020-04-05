@@ -9,12 +9,12 @@ func (w *Window) GetActiveStates() []string {
 	return w.states.GetActive()
 }
 
-func (w *Window) addStates(states ...string) {
+func (w *Window) AddStates(states ...string) {
 	w.states.SetAll(states)
 	ewmh.WmStateSet(w.win.X, w.win.Id, w.states.GetActive())
 }
 
-func (w *Window) removeStates(states ...string) {
+func (w *Window) RemoveStates(states ...string) {
 	w.states.UnSetAll(states)
 	ewmh.WmStateSet(w.win.X, w.win.Id, w.states.GetActive())
 }

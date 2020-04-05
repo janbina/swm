@@ -157,13 +157,13 @@ func (w *Window) Unmap() {
 
 func (w *Window) Iconify() {
 	w.Unmap()
-	w.addStates("_NET_WM_STATE_HIDDEN")
+	w.AddStates("_NET_WM_STATE_HIDDEN")
 	focus.FocusLast()
 }
 
 func (w *Window) DeIconify() {
 	w.Map()
-	w.removeStates("_NET_WM_STATE_HIDDEN")
+	w.RemoveStates("_NET_WM_STATE_HIDDEN")
 	w.Focus()
 	w.Raise()
 }

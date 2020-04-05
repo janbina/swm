@@ -42,7 +42,7 @@ func (w *Window) Focused() {
 	focus.SetFocus(w)
 	_ = util.SetBorderColor(w.parent, borderColorActive)
 	_ = ewmh.ActiveWindowSet(w.win.X, w.win.Id)
-	w.addStates("_NET_WM_STATE_FOCUSED")
+	w.AddStates("_NET_WM_STATE_FOCUSED")
 	if w.layer == stack.LayerFullscreen {
 		// Effective layer of fullscreen window depends on its focus state (see Window.Layer()),
 		// so we have to restack after changing its focus state
@@ -54,7 +54,7 @@ func (w *Window) Unfocused() {
 	w.focused = false
 	_ = util.SetBorderColor(w.parent, borderColorInactive)
 	_ = ewmh.ActiveWindowSet(w.win.X, 0)
-	w.removeStates("_NET_WM_STATE_FOCUSED")
+	w.RemoveStates("_NET_WM_STATE_FOCUSED")
 	if w.layer == stack.LayerFullscreen {
 		// Effective layer of fullscreen window depends on its focus state (see Window.Layer()),
 		// so we have to restack after changing its focus state

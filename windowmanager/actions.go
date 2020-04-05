@@ -226,11 +226,13 @@ func MoveWindowToDesktop(w *window.Window, desktop int) {
 func UnstickWindow(w *window.Window) {
 	if desktopmanager.IsWinSticky(w.Id()) {
 		MoveWindowToDesktop(w, desktopmanager.GetCurrentDesktop())
+		w.RemoveStates("_NET_WM_STATE_STICKY")
 	}
 }
 
 func StickWindow(w *window.Window) {
 	MoveWindowToDesktop(w, desktopmanager.StickyDesktop)
+	w.AddStates("_NET_WM_STATE_STICKY")
 }
 
 func ToggleWindowSticky(w *window.Window) {

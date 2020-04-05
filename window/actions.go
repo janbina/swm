@@ -99,7 +99,7 @@ func (w *Window) MaximizeVert() {
 		return
 	}
 	w.maxedVert = true
-	w.addStates("_NET_WM_STATE_MAXIMIZED_VERT")
+	w.AddStates("_NET_WM_STATE_MAXIMIZED_VERT")
 
 	w.SaveWindowState("prior_maxVert")
 	winG, err := w.Geometry()
@@ -118,7 +118,7 @@ func (w *Window) UnMaximizeVert() {
 		return
 	}
 	w.maxedVert = false
-	w.removeStates("_NET_WM_STATE_MAXIMIZED_VERT", "MAXIMIZED")
+	w.RemoveStates("_NET_WM_STATE_MAXIMIZED_VERT", "MAXIMIZED")
 
 	w.LoadWindowState("prior_maxVert")
 }
@@ -136,7 +136,7 @@ func (w *Window) MaximizeHorz() {
 		return
 	}
 	w.maxedHorz = true
-	w.addStates("_NET_WM_STATE_MAXIMIZED_HORZ")
+	w.AddStates("_NET_WM_STATE_MAXIMIZED_HORZ")
 
 	w.SaveWindowState("prior_maxHorz")
 	winG, err := w.Geometry()
@@ -155,7 +155,7 @@ func (w *Window) UnMaximizeHorz() {
 		return
 	}
 	w.maxedHorz = false
-	w.removeStates("_NET_WM_STATE_MAXIMIZED_HORZ", "MAXIMIZED")
+	w.RemoveStates("_NET_WM_STATE_MAXIMIZED_HORZ", "MAXIMIZED")
 
 	w.LoadWindowState("prior_maxHorz")
 }
@@ -179,13 +179,13 @@ func (w *Window) IconifyToggle() {
 func (w *Window) UnStackAbove() {
 	w.layer = stack.LayerDefault
 	w.Raise()
-	w.removeStates("_NET_WM_STATE_ABOVE")
+	w.RemoveStates("_NET_WM_STATE_ABOVE")
 }
 
 func (w *Window) StackAbove() {
 	w.layer = stack.LayerAbove
 	w.Raise()
-	w.addStates("_NET_WM_STATE_ABOVE")
+	w.AddStates("_NET_WM_STATE_ABOVE")
 }
 
 func (w *Window) StackAboveToggle() {
@@ -199,13 +199,13 @@ func (w *Window) StackAboveToggle() {
 func (w *Window) UnStackBelow() {
 	w.layer = stack.LayerDefault
 	w.Raise()
-	w.removeStates("_NET_WM_STATE_BELOW")
+	w.RemoveStates("_NET_WM_STATE_BELOW")
 }
 
 func (w *Window) StackBelow() {
 	w.layer = stack.LayerBelow
 	w.Raise()
-	w.addStates("_NET_WM_STATE_BELOW")
+	w.AddStates("_NET_WM_STATE_BELOW")
 }
 
 func (w *Window) StackBelowToggle() {
@@ -219,13 +219,13 @@ func (w *Window) StackBelowToggle() {
 func (w *Window) StopAttention() {
 	w.demandsAttention = false
 	_ = util.SetBorderColor(w.parent, borderColorInactive)
-	w.removeStates("_NET_WM_STATE_DEMANDS_ATTENTION")
+	w.RemoveStates("_NET_WM_STATE_DEMANDS_ATTENTION")
 }
 
 func (w *Window) StartAttention() {
 	w.demandsAttention = true
 	_ = util.SetBorderColor(w.parent, borderColorAttention)
-	w.addStates("_NET_WM_STATE_DEMANDS_ATTENTION")
+	w.AddStates("_NET_WM_STATE_DEMANDS_ATTENTION")
 }
 
 func (w *Window) ToggleAttention() {
@@ -241,7 +241,7 @@ func (w *Window) UnFullscreen() {
 		return
 	}
 	w.fullscreen = false
-	w.removeStates("_NET_WM_STATE_FULLSCREEN")
+	w.RemoveStates("_NET_WM_STATE_FULLSCREEN")
 
 	w.LoadWindowState("prior_fullscreen")
 
@@ -254,7 +254,7 @@ func (w *Window) Fullscreen() {
 		return
 	}
 	w.fullscreen = true
-	w.addStates("_NET_WM_STATE_FULLSCREEN")
+	w.AddStates("_NET_WM_STATE_FULLSCREEN")
 
 	w.SaveWindowState("prior_fullscreen")
 	winG, err := w.Geometry()
