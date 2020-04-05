@@ -1,10 +1,8 @@
 package window
 
 import (
-	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/icccm"
 	"github.com/janbina/swm/stack"
-	"github.com/janbina/swm/util"
 )
 
 func (w *Window) Raise() {
@@ -19,26 +17,28 @@ func (w *Window) Layer() int {
 	return w.layer
 }
 
-func (w *Window) TransientFor(otherId xproto.Window) bool {
-	if w.Id() == otherId {
+func (w *Window) TransientFor(_other stack.StackingWindow) bool {
+	other, ok := _other.(*Window)
+	if !ok {
+		return false
+	}
+	if w.Id() == other.Id() {
 		return false
 	}
 	if w.transientFor == 0 {
 		w.transientFor, _ = icccm.WmTransientForGet(w.win.X, w.win.Id)
 	}
-	if w.transientFor == otherId {
+	if w.transientFor == other.Id() {
 		return true
 	} else if w.transientFor != 0 {
 		return false
 	}
 
-	otherHints := getHintsForWindow(w.win.X, otherId)
 	if w.hints.Flags&icccm.HintWindowGroup > 0 &&
-		otherHints.Flags&icccm.HintWindowGroup > 0 &&
-		w.hints.WindowGroup == otherHints.WindowGroup &&
-		hasTransientType(w.types) {
+		other.hints.Flags&icccm.HintWindowGroup > 0 &&
+		w.hints.WindowGroup == other.hints.WindowGroup {
 
-		return !hasTransientType(getTypesForWindow(w.win.X, otherId))
+		return w.hasTransientType() && !other.hasTransientType()
 	}
 	return false
 }
@@ -49,8 +49,8 @@ func (w *Window) StackSibling(sibling stack.StackingWindow, mode byte) {
 	}
 }
 
-func hasTransientType(set util.StringSet) bool {
-	return set.Any(
+func (w *Window) hasTransientType() bool {
+	return w.types.Any(
 		"_NET_WM_WINDOW_TYPE_TOOLBAR",
 		"_NET_WM_WINDOW_TYPE_MENU",
 		"_NET_WM_WINDOW_TYPE_UTILITY",

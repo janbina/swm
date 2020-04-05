@@ -11,7 +11,7 @@ import (
 type StackingWindow interface {
 	Id() xproto.Window
 	Layer() int
-	TransientFor(win xproto.Window) bool
+	TransientFor(win StackingWindow) bool
 	StackSibling(sibling StackingWindow, mode byte)
 }
 
@@ -52,7 +52,7 @@ func Raise(win StackingWindow) {
 	t := time.Now().UnixNano()
 	raiseTimestamp[win.Id()] = t
 	for _, w := range windows {
-		if w.TransientFor(win.Id()) {
+		if w.TransientFor(win) {
 			raiseTimestamp[w.Id()] = t + 1
 		}
 	}
