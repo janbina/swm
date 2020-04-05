@@ -127,7 +127,7 @@ var ewmhSupported = []string{
 var windowAllowedActions = []string{
 	//"_NET_WM_ACTION_MOVE",
 	//"_NET_WM_ACTION_RESIZE",
-	//"_NET_WM_ACTION_MINIMIZE",
+	"_NET_WM_ACTION_MINIMIZE",
 	//"_NET_WM_ACTION_SHADE",
 	"_NET_WM_ACTION_STICK",
 	"_NET_WM_ACTION_MAXIMIZE_HORZ",

@@ -155,13 +155,13 @@ func (w *Window) Unmap() {
 	_ = w.SetIcccmState(icccm.StateIconic)
 }
 
-func (w *Window) Hide() {
+func (w *Window) Iconify() {
 	w.Unmap()
 	w.addStates("_NET_WM_STATE_HIDDEN")
-	focus.FocusLast() // Todo: how to do this better
+	focus.FocusLast()
 }
 
-func (w *Window) Show() {
+func (w *Window) DeIconify() {
 	w.Map()
 	w.removeStates("_NET_WM_STATE_HIDDEN")
 	w.Focus()

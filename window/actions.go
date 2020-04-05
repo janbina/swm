@@ -2,7 +2,6 @@ package window
 
 import (
 	"github.com/BurntSushi/xgb/xproto"
-	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
 	"github.com/janbina/swm/util"
@@ -171,11 +170,10 @@ func (w *Window) MaximizeHorzToggle() {
 
 func (w *Window) IconifyToggle() {
 	if w.iconified {
-		w.Show()
+		w.DeIconify()
 	} else {
-		w.Hide()
+		w.Iconify()
 	}
-	focus.FocusLast()
 }
 
 func (w *Window) UnStackAbove() {

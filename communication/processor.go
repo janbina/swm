@@ -223,7 +223,7 @@ func stackBelowCommand(_ []string) string {
 
 func minimizeCommand(_ []string) string {
 	windowmanager.DoOnActiveWindow(func(w *window.Window) {
-		w.Hide()
+		w.Iconify()
 	})
 	return ""
 }
