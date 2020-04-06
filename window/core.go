@@ -10,6 +10,7 @@ import (
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/geometry"
+	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
 	"github.com/janbina/swm/util"
 	"log"
@@ -73,6 +74,18 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 	g, _ := window.win.Geometry()
 
 	window.parent, _ = reparent(x, xWin)
+
+	if window.normalHints.Flags&icccm.SizeHintUSPosition == 0 &&
+		window.normalHints.Flags&icccm.SizeHintPPosition == 0 {
+		if pointer, err := util.QueryPointer(x); err == nil {
+			if head, err := heads.GetHeadForPointerStruts(pointer.X, pointer.Y); err == nil {
+				xGap := head.Width() - g.Width()
+				yGap := head.Height() - g.Height()
+				g.XSet(head.X() + xGap/2)
+				g.YSet(head.Y() + yGap/2)
+			}
+		}
+	}
 
 	window.parent.MoveResize(g.Pieces())
 

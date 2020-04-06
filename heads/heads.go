@@ -30,3 +30,23 @@ func GetHeadForRectStruts(rect xrect.Rect) (xrect.Rect, error) {
 		return HeadsStruts[i], nil
 	}
 }
+
+func GetHeadForPointerStruts(x, y int) (xrect.Rect, error) {
+	if len(HeadsStruts) == 0 {
+		return nil, fmt.Errorf("no heads")
+	}
+	for _, head := range HeadsStruts {
+		if xInRect(x, head) && yInRect(y, head) {
+			return head, nil
+		}
+	}
+	return HeadsStruts[0], nil
+}
+
+func xInRect(xT int, rect xrect.Rect) bool {
+	return xT >= rect.X() && xT < (rect.X()+rect.Width())
+}
+
+func yInRect(yT int, rect xrect.Rect) bool {
+	return yT >= rect.Y() && yT < (rect.Y()+rect.Height())
+}
