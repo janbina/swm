@@ -88,4 +88,8 @@ func setupListeners(w xproto.Window, win *window.Window) {
 	xevent.PropertyNotifyFun(func(x *xgbutil.XUtil, e xevent.PropertyNotifyEvent) {
 		win.HandlePropertyNotify(e)
 	}).Connect(X, w)
+
+	xevent.ConfigureRequestFun(func(x *xgbutil.XUtil, e xevent.ConfigureRequestEvent) {
+		win.ConfigureRequest(e)
+	}).Connect(X, w)
 }

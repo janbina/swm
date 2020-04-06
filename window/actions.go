@@ -2,6 +2,7 @@ package window
 
 import (
 	"github.com/BurntSushi/xgb/xproto"
+	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
 	"github.com/janbina/swm/util"
@@ -313,5 +314,15 @@ func (w *Window) ToggleSkipPager() {
 		w.UnSkipPager()
 	} else {
 		w.SkipPager()
+	}
+}
+
+func (w *Window) ConfigureRequest(e xevent.ConfigureRequestEvent) {
+	log.Printf("Window configure request: %s", e)
+	flags := int(e.ValueMask)
+	x, y, width, height := int(e.X), int(e.Y), int(e.Width), int(e.Height)
+
+	if flags&ConfigAll != 0 {
+		w.MoveResize(x,y,width,height,flags)
 	}
 }
