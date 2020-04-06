@@ -1,6 +1,7 @@
 package windowmanager
 
 import (
+	"log"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/keybind"
@@ -29,6 +30,7 @@ type ManagedWindow interface {
 	IsHidden() bool
 	SetupMouseEvents(moveShortcut string, resizeShortcut string)
 	Destroyed()
+	RootGeometryChanged()
 }
 
 var (
@@ -63,25 +65,15 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 
 	Root.Change(xproto.CwCursor, uint32(cursors.LeftPtr))
 
-	RootGeometry, err = Root.Geometry()
-	if err != nil {
-		return err
-	}
-	setDesktopGeometry()
-	setDesktopViewport()
-
-	heads.Heads, err = xinerama.PhysicalHeads(X)
-	if err != nil || len(heads.Heads) == 0 {
-		heads.Heads = xinerama.Heads{RootGeometry}
-	}
-
 	managedWindows = make(map[xproto.Window]ManagedWindow)
 	strutWindows = make(map[xproto.Window]bool)
 
-	applyStruts()
 	desktopmanager.SetDesktops()
 	desktopmanager.SetCurrentDesktop()
-	setWorkArea(desktopmanager.GetNumDesktops())
+
+	if err = loadGeometriesAndHeads(); err != nil {
+		return err
+	}
 
 	setEwmhSupported(X)
 
@@ -91,6 +83,7 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 // Setup event listeners
 func SetupRoot() error {
 	if err := Root.Listen(
+		xproto.EventMaskStructureNotify,
 		xproto.EventMaskSubstructureRedirect,
 		xproto.EventMaskSubstructureNotify,
 	); err != nil {
@@ -100,6 +93,10 @@ func SetupRoot() error {
 	xevent.ConfigureRequestFun(configureRequestFun).Connect(X, Root.Id)
 	xevent.MapRequestFun(mapRequestFun).Connect(X, Root.Id)
 	xevent.ClientMessageFun(handleRootClientMessage).Connect(X, Root.Id)
+	xevent.ConfigureNotifyFun(func(X *xgbutil.XUtil, e xevent.ConfigureNotifyEvent) {
+		log.Printf("Root geometry changed: %s", e)
+		_ = loadGeometriesAndHeads()
+	}).Connect(X, Root.Id)
 
 	return nil
 }
@@ -133,4 +130,29 @@ func Run() {
 
 func Shutdown() {
 	xevent.Quit(X)
+}
+
+func loadGeometriesAndHeads() error {
+	var err error
+	RootGeometry, err = Root.Geometry()
+	if err != nil {
+		return err
+	}
+	setDesktopGeometry()
+	setDesktopViewport()
+
+	heads.Heads, err = xinerama.PhysicalHeads(X)
+	if err != nil || len(heads.Heads) == 0 {
+		heads.Heads = xinerama.Heads{RootGeometry}
+	}
+
+	applyStruts()
+
+	setWorkArea(desktopmanager.GetNumDesktops())
+
+	for _, win := range managedWindows {
+		win.RootGeometryChanged()
+	}
+
+	return nil
 }

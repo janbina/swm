@@ -326,3 +326,39 @@ func (w *Window) ConfigureRequest(e xevent.ConfigureRequestEvent) {
 		w.MoveResize(x,y,width,height,flags)
 	}
 }
+
+// RootGeometryChanged moves window based on changes to root geometry
+// New monitors might have been added/removed and resolution could have changed
+// We unfullscreen and unmaximize window, so it restores its original geometry,
+// than we check if window overlaps with any monitor and if not, move it so it does
+// and finally restore maximized and fullscreen states
+func (w *Window) RootGeometryChanged() {
+	maxedVert, maxedHorz, fullscreen := w.maxedVert, w.maxedHorz, w.fullscreen
+	w.UnFullscreen()
+	w.UnMaximize()
+
+	g, _ := w.Geometry()
+
+	dX, dY := util.MinMovement(g.Rect(), heads.HeadsStruts, 50)
+	flags := 0
+	if dX != 0 {
+		flags |= ConfigX
+	}
+	if dY != 0 {
+		flags |= ConfigY
+	}
+	if flags != 0 {
+		w.MoveResize(g.X() + dX, g.Y() + dY, 0, 0, flags)
+	}
+
+	if maxedHorz && maxedVert {
+		w.Maximize()
+	} else if maxedVert {
+		w.MaximizeVert()
+	} else if maxedHorz {
+		w.MaximizeHorz()
+	}
+	if fullscreen {
+		w.Fullscreen()
+	}
+}
