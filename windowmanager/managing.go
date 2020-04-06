@@ -19,6 +19,12 @@ func manageWindow(w xproto.Window) {
 		return
 	}
 
+	attrs, err := xproto.GetWindowAttributes(X.Conn(), w).Reply()
+	if err == nil && attrs.OverrideRedirect {
+		log.Printf("Ignoring window with override redirect")
+		return
+	}
+
 	win := window.New(X, w)
 	managedWindows[w] = win
 	desktopmanager.AddWindow(w)
