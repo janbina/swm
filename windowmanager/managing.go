@@ -12,6 +12,13 @@ import (
 )
 
 func manageWindow(w xproto.Window) {
+	X.Grab()
+	defer X.Ungrab()
+
+	if _, ok := managedWindows[w]; ok {
+		return
+	}
+
 	win := window.New(X, w)
 	managedWindows[w] = win
 	desktopmanager.AddWindow(w)
@@ -42,6 +49,8 @@ func manageWindow(w xproto.Window) {
 }
 
 func unmanageWindow(w xproto.Window) {
+	X.Grab()
+	defer X.Ungrab()
 	win := managedWindows[w]
 	if win == nil {
 		return
