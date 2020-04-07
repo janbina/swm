@@ -39,7 +39,7 @@ func QueryPointerClient(x *xgbutil.XUtil) (*QueryPointerResponse, error) {
 	}
 	return &QueryPointerResponse{
 		int(r.RootX), int(r.RootY),
-		r.Child, int(r.WinX), int(r.WinY),
+		client, int(r.WinX), int(r.WinY),
 	}, nil
 }
 

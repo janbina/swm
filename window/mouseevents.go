@@ -69,6 +69,24 @@ func (w *Window) DragResizeBegin(xr, yr int16, dir int) {
 	)
 }
 
+func (w *Window) DragResizeBeginEvent(xr, yr, xe, ye int16) {
+	X := w.win.X
+	mousebind.DragBegin(
+		X,
+		xevent.ButtonPressEvent{
+			ButtonPressEvent: &xproto.ButtonPressEvent{
+				RootX: xr,
+				RootY: yr,
+				EventX: xe,
+				EventY: ye,
+			},
+		},
+		X.Dummy(),
+		w.win.Id,
+		dragResizeBegin(w, ewmh.Infer), dragResizeStep(w), dragResizeEnd(w),
+	)
+}
+
 func dragMoveBegin(w *Window) xgbutil.MouseDragBeginFun {
 	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) (bool, xproto.Cursor) {
 		if !w.IsMouseMoveable() {

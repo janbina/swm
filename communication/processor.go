@@ -26,10 +26,12 @@ var commands = map[string]commandFunc{
 	"stack-above":          stackAboveCommand,
 	"stack-below":          stackBelowCommand,
 	"minimize":             minimizeCommand,
-	"maximize":          	maximizeCommand,
-	"cycle-win":          	cycleWinCommand,
-	"cycle-win-rev":      	cycleWinRevCommand,
-	"cycle-win-end":       	cycleWinEndCommand,
+	"maximize":             maximizeCommand,
+	"cycle-win":            cycleWinCommand,
+	"cycle-win-rev":        cycleWinRevCommand,
+	"cycle-win-end":        cycleWinEndCommand,
+	"begin-mouse-move":     mouseMoveCommand,
+	"begin-mouse-resize":   mouseResizeCommand,
 }
 
 func processCommand(msg string) string {
@@ -131,19 +133,19 @@ func moveResizeCommand(args []string) string {
 	if err != nil {
 		return fmt.Sprintf("Cannot get active window geometry: %s", err)
 	}
-	if *x == 0  {
+	if *x == 0 {
 		*x = int(*xr * float64(screenGeom.Width()))
 	}
 
-	if *y == 0  {
+	if *y == 0 {
 		*y = int(*yr * float64(screenGeom.Height()))
 	}
 
-	if *w == 0  {
+	if *w == 0 {
 		*w = int(*wr * float64(screenGeom.Width()))
 	}
 
-	if *h == 0  {
+	if *h == 0 {
 		*h = int(*hr * float64(screenGeom.Height()))
 	}
 
@@ -161,7 +163,7 @@ func moveResizeCommand(args []string) string {
 	} else if strings.Contains(*anchor, "b") {
 		realY = screenGeom.Y() + screenGeom.Height() - *y - *h
 	} else { //center
-		realY = screenGeom.Y() + screenGeom.Height() / 2 - *h / 2 + *y
+		realY = screenGeom.Y() + screenGeom.Height()/2 - *h/2 + *y
 	}
 
 	var realX int
@@ -170,7 +172,7 @@ func moveResizeCommand(args []string) string {
 	} else if strings.Contains(*anchor, "r") {
 		realX = screenGeom.X() + screenGeom.Width() - *x - *w
 	} else { //center
-		realX = screenGeom.X() + screenGeom.Width() / 2 - *w / 2 + *x
+		realX = screenGeom.X() + screenGeom.Width()/2 - *w/2 + *x
 	}
 
 	windowmanager.MoveResizeActiveWindow(realX, realY, *w, *h)
@@ -197,7 +199,7 @@ func moveCommand(args []string) string {
 	dx := *r - *l
 	dy := *b - *t
 
-	windowmanager.MoveActiveWindow(winGeom.X() + dx, winGeom.Y() + dy)
+	windowmanager.MoveActiveWindow(winGeom.X()+dx, winGeom.Y()+dy)
 
 	return ""
 }
@@ -247,5 +249,19 @@ func cycleWinRevCommand(_ []string) string {
 
 func cycleWinEndCommand(_ []string) string {
 	windowmanager.CycleWinEnd()
+	return ""
+}
+
+func mouseMoveCommand(_ []string) string {
+	if err := windowmanager.BeginMouseMoveFromPointer(); err != nil {
+		return err.Error()
+	}
+	return ""
+}
+
+func mouseResizeCommand(_ []string) string {
+	if err := windowmanager.BeginMouseResizeFromPointer(); err != nil {
+		return err.Error()
+	}
 	return ""
 }

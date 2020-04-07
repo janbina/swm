@@ -10,6 +10,7 @@ import (
 	"github.com/janbina/swm/geometry"
 	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
+	"github.com/janbina/swm/util"
 	"github.com/janbina/swm/window"
 	"log"
 )
@@ -241,4 +242,30 @@ func ToggleWindowSticky(w *window.Window) {
 	} else {
 		StickWindow(w)
 	}
+}
+
+func BeginMouseMoveFromPointer() error {
+	p, err := util.QueryPointerClient(X)
+	if err != nil {
+		return fmt.Errorf("no client window underneath the pointer")
+	}
+	win := FindWindowById(p.Win)
+	if win == nil {
+		return fmt.Errorf("no client window underneath the pointer")
+	}
+	win.(*window.Window).DragMoveBegin(int16(p.X), int16(p.Y))
+	return nil
+}
+
+func BeginMouseResizeFromPointer() error {
+	p, err := util.QueryPointerClient(X)
+	if err != nil {
+		return fmt.Errorf("no client window underneath the pointer")
+	}
+	win := FindWindowById(p.Win)
+	if win == nil {
+		return fmt.Errorf("no client window underneath the pointer")
+	}
+	win.(*window.Window).DragResizeBeginEvent(int16(p.X), int16(p.Y), int16(p.WinX), int16(p.WinY))
+	return nil
 }
