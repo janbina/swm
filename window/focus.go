@@ -30,8 +30,9 @@ func (w *Window) ShouldSendFocusNotify() bool {
 	return w.protocols["WM_TAKE_FOCUS"]
 }
 
-func (w *Window) PrepareForFocus() {
+func (w *Window) PrepareForFocus(tmp bool) {
 	if w.iconified {
+		w.tmpDeiconified = tmp
 		w.IconifyToggle()
 	}
 }
@@ -52,6 +53,10 @@ func (w *Window) Focused() {
 
 func (w *Window) Unfocused() {
 	w.focused = false
+	if w.tmpDeiconified {
+		w.tmpDeiconified = false
+		w.IconifyToggle()
+	}
 	_ = util.SetBorderColor(w.parent, borderColorInactive)
 	_ = ewmh.ActiveWindowSet(w.win.X, 0)
 	w.RemoveStates("_NET_WM_STATE_FOCUSED")
@@ -60,6 +65,10 @@ func (w *Window) Unfocused() {
 		// so we have to restack after changing its focus state
 		stack.ReStack()
 	}
+}
+
+func (w *Window) RemoveTmpDeiconified() {
+	w.tmpDeiconified = false
 }
 
 func (w *Window) FocusToggle() {

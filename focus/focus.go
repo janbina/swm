@@ -15,7 +15,7 @@ type FocusableWindow interface {
 	CanFocus() bool
 	ShouldSendFocusNotify() bool // WM_TAKE_FOCUS protocol
 
-	PrepareForFocus()
+	PrepareForFocus(tmp bool)
 	ApplyFocus() // set focus on the actual window, send focus notify
 	Focused()
 	Unfocused()
@@ -54,13 +54,17 @@ func Remove(w FocusableWindow) bool {
 }
 
 func Focus(w FocusableWindow) {
+	focus(w, false)
+}
+
+func focus(w FocusableWindow, tmp bool) {
 	if !Remove(w) {
 		return
 	}
 
 	if w.CanFocus() || w.ShouldSendFocusNotify() {
 		add(w)
-		w.PrepareForFocus()
+		w.PrepareForFocus(tmp)
 		w.ApplyFocus()
 	}
 }

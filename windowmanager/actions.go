@@ -214,6 +214,7 @@ func CycleWinRev() {
 func CycleWinEnd() {
 	cycleState = 0
 	if win, ok := focus.CyclingEnded().(*window.Window); ok {
+		win.RemoveTmpDeiconified()
 		win.Raise()
 	}
 }

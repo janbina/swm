@@ -32,6 +32,7 @@ type Window struct {
 	maxedVert        bool
 	maxedHorz        bool
 	iconified        bool
+	tmpDeiconified   bool
 	focused          bool
 	mapped           bool
 	layer            int
