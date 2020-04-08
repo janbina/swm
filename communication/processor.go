@@ -7,12 +7,11 @@ import (
 	"github.com/janbina/swm/window"
 	"github.com/janbina/swm/windowmanager"
 	"github.com/mattn/go-shellwords"
+	"log"
 	"strings"
 )
 
-type commandFunc func([]string) string
-
-var commands = map[string]commandFunc{
+var commands = map[string]func([]string) string{
 	"shutdown":             shutdownCommand,
 	"resize":               resizeCommand,
 	"move-drag-shortcut":   moveDragShortcutCommand,
@@ -28,6 +27,8 @@ var commands = map[string]commandFunc{
 }
 
 func processCommand(msg string) string {
+	log.Printf("Got command from swmctl: %s", msg)
+
 	args, _ := shellwords.Parse(msg)
 
 	if len(args) == 0 {

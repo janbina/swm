@@ -3,51 +3,50 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/BurntSushi/cmd"
-	"log"
+	"github.com/BurntSushi/xgbutil"
+	"github.com/janbina/swm/communication"
 	"net"
 	"os"
 	"strings"
 )
 
 func main() {
-
-	if len(os.Args) < 2 {
-		fmt.Println("No arguments provided")
-	}
-
-	conn, err := net.Dial("unix", socketFilePath())
+	x, err := xgbutil.NewConn()
 	if err != nil {
-		log.Fatalf("Cannot connect to socket: %s", err)
+		fmt.Println("Cannot initialize X connection")
+		os.Exit(1)
 	}
-	defer conn.Close()
+	defer x.Conn().Close()
 
-	args := make([]string, len(os.Args) - 1)
+	socket := communication.GetSocketFilePath(x.Conn())
+
+	conn, err := net.Dial("unix", socket)
+	if err != nil {
+		fmt.Printf("Cannot connect to swm. Is swm running on display %d?", x.Conn().DisplayNumber)
+		os.Exit(1)
+	}
+	defer func() { _ = conn.Close() }()
+
+	args := make([]string, len(os.Args)-1)
 	for i, a := range os.Args[1:] {
 		args[i] = fmt.Sprintf("\"%s\"", a)
 	}
 
 	command := strings.Join(args, " ")
 	if _, err = fmt.Fprintf(conn, "%s%c", command, 0); err != nil {
-		log.Fatalf("Error writing command: %s", err)
+		fmt.Printf("Cannot send command to swm")
+		os.Exit(1)
 	}
 
 	reader := bufio.NewReader(conn)
 	reply, err := reader.ReadString(0)
 	if err != nil {
-		log.Fatalf("Cannot read response: %s", err)
+		fmt.Printf("Cannot read swm's reply")
+		os.Exit(1)
 	}
 	reply = reply[:len(reply)-1]
 
 	if len(reply) > 0 {
 		fmt.Println(reply)
 	}
-}
-
-func socketFilePath() string {
-	c := cmd.New("swm", "--show-socket")
-	if err := c.Run(); err != nil {
-		log.Fatal(err)
-	}
-	return strings.TrimSpace(c.BufStdout.String())
 }

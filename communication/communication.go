@@ -37,7 +37,7 @@ func Listen(x *xgb.Conn) {
 	if err != nil {
 		log.Fatalf("Cannot start listener")
 	}
-	defer listener.Close()
+	defer func() { _ = listener.Close() }()
 
 	for {
 		conn, err := listener.Accept()
@@ -48,18 +48,18 @@ func Listen(x *xgb.Conn) {
 }
 
 func handleClient(conn net.Conn) {
-	defer conn.Close()
 	for {
 		msg, err := bufio.NewReader(conn).ReadString(0)
 		if err != nil {
-			return
+			break
 		}
 		msg = msg[:len(msg)-1]
 
-		log.Printf("Got command from swmctl: %s", msg)
-
 		out := processCommand(msg)
 
-		fmt.Fprintf(conn, "%s%c", out, 0)
+		if _, err := fmt.Fprintf(conn, "%s%c", out, 0); err != nil {
+			log.Printf("Error sending response to swmctl: %s", err)
+		}
 	}
+	_ = conn.Close()
 }
