@@ -21,4 +21,5 @@ func (w *Window) LoadWindowState(name string) {
 	}
 	w.moveResizeInternal(s.geom.PiecesTotal())
 	util.SetBorderWidth(w.parent, uint32(s.geom.BorderWidth()))
+	w.setFrameExtents(s.geom.BorderWidth())
 }

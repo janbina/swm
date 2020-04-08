@@ -2,6 +2,7 @@ package window
 
 import (
 	"github.com/BurntSushi/xgb/xproto"
+	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
@@ -267,6 +268,7 @@ func (w *Window) Fullscreen() {
 		log.Printf("Cannot get screen geometry: %s", err)
 	}
 	util.SetBorderWidth(w.parent, 0)
+	w.setFrameExtents(0)
 	w.moveResizeInternal(g.X(), g.Y(), g.Width(), g.Height())
 
 	w.layer = stack.LayerFullscreen
@@ -361,4 +363,13 @@ func (w *Window) RootGeometryChanged() {
 	if fullscreen {
 		w.Fullscreen()
 	}
+}
+
+func (w *Window) setFrameExtents(width int) {
+	_ = ewmh.FrameExtentsSet(w.win.X, w.win.Id, &ewmh.FrameExtents{
+		Left:   width,
+		Right:  width,
+		Top:    width,
+		Bottom: width,
+	})
 }

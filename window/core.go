@@ -18,7 +18,7 @@ import (
 
 const (
 	borderColorActive    = 0x00BCD4
-	borderColorInactive  = 0xCDDC39
+	borderColorInactive  = 0xB0BEC5
 	borderColorAttention = 0xF44336
 )
 
@@ -91,9 +91,12 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 	window.parent.MoveResize(g.Pieces())
 
 	if window.shouldDecorate() {
-		if err := util.SetBorder(window.parent, 2, borderColorInactive); err != nil {
+		if err := util.SetBorder(window.parent, 1, borderColorInactive); err != nil {
 			log.Printf("Cannot set window border")
 		}
+		window.setFrameExtents(1)
+	} else {
+		window.setFrameExtents(0)
 	}
 
 	if window.states["_NET_WM_STATE_MAXIMIZED_VERT"] && window.states["_NET_WM_STATE_MAXIMIZED_HORZ"] {
