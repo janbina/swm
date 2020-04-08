@@ -62,6 +62,7 @@ func (w *Window) moveResizeInternal(x, y, width, height int, flags ...int) {
 	onlyMove := f&ConfigSize == 0
 	if onlyMove {
 		w.parent.Move(x, y)
+		w.sendConfigureNotify()
 	} else {
 		g, _ := w.Geometry()
 		realWidth := width - 2*g.BorderWidth()
@@ -75,6 +76,7 @@ func (w *Window) moveResizeInternal(x, y, width, height int, flags ...int) {
 		}
 		w.parent.MROpt(f, x, y, realWidth, realHeight)
 		w.win.MROpt(f, 0, 0, realWidth, realHeight)
+		w.sendConfigureNotify()
 	}
 }
 
@@ -325,7 +327,7 @@ func (w *Window) ConfigureRequest(e xevent.ConfigureRequestEvent) {
 	x, y, width, height := int(e.X), int(e.Y), int(e.Width), int(e.Height)
 
 	if flags&ConfigAll != 0 {
-		w.MoveResize(x,y,width,height,flags)
+		w.MoveResize(x, y, width, height, flags)
 	}
 }
 
@@ -350,7 +352,7 @@ func (w *Window) RootGeometryChanged() {
 		flags |= ConfigY
 	}
 	if flags != 0 {
-		w.MoveResize(g.X() + dX, g.Y() + dY, 0, 0, flags)
+		w.MoveResize(g.X()+dX, g.Y()+dY, 0, 0, flags)
 	}
 
 	if maxedHorz && maxedVert {
@@ -362,6 +364,29 @@ func (w *Window) RootGeometryChanged() {
 	}
 	if fullscreen {
 		w.Fullscreen()
+	}
+}
+
+func (w *Window) sendConfigureNotify() {
+	if g, err := w.Geometry(); err == nil {
+		e := xproto.ConfigureNotifyEvent{
+			Event:            w.win.Id,
+			Window:           w.win.Id,
+			AboveSibling:     0,
+			X:                int16(g.X()) + 1,
+			Y:                int16(g.Y()) + 1,
+			Width:            uint16(g.Width()),
+			Height:           uint16(g.Height()),
+			BorderWidth:      0,
+			OverrideRedirect: false,
+		}
+		xproto.SendEvent(
+			w.win.X.Conn(),
+			false,
+			w.win.Id,
+			xproto.EventMaskStructureNotify,
+			string(e.Bytes()),
+		)
 	}
 }
 
