@@ -12,7 +12,6 @@ import (
 	"github.com/janbina/swm/stack"
 	"github.com/janbina/swm/util"
 	"github.com/janbina/swm/window"
-	"log"
 )
 
 var moveDragShortcut = "Mod1-1"
@@ -37,21 +36,6 @@ func DoOnWindow(id xproto.Window, f func(*window.Window)) {
 	if win != nil {
 		f(win)
 	}
-}
-
-func DestroyActiveWindow() {
-	if w := getActiveWin(); w != nil {
-		DestroyWindow(w.Id())
-	}
-}
-
-func DestroyWindow(id xproto.Window) {
-	win := FindWindowById(id)
-	if win == nil {
-		return
-	}
-	log.Printf("Destroy win %d", id)
-	win.Destroy()
 }
 
 func ResizeActiveWindow(directions window.Directions) {

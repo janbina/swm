@@ -3,12 +3,10 @@ package communication
 import (
 	"flag"
 	"fmt"
-	"github.com/BurntSushi/xgb/xproto"
 	"github.com/janbina/swm/desktopmanager"
 	"github.com/janbina/swm/window"
 	"github.com/janbina/swm/windowmanager"
 	"github.com/mattn/go-shellwords"
-	"strconv"
 	"strings"
 )
 
@@ -16,17 +14,12 @@ type commandFunc func([]string) string
 
 var commands = map[string]commandFunc{
 	"shutdown":             shutdownCommand,
-	"destroywin":           destroyWindowCommand,
 	"resize":               resizeCommand,
 	"move-drag-shortcut":   moveDragShortcutCommand,
 	"resize-drag-shortcut": resizeDragShortcutCommand,
 	"moveresize":           moveResizeCommand,
 	"move":                 moveCommand,
 	"set-desktop-names":    setDesktopNamesCommand,
-	"stack-above":          stackAboveCommand,
-	"stack-below":          stackBelowCommand,
-	"minimize":             minimizeCommand,
-	"maximize":             maximizeCommand,
 	"cycle-win":            cycleWinCommand,
 	"cycle-win-rev":        cycleWinRevCommand,
 	"cycle-win-end":        cycleWinEndCommand,
@@ -53,19 +46,6 @@ func processCommand(msg string) string {
 
 func shutdownCommand(_ []string) string {
 	windowmanager.Shutdown()
-	return ""
-}
-
-func destroyWindowCommand(args []string) string {
-	if len(args) == 0 {
-		windowmanager.DestroyActiveWindow()
-	} else {
-		if win, err := strconv.Atoi(args[0]); err != nil {
-			return fmt.Sprintf("Expected window id (int) as first argument, got %s", args[0])
-		} else {
-			windowmanager.DestroyWindow(xproto.Window(win))
-		}
-	}
 	return ""
 }
 
@@ -206,34 +186,6 @@ func moveCommand(args []string) string {
 
 func setDesktopNamesCommand(args []string) string {
 	desktopmanager.SetDesktopNames(args)
-	return ""
-}
-
-func stackAboveCommand(_ []string) string {
-	windowmanager.DoOnActiveWindow(func(w *window.Window) {
-		w.StackAboveToggle()
-	})
-	return ""
-}
-
-func stackBelowCommand(_ []string) string {
-	windowmanager.DoOnActiveWindow(func(w *window.Window) {
-		w.StackBelowToggle()
-	})
-	return ""
-}
-
-func minimizeCommand(_ []string) string {
-	windowmanager.DoOnActiveWindow(func(w *window.Window) {
-		w.Iconify()
-	})
-	return ""
-}
-
-func maximizeCommand(_ []string) string {
-	windowmanager.DoOnActiveWindow(func(w *window.Window) {
-		w.MaximizeToggle()
-	})
 	return ""
 }
 
