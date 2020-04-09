@@ -82,7 +82,7 @@ func moveCommand(args []string) string {
 		return fmt.Sprintf("Error parsing arguments: %s", err)
 	}
 
-	winGeom, err := windowmanager.GetActiveWindowGeometry()
+	winGeom, err := windowmanager.GetWindowGeometry(0)
 	if err != nil {
 		return fmt.Sprintf("Cannot get active window geometry: %s", err)
 	}
@@ -90,8 +90,9 @@ func moveCommand(args []string) string {
 	dx := *r - *l
 	dy := *b - *t
 
-	windowmanager.MoveActiveWindow(winGeom.X()+dx, winGeom.Y()+dy)
-
+	if err := windowmanager.MoveWindow(0, winGeom.X()+dx, winGeom.Y()+dy); err != nil {
+		return err.Error()
+	}
 	return ""
 }
 
@@ -107,7 +108,9 @@ func resizeCommand(args []string) string {
 		return fmt.Sprintf("Error parsing arguments: %s", err)
 	}
 
-	windowmanager.ResizeActiveWindow(d)
+	if err := windowmanager.ResizeWindow(0, d); err != nil {
+		return err.Error()
+	}
 	return ""
 }
 
@@ -127,11 +130,11 @@ func moveResizeCommand(args []string) string {
 		return fmt.Sprintf("Error parsing arguments: %s", err)
 	}
 
-	screenGeom, err := windowmanager.GetCurrentScreenGeometryStruts()
+	screenGeom, err := windowmanager.GetWindowScreenGeometryStruts(0)
 	if err != nil {
 		return fmt.Sprintf("Cannot get window screen geometry: %s", err)
 	}
-	winGeom, err := windowmanager.GetActiveWindowGeometry()
+	winGeom, err := windowmanager.GetWindowGeometry(0)
 	if err != nil {
 		return fmt.Sprintf("Cannot get active window geometry: %s", err)
 	}
@@ -177,8 +180,9 @@ func moveResizeCommand(args []string) string {
 		realX = screenGeom.X() + screenGeom.Width()/2 - *w/2 + *x
 	}
 
-	windowmanager.MoveResizeActiveWindow(realX, realY, *w, *h)
-
+	if err := windowmanager.MoveResizeWindow(0, realX, realY, *w, *h); err != nil {
+		return err.Error()
+	}
 	return ""
 }
 

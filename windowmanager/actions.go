@@ -17,95 +17,53 @@ import (
 var moveDragShortcut = "Mod1-1"
 var resizeDragShortcut = "Mod1-3"
 
-func FindWindowById(id xproto.Window) ManagedWindow {
-	return managedWindows[id]
-}
-
-func getActiveWin() focus.FocusableWindow {
+func getActiveWindow() focus.FocusableWindow {
 	return focus.Current()
 }
 
-func DoOnActiveWindow(f func(*window.Window)) {
-	if w := getActiveWin(); w != nil {
-		DoOnWindow(w.Id(), f)
+func GetWindowById(id int) (ManagedWindow, error) {
+	if id == 0 {
+		if active := getActiveWindow(); active == nil {
+			return nil, fmt.Errorf("cannot get active window")
+		} else {
+			id = int(active.Id())
+		}
+	}
+	if win := managedWindows[xproto.Window(id)]; win == nil {
+		return nil, fmt.Errorf("cannot find window with id %d", id)
+	} else {
+		return win, nil
 	}
 }
 
-func DoOnWindow(id xproto.Window, f func(*window.Window)) {
-	win := FindWindowById(id).(*window.Window)
-	if win != nil {
-		f(win)
-	}
-}
-
-func ResizeActiveWindow(directions window.Directions) {
-	if w := getActiveWin(); w != nil {
-		ResizeWindow(w.Id(), directions)
-	}
-}
-
-func ResizeWindow(id xproto.Window, directions window.Directions) {
-	win := FindWindowById(id)
-	if win == nil {
-		return
-	}
-	win.Resize(directions)
-}
-
-func MoveActiveWindow(x, y int) {
-	if w := getActiveWin(); w != nil {
-		MoveWindow(w.Id(), x, y)
-	}
-}
-
-func MoveWindow(id xproto.Window, x, y int) {
-	win := FindWindowById(id)
-	if win == nil {
-		return
-	}
-	win.Move(x, y)
-}
-
-func MoveResizeActiveWindow(x, y, width, height int) {
-	if w := getActiveWin(); w != nil {
-		MoveResizeWindow(w.Id(), x, y, width, height)
-	}
-}
-
-func MoveResizeWindow(id xproto.Window, x, y, width, height int) {
-	win := FindWindowById(id)
-	if win == nil {
-		return
-	}
-	win.MoveResize(x, y, width, height)
-}
-
-func SetMoveDragShortcut(s string) error {
-	if _, _, err := mousebind.ParseString(X, s); err != nil {
+func doOnWindow(id int, action func(win ManagedWindow)) error {
+	win, err := GetWindowById(id)
+	if err != nil {
 		return err
 	}
-	moveDragShortcut = s
-	mouseShortcutsChanged()
+	action(win)
 	return nil
 }
 
-func SetResizeDragShortcut(s string) error {
-	if _, _, err := mousebind.ParseString(X, s); err != nil {
-		return err
-	}
-	resizeDragShortcut = s
-	mouseShortcutsChanged()
-	return nil
+func MoveWindow(id int, x, y int) error {
+	return doOnWindow(id, func(win ManagedWindow) {
+		win.Move(x, y)
+	})
 }
 
-func GetCurrentScreenGeometry() (xrect.Rect, error) {
-	if w := getActiveWin(); w != nil {
-		return GetWindowScreenGeometry(w.Id())
-	}
-	return nil, fmt.Errorf("no active window")
+func ResizeWindow(id int, directions window.Directions) error {
+	return doOnWindow(id, func(win ManagedWindow) {
+		win.Resize(directions)
+	})
 }
 
-func GetWindowScreenGeometry(id xproto.Window) (xrect.Rect, error) {
+func MoveResizeWindow(id int, x, y, width, height int) error {
+	return doOnWindow(id, func(win ManagedWindow) {
+		win.MoveResize(x, y, width, height)
+	})
+}
+
+func GetWindowScreenGeometry(id int) (xrect.Rect, error) {
 	winGeom, err := GetWindowGeometry(id)
 	if err != nil {
 		return nil, err
@@ -113,14 +71,7 @@ func GetWindowScreenGeometry(id xproto.Window) (xrect.Rect, error) {
 	return heads.GetHeadForRect(winGeom.RectTotal())
 }
 
-func GetCurrentScreenGeometryStruts() (xrect.Rect, error) {
-	if w := getActiveWin(); w != nil {
-		return GetWindowScreenGeometryStruts(w.Id())
-	}
-	return nil, fmt.Errorf("no active window")
-}
-
-func GetWindowScreenGeometryStruts(id xproto.Window) (xrect.Rect, error) {
+func GetWindowScreenGeometryStruts(id int) (xrect.Rect, error) {
 	winGeom, err := GetWindowGeometry(id)
 	if err != nil {
 		return nil, err
@@ -128,17 +79,10 @@ func GetWindowScreenGeometryStruts(id xproto.Window) (xrect.Rect, error) {
 	return heads.GetHeadForRectStruts(winGeom.RectTotal())
 }
 
-func GetActiveWindowGeometry() (*geometry.Geometry, error) {
-	if w := getActiveWin(); w != nil {
-		return GetWindowGeometry(w.Id())
-	}
-	return nil, fmt.Errorf("no active window")
-}
-
-func GetWindowGeometry(id xproto.Window) (*geometry.Geometry, error) {
-	win := FindWindowById(id)
-	if win == nil {
-		return nil, fmt.Errorf("cannot find window with id %d", id)
+func GetWindowGeometry(id int) (*geometry.Geometry, error) {
+	win, err := GetWindowById(id)
+	if err != nil {
+		return nil, err
 	}
 	return win.Geometry()
 }
@@ -172,12 +116,6 @@ func applyChanges(changes *desktopmanager.Changes) {
 		if !win.IsHidden() {
 			win.Map()
 		}
-	}
-}
-
-func mouseShortcutsChanged() {
-	for _, win := range managedWindows {
-		win.SetupMouseEvents(moveDragShortcut, resizeDragShortcut)
 	}
 }
 
@@ -229,13 +167,37 @@ func ToggleWindowSticky(w *window.Window) {
 	}
 }
 
+func SetMoveDragShortcut(s string) error {
+	if _, _, err := mousebind.ParseString(X, s); err != nil {
+		return err
+	}
+	moveDragShortcut = s
+	mouseShortcutsChanged()
+	return nil
+}
+
+func SetResizeDragShortcut(s string) error {
+	if _, _, err := mousebind.ParseString(X, s); err != nil {
+		return err
+	}
+	resizeDragShortcut = s
+	mouseShortcutsChanged()
+	return nil
+}
+
+func mouseShortcutsChanged() {
+	for _, win := range managedWindows {
+		win.SetupMouseEvents(moveDragShortcut, resizeDragShortcut)
+	}
+}
+
 func BeginMouseMoveFromPointer() error {
 	p, err := util.QueryPointerClient(X)
 	if err != nil {
 		return fmt.Errorf("no client window underneath the pointer")
 	}
-	win := FindWindowById(p.Win)
-	if win == nil {
+	win, err := GetWindowById(int(p.Win))
+	if err != nil {
 		return fmt.Errorf("no client window underneath the pointer")
 	}
 	win.(*window.Window).DragMoveBegin(int16(p.X), int16(p.Y))
@@ -247,8 +209,8 @@ func BeginMouseResizeFromPointer() error {
 	if err != nil {
 		return fmt.Errorf("no client window underneath the pointer")
 	}
-	win := FindWindowById(p.Win)
-	if win == nil {
+	win, err := GetWindowById(int(p.Win))
+	if err != nil {
 		return fmt.Errorf("no client window underneath the pointer")
 	}
 	win.(*window.Window).DragResizeBeginEvent(int16(p.X), int16(p.Y), int16(p.WinX), int16(p.WinY))
