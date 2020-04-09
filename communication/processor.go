@@ -73,6 +73,7 @@ func shutdownCommand(_ []string) string {
 
 func moveCommand(args []string) string {
 	f := flag.NewFlagSet("move", flag.ContinueOnError)
+	id := f.Int("id", 0, "")
 	l := f.Int("l", 0, "")
 	b := f.Int("b", 0, "")
 	t := f.Int("t", 0, "")
@@ -82,7 +83,7 @@ func moveCommand(args []string) string {
 		return fmt.Sprintf("Error parsing arguments: %s", err)
 	}
 
-	winGeom, err := windowmanager.GetWindowGeometry(0)
+	winGeom, err := windowmanager.GetWindowGeometry(*id)
 	if err != nil {
 		return fmt.Sprintf("Cannot get active window geometry: %s", err)
 	}
@@ -90,7 +91,7 @@ func moveCommand(args []string) string {
 	dx := *r - *l
 	dy := *b - *t
 
-	if err := windowmanager.MoveWindow(0, winGeom.X()+dx, winGeom.Y()+dy); err != nil {
+	if err := windowmanager.MoveWindow(*id, winGeom.X()+dx, winGeom.Y()+dy); err != nil {
 		return err.Error()
 	}
 	return ""
@@ -98,7 +99,8 @@ func moveCommand(args []string) string {
 
 func resizeCommand(args []string) string {
 	d := window.Directions{}
-	f := flag.NewFlagSet("moveresize", flag.ContinueOnError)
+	f := flag.NewFlagSet("resize", flag.ContinueOnError)
+	id := f.Int("id", 0, "")
 	f.IntVar(&d.Left, "l", 0, "")
 	f.IntVar(&d.Bottom, "b", 0, "")
 	f.IntVar(&d.Top, "t", 0, "")
@@ -108,7 +110,7 @@ func resizeCommand(args []string) string {
 		return fmt.Sprintf("Error parsing arguments: %s", err)
 	}
 
-	if err := windowmanager.ResizeWindow(0, d); err != nil {
+	if err := windowmanager.ResizeWindow(*id, d); err != nil {
 		return err.Error()
 	}
 	return ""
@@ -116,6 +118,7 @@ func resizeCommand(args []string) string {
 
 func moveResizeCommand(args []string) string {
 	f := flag.NewFlagSet("moveresize", flag.ContinueOnError)
+	id := f.Int("id", 0, "")
 	anchor := f.String("anchor", "tl", "")
 	x := f.Int("x", 0, "")
 	y := f.Int("y", 0, "")
@@ -130,11 +133,11 @@ func moveResizeCommand(args []string) string {
 		return fmt.Sprintf("Error parsing arguments: %s", err)
 	}
 
-	screenGeom, err := windowmanager.GetWindowScreenGeometryStruts(0)
+	screenGeom, err := windowmanager.GetWindowScreenGeometryStruts(*id)
 	if err != nil {
 		return fmt.Sprintf("Cannot get window screen geometry: %s", err)
 	}
-	winGeom, err := windowmanager.GetWindowGeometry(0)
+	winGeom, err := windowmanager.GetWindowGeometry(*id)
 	if err != nil {
 		return fmt.Sprintf("Cannot get active window geometry: %s", err)
 	}
@@ -180,7 +183,7 @@ func moveResizeCommand(args []string) string {
 		realX = screenGeom.X() + screenGeom.Width()/2 - *w/2 + *x
 	}
 
-	if err := windowmanager.MoveResizeWindow(0, realX, realY, *w, *h); err != nil {
+	if err := windowmanager.MoveResizeWindow(*id, realX, realY, *w, *h); err != nil {
 		return err.Error()
 	}
 	return ""
