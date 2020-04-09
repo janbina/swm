@@ -3,14 +3,18 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/janbina/swm/communication"
+	"io/ioutil"
+	"log"
 	"net"
 	"os"
 	"strings"
 )
 
 func main() {
+	xgb.Logger = log.New(ioutil.Discard, "", 0)
 	x, err := xgbutil.NewConn()
 	if err != nil {
 		fmt.Println("Cannot initialize X connection")

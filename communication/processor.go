@@ -8,6 +8,7 @@ import (
 	"github.com/janbina/swm/windowmanager"
 	"github.com/mattn/go-shellwords"
 	"log"
+	"sort"
 	"strings"
 )
 
@@ -32,17 +33,37 @@ func processCommand(msg string) string {
 	args, _ := shellwords.Parse(msg)
 
 	if len(args) == 0 {
-		return "No command"
+		return printUsage("No command")
 	}
 
 	command := args[0]
 	commandArgs := args[1:]
 
 	if c, ok := commands[command]; !ok {
-		return fmt.Sprintf("Unknown command: %s", command)
+		return printUsage(fmt.Sprintf("Unknown command: %s", command))
 	} else {
 		return c(commandArgs)
 	}
+}
+
+func printUsage(firstLine string) string {
+	var r strings.Builder
+	r.WriteString(firstLine)
+	r.WriteByte('\n')
+	r.WriteString("Usage: swmctl <cmd> <args>\n")
+	r.WriteString("Available commands:\n")
+
+	keys := make([]string, 0, len(commands))
+	for k := range commands {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		r.WriteString(fmt.Sprintf("\t%s\n", k))
+	}
+
+	return r.String()
 }
 
 func shutdownCommand(_ []string) string {
