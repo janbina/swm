@@ -51,12 +51,6 @@ func MoveWindow(id int, x, y int) error {
 	})
 }
 
-func ResizeWindow(id int, directions window.Directions) error {
-	return doOnWindow(id, func(win ManagedWindow) {
-		win.Resize(directions)
-	})
-}
-
 func MoveResizeWindow(id int, x, y, width, height int) error {
 	return doOnWindow(id, func(win ManagedWindow) {
 		win.MoveResize(x, y, width, height)

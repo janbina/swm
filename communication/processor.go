@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"github.com/janbina/swm/desktopmanager"
-	"github.com/janbina/swm/window"
 	"github.com/janbina/swm/windowmanager"
 	"github.com/mattn/go-shellwords"
 	"log"
@@ -74,10 +73,10 @@ func shutdownCommand(_ []string) string {
 func moveCommand(args []string) string {
 	f := flag.NewFlagSet("move", flag.ContinueOnError)
 	id := f.Int("id", 0, "")
-	l := f.Int("l", 0, "")
-	b := f.Int("b", 0, "")
-	t := f.Int("t", 0, "")
-	r := f.Int("r", 0, "")
+	west := f.Int("w", 0, "")
+	south := f.Int("s", 0, "")
+	north := f.Int("n", 0, "")
+	east := f.Int("e", 0, "")
 
 	if err := f.Parse(args); err != nil {
 		return fmt.Sprintf("Error parsing arguments: %s", err)
@@ -88,8 +87,8 @@ func moveCommand(args []string) string {
 		return fmt.Sprintf("Cannot get active window geometry: %s", err)
 	}
 
-	dx := *r - *l
-	dy := *b - *t
+	dx := *east - *west
+	dy := *south - *north
 
 	if err := windowmanager.MoveWindow(*id, winGeom.X()+dx, winGeom.Y()+dy); err != nil {
 		return err.Error()
@@ -98,19 +97,29 @@ func moveCommand(args []string) string {
 }
 
 func resizeCommand(args []string) string {
-	d := window.Directions{}
 	f := flag.NewFlagSet("resize", flag.ContinueOnError)
 	id := f.Int("id", 0, "")
-	f.IntVar(&d.Left, "l", 0, "")
-	f.IntVar(&d.Bottom, "b", 0, "")
-	f.IntVar(&d.Top, "t", 0, "")
-	f.IntVar(&d.Right, "r", 0, "")
+	west := f.Int("w", 0, "")
+	south := f.Int("s", 0, "")
+	north := f.Int("n", 0, "")
+	east := f.Int("e", 0, "")
 
 	if err := f.Parse(args); err != nil {
 		return fmt.Sprintf("Error parsing arguments: %s", err)
 	}
 
-	if err := windowmanager.ResizeWindow(*id, d); err != nil {
+	winGeom, err := windowmanager.GetWindowGeometry(*id)
+	if err != nil {
+		return fmt.Sprintf("Cannot get active window geometry: %s", err)
+	}
+
+	x := winGeom.X() - *west
+	y := winGeom.Y() - *north
+
+	width := winGeom.TotalWidth() + *west + *east
+	height := winGeom.TotalHeight() + *north + *south
+
+	if err := windowmanager.MoveResizeWindow(*id, x, y, width, height); err != nil {
 		return err.Error()
 	}
 	return ""
@@ -119,7 +128,7 @@ func resizeCommand(args []string) string {
 func moveResizeCommand(args []string) string {
 	f := flag.NewFlagSet("moveresize", flag.ContinueOnError)
 	id := f.Int("id", 0, "")
-	anchor := f.String("anchor", "tl", "")
+	gravity := f.String("g", "nw", "")
 	x := f.Int("x", 0, "")
 	y := f.Int("y", 0, "")
 	w := f.Int("w", 0, "")
@@ -158,26 +167,26 @@ func moveResizeCommand(args []string) string {
 	}
 
 	if *w <= 0 {
-		*w = winGeom.Width()
+		*w = winGeom.TotalWidth()
 	}
 
 	if *h <= 0 {
-		*h = winGeom.Height()
+		*h = winGeom.TotalHeight()
 	}
 
 	var realY int
-	if strings.Contains(*anchor, "t") {
+	if strings.Contains(*gravity, "n") {
 		realY = screenGeom.Y() + *y
-	} else if strings.Contains(*anchor, "b") {
+	} else if strings.Contains(*gravity, "s") {
 		realY = screenGeom.Y() + screenGeom.Height() - *y - *h
 	} else { //center
 		realY = screenGeom.Y() + screenGeom.Height()/2 - *h/2 + *y
 	}
 
 	var realX int
-	if strings.Contains(*anchor, "l") {
+	if strings.Contains(*gravity, "w") {
 		realX = screenGeom.X() + *x
-	} else if strings.Contains(*anchor, "r") {
+	} else if strings.Contains(*gravity, "e") {
 		realX = screenGeom.X() + screenGeom.Width() - *x - *w
 	} else { //center
 		realX = screenGeom.X() + screenGeom.Width()/2 - *w/2 + *x

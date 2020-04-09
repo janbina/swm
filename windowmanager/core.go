@@ -1,7 +1,6 @@
 package windowmanager
 
 import (
-	"log"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/keybind"
@@ -16,12 +15,11 @@ import (
 	"github.com/janbina/swm/geometry"
 	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
-	"github.com/janbina/swm/window"
+	"log"
 )
 
 type ManagedWindow interface {
 	Destroy()
-	Resize(directions window.Directions)
 	Move(x int, y int)
 	MoveResize(x int, y int, width int, height int, flags ...int)
 	Geometry() (*geometry.Geometry, error)

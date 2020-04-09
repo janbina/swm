@@ -10,13 +10,6 @@ import (
 	"log"
 )
 
-type Directions struct {
-	Left   int
-	Right  int
-	Bottom int
-	Top    int
-}
-
 const (
 	ConfigX        = xproto.ConfigWindowX
 	ConfigY        = xproto.ConfigWindowY
@@ -26,16 +19,6 @@ const (
 	ConfigSize     = ConfigWidth | ConfigHeight
 	ConfigAll      = ConfigPosition | ConfigSize
 )
-
-func (w *Window) Resize(d Directions) {
-	g, _ := w.Geometry()
-	x := g.X() + d.Left
-	y := g.Y() + d.Top
-
-	width := g.TotalWidth() + d.Right - d.Left
-	height := g.TotalHeight() + d.Bottom - d.Top
-	w.MoveResize(x, y, width, height)
-}
 
 func (w *Window) Move(x, y int) {
 	w.MoveResize(x, y, 0, 0, ConfigPosition)
