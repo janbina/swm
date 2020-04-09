@@ -14,15 +14,15 @@ import (
 
 var commands = map[string]func([]string) string{
 	"shutdown":             shutdownCommand,
-	"resize":               resizeCommand,
-	"move-drag-shortcut":   moveDragShortcutCommand,
-	"resize-drag-shortcut": resizeDragShortcutCommand,
-	"moveresize":           moveResizeCommand,
 	"move":                 moveCommand,
-	"set-desktop-names":    setDesktopNamesCommand,
+	"resize":               resizeCommand,
+	"moveresize":           moveResizeCommand,
 	"cycle-win":            cycleWinCommand,
 	"cycle-win-rev":        cycleWinRevCommand,
 	"cycle-win-end":        cycleWinEndCommand,
+	"set-desktop-names":    setDesktopNamesCommand,
+	"move-drag-shortcut":   moveDragShortcutCommand,
+	"resize-drag-shortcut": resizeDragShortcutCommand,
 	"begin-mouse-move":     mouseMoveCommand,
 	"begin-mouse-resize":   mouseResizeCommand,
 }
@@ -71,6 +71,30 @@ func shutdownCommand(_ []string) string {
 	return ""
 }
 
+func moveCommand(args []string) string {
+	f := flag.NewFlagSet("move", flag.ContinueOnError)
+	l := f.Int("l", 0, "")
+	b := f.Int("b", 0, "")
+	t := f.Int("t", 0, "")
+	r := f.Int("r", 0, "")
+
+	if err := f.Parse(args); err != nil {
+		return fmt.Sprintf("Error parsing arguments: %s", err)
+	}
+
+	winGeom, err := windowmanager.GetActiveWindowGeometry()
+	if err != nil {
+		return fmt.Sprintf("Cannot get active window geometry: %s", err)
+	}
+
+	dx := *r - *l
+	dy := *b - *t
+
+	windowmanager.MoveActiveWindow(winGeom.X()+dx, winGeom.Y()+dy)
+
+	return ""
+}
+
 func resizeCommand(args []string) string {
 	d := window.Directions{}
 	f := flag.NewFlagSet("moveresize", flag.ContinueOnError)
@@ -84,30 +108,6 @@ func resizeCommand(args []string) string {
 	}
 
 	windowmanager.ResizeActiveWindow(d)
-	return ""
-}
-
-func moveDragShortcutCommand(args []string) string {
-	if len(args) == 0 {
-		return "No shortcut provided"
-	}
-	s := args[0]
-	err := windowmanager.SetMoveDragShortcut(s)
-	if err != nil {
-		return "Invalid shortcut"
-	}
-	return ""
-}
-
-func resizeDragShortcutCommand(args []string) string {
-	if len(args) == 0 {
-		return "No shortcut provided"
-	}
-	s := args[0]
-	err := windowmanager.SetResizeDragShortcut(s)
-	if err != nil {
-		return "Invalid shortcut"
-	}
 	return ""
 }
 
@@ -182,35 +182,6 @@ func moveResizeCommand(args []string) string {
 	return ""
 }
 
-func moveCommand(args []string) string {
-	f := flag.NewFlagSet("move", flag.ContinueOnError)
-	l := f.Int("l", 0, "")
-	b := f.Int("b", 0, "")
-	t := f.Int("t", 0, "")
-	r := f.Int("r", 0, "")
-
-	if err := f.Parse(args); err != nil {
-		return fmt.Sprintf("Error parsing arguments: %s", err)
-	}
-
-	winGeom, err := windowmanager.GetActiveWindowGeometry()
-	if err != nil {
-		return fmt.Sprintf("Cannot get active window geometry: %s", err)
-	}
-
-	dx := *r - *l
-	dy := *b - *t
-
-	windowmanager.MoveActiveWindow(winGeom.X()+dx, winGeom.Y()+dy)
-
-	return ""
-}
-
-func setDesktopNamesCommand(args []string) string {
-	desktopmanager.SetDesktopNames(args)
-	return ""
-}
-
 func cycleWinCommand(_ []string) string {
 	windowmanager.CycleWin()
 	return ""
@@ -223,6 +194,35 @@ func cycleWinRevCommand(_ []string) string {
 
 func cycleWinEndCommand(_ []string) string {
 	windowmanager.CycleWinEnd()
+	return ""
+}
+
+func setDesktopNamesCommand(args []string) string {
+	desktopmanager.SetDesktopNames(args)
+	return ""
+}
+
+func moveDragShortcutCommand(args []string) string {
+	if len(args) == 0 {
+		return "No shortcut provided"
+	}
+	s := args[0]
+	err := windowmanager.SetMoveDragShortcut(s)
+	if err != nil {
+		return "Invalid shortcut"
+	}
+	return ""
+}
+
+func resizeDragShortcutCommand(args []string) string {
+	if len(args) == 0 {
+		return "No shortcut provided"
+	}
+	s := args[0]
+	err := windowmanager.SetResizeDragShortcut(s)
+	if err != nil {
+		return "Invalid shortcut"
+	}
 	return ""
 }
 
