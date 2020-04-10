@@ -76,6 +76,7 @@ func handleWmChangeStateMessage(win *win, data []uint32) {
 }
 
 func handleActiveWindowMessage(win *win, _ []uint32) {
+	switchToWindowDesktop(win.Id())
 	win.Focus()
 	win.Raise()
 }

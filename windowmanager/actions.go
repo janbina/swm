@@ -94,6 +94,12 @@ func switchToDesktop(index int) {
 	focus.FocusLast()
 }
 
+func switchToWindowDesktop(win xproto.Window) {
+	if !desktopmanager.IsWinDesktopVisible(win) {
+		desktopmanager.SwitchToDesktop(desktopmanager.GetWinDesktop(win))
+	}
+}
+
 func applyChanges(changes *desktopmanager.Changes) {
 	for _, w := range changes.Invisible {
 		win := managedWindows[w]
