@@ -2,9 +2,17 @@
 
 SWM is simple stacking window manager for X.
 
+## Installation
+
+Clone this repository and run:
+```
+go build github.com/janbina/swm/cmd/swm
+go build github.com/janbina/swm/cmd/swmctl
+```
+
 ## How to use
 
-For now, there is one `built-in` keyboard shotrcut, `alt + Return` which runs `xterm`.
+For now, there is one `built-in` keyboard shotrcut, `alt + Return`, which runs `xterm`.
 
 SWM is meant to be controlled using X events and `swmctl`, its custom command sending tool.
 
