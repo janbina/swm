@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/xevent"
@@ -48,15 +49,15 @@ func getActiveWindow() xproto.Window {
 	return w
 }
 
-func swmctl(command string) {
-	_, e := swmctlOut(command)
+func swmctl(args ...string) {
+	_, e := swmctlOut(args...)
 	if e != nil {
-		log.Fatalf("Error running swmctl command %s: %s", command, e)
+		log.Fatalf("Error running swmctl command %s: %s", args, e)
 	}
 }
 
-func swmctlOut(command string) (string, error) {
-	cmd := exec.Command("./swmctl", command)
+func swmctlOut(args ...string) (string, error) {
+	cmd := exec.Command("./swmctl", args...)
 	out, err := cmd.Output()
 	return string(out), err
 }
@@ -67,7 +68,21 @@ func sleepMillis(millis time.Duration) {
 
 func assert(val bool, msg string, errorCnt *int) {
 	if !val {
-		_ = errorLogger.Output(3, msg)
+		_ = errorLogger.Output(2, msg)
+		*errorCnt++
+	}
+}
+
+func assertActive(win *xwindow.Window, errorCnt *int) {
+	if win.Id != getActiveWindow() {
+		_ = errorLogger.Output(2, "Incorrect active window")
+		*errorCnt++
+	}
+}
+
+func assertEquals(expected, actual int, msg string, errorCnt *int) {
+	if expected != actual {
+		_ = errorLogger.Output(2, fmt.Sprintf("%s - expected %d, got %d", msg, expected, actual))
 		*errorCnt++
 	}
 }

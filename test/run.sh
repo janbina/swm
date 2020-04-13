@@ -12,7 +12,7 @@ echo "Starting xvfb and swm"
 Xvfb $DISPLAY -screen 0 1024x768x16 &
 XVFB_PID=$!
 sleep 1
-./swm  > /dev/null 2>&1 &
+./swm > /dev/null 2>&1 &
 sleep 1
 
 echo "=================================================="

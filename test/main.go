@@ -18,6 +18,10 @@ type test struct {
 
 var tests = []test{
 	{"cycling", testCycling},
+	{"desktop basics", testDesktopBasics},
+	{"desktop names", testDesktopNames},
+	{"desktop window creation", testDesktopWindowCreation},
+	{"desktop window movement", testDesktopWindowMovement},
 }
 
 var errorLogger = log.New(os.Stdout, "    error: ", log.Lshortfile)
@@ -33,10 +37,10 @@ func main() {
 
 	errorCnt := 0
 	for _, t := range tests {
-		fmt.Printf("Testing %s\n", t.name)
+		fmt.Printf("Testing %s ... ", t.name)
 		errs := t.fun()
 		if errs == 0 {
-			fmt.Printf("%s OK\n", t.name)
+			fmt.Printf("OK\n")
 		} else {
 			fmt.Printf("Errors in %s: %d\n", t.name, errs)
 		}

@@ -1,9 +1,5 @@
 package main
 
-import (
-	"github.com/BurntSushi/xgbutil/xwindow"
-)
-
 func testCycling() int {
 	errorCnt := 0
 	winNum := 5
@@ -89,8 +85,4 @@ func reverseCycle(times int, end bool) {
 		swmctl("cycle-win-end")
 	}
 	sleepMillis(50)
-}
-
-func assertActive(win *xwindow.Window, errorCnt *int) {
-	assert(win.Id == getActiveWindow(), "Incorrect active window", errorCnt)
 }
