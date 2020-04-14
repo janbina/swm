@@ -38,7 +38,7 @@ func main() {
 		func(X *xgbutil.XUtil, ev xevent.KeyPressEvent) {
 			exec.Command("xterm").Start()
 		},
-	).Connect(windowmanager.X, windowmanager.Root.Id, "Mod1-return", true)
+	).Connect(windowmanager.X, windowmanager.Root.Id, "control-Mod1-return", true)
 
 	windowmanager.Run()
 }
