@@ -27,7 +27,8 @@ func (w *Window) Move(x, y int) {
 // single function for all moving and/or resizing, which also automatically cancel fullscreen and maximized state
 func (w *Window) MoveResize(x, y, width, height int, flags ...int) {
 	w.UnFullscreen()
-	w.UnMaximize()
+	w.UnMaximizeVert()
+	w.UnMaximizeHorz()
 	w.moveResizeInternal(x, y, width, height, flags...)
 }
 
@@ -63,24 +64,6 @@ func (w *Window) moveResizeInternal(x, y, width, height int, flags ...int) {
 	}
 }
 
-func (w *Window) Maximize() {
-	w.MaximizeHorz()
-	w.MaximizeVert()
-}
-
-func (w *Window) UnMaximize() {
-	w.UnMaximizeVert()
-	w.UnMaximizeHorz()
-}
-
-func (w *Window) MaximizeToggle() {
-	if w.maxedVert && w.maxedHorz {
-		w.UnMaximize()
-	} else {
-		w.Maximize()
-	}
-}
-
 func (w *Window) MaximizeVert() {
 	if w.maxedVert || w.fullscreen {
 		return
@@ -88,7 +71,7 @@ func (w *Window) MaximizeVert() {
 	w.maxedVert = true
 	w.AddStates("_NET_WM_STATE_MAXIMIZED_VERT")
 
-	w.SaveWindowState("prior_maxVert")
+	w.SaveWindowState(StatePriorMaxVert)
 	winG, err := w.Geometry()
 	if err != nil {
 		log.Printf("Cannot get window geometry: %s", err)
@@ -105,9 +88,9 @@ func (w *Window) UnMaximizeVert() {
 		return
 	}
 	w.maxedVert = false
-	w.RemoveStates("_NET_WM_STATE_MAXIMIZED_VERT", "MAXIMIZED")
+	w.RemoveStates("_NET_WM_STATE_MAXIMIZED_VERT")
 
-	w.LoadWindowState("prior_maxVert")
+	w.LoadWindowState(StatePriorMaxVert)
 }
 
 func (w *Window) MaximizeVertToggle() {
@@ -125,7 +108,7 @@ func (w *Window) MaximizeHorz() {
 	w.maxedHorz = true
 	w.AddStates("_NET_WM_STATE_MAXIMIZED_HORZ")
 
-	w.SaveWindowState("prior_maxHorz")
+	w.SaveWindowState(StatePriorMaxHorz)
 	winG, err := w.Geometry()
 	if err != nil {
 		log.Printf("Cannot get window geometry: %s", err)
@@ -142,9 +125,9 @@ func (w *Window) UnMaximizeHorz() {
 		return
 	}
 	w.maxedHorz = false
-	w.RemoveStates("_NET_WM_STATE_MAXIMIZED_HORZ", "MAXIMIZED")
+	w.RemoveStates("_NET_WM_STATE_MAXIMIZED_HORZ")
 
-	w.LoadWindowState("prior_maxHorz")
+	w.LoadWindowState(StatePriorMaxHorz)
 }
 
 func (w *Window) MaximizeHorzToggle() {
@@ -230,7 +213,7 @@ func (w *Window) UnFullscreen() {
 	w.fullscreen = false
 	w.RemoveStates("_NET_WM_STATE_FULLSCREEN")
 
-	w.LoadWindowState("prior_fullscreen")
+	w.LoadWindowState(StatePriorFullscreen)
 
 	w.layer = stack.LayerDefault
 	stack.ReStack()
@@ -243,7 +226,7 @@ func (w *Window) Fullscreen() {
 	w.fullscreen = true
 	w.AddStates("_NET_WM_STATE_FULLSCREEN")
 
-	w.SaveWindowState("prior_fullscreen")
+	w.SaveWindowState(StatePriorFullscreen)
 	winG, err := w.Geometry()
 	if err != nil {
 		log.Printf("Cannot get window geometry: %s", err)
@@ -322,7 +305,8 @@ func (w *Window) ConfigureRequest(e xevent.ConfigureRequestEvent) {
 func (w *Window) RootGeometryChanged() {
 	maxedVert, maxedHorz, fullscreen := w.maxedVert, w.maxedHorz, w.fullscreen
 	w.UnFullscreen()
-	w.UnMaximize()
+	w.UnMaximizeVert()
+	w.UnMaximizeHorz()
 
 	g, _ := w.Geometry()
 
@@ -338,11 +322,10 @@ func (w *Window) RootGeometryChanged() {
 		w.MoveResize(g.X()+dX, g.Y()+dY, 0, 0, flags)
 	}
 
-	if maxedHorz && maxedVert {
-		w.Maximize()
-	} else if maxedVert {
+	if maxedVert {
 		w.MaximizeVert()
-	} else if maxedHorz {
+	}
+	if maxedHorz {
 		w.MaximizeHorz()
 	}
 	if fullscreen {

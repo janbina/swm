@@ -25,7 +25,6 @@ var windowCmHandlers = map[string]func(win *win, data []uint32){
 
 var windowStateHandlers = map[string][3]func(window *win){
 	//                                 {StateRemove, StateAdd, StateToggle}
-	"MAXIMIZED":                       {(*win).UnMaximize, (*win).Maximize, (*win).MaximizeToggle},
 	"_NET_WM_STATE_MAXIMIZED_VERT":    {(*win).UnMaximizeVert, (*win).MaximizeVert, (*win).MaximizeVertToggle},
 	"_NET_WM_STATE_MAXIMIZED_HORZ":    {(*win).UnMaximizeHorz, (*win).MaximizeHorz, (*win).MaximizeHorzToggle},
 	"_NET_WM_STATE_ABOVE":             {(*win).UnStackAbove, (*win).StackAbove, (*win).StackAboveToggle},
@@ -91,14 +90,9 @@ func handleWmStateMessage(win *win, data []uint32) {
 }
 
 func updateWinStates(win *win, action int, s1 string, s2 string) {
-	if (s1 == "_NET_WM_STATE_MAXIMIZED_VERT" && s2 == "_NET_WM_STATE_MAXIMIZED_HORZ") ||
-		(s2 == "_NET_WM_STATE_MAXIMIZED_VERT" && s1 == "_NET_WM_STATE_MAXIMIZED_HORZ") {
-		updateWinState(win, action, "MAXIMIZED")
-	} else {
-		updateWinState(win, action, s1)
-		if len(s2) > 0 {
-			updateWinState(win, action, s2)
-		}
+	updateWinState(win, action, s1)
+	if len(s2) > 0 {
+		updateWinState(win, action, s2)
 	}
 }
 

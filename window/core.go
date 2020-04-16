@@ -27,7 +27,7 @@ type Window struct {
 	parent      *xwindow.Window
 	moveState   *MoveState
 	resizeState *ResizeState
-	savedStates map[string]windowState
+	savedStates map[state]windowState
 
 	maxedVert        bool
 	maxedHorz        bool
@@ -68,7 +68,7 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 
 	window.fetchXProperties()
 
-	window.savedStates = make(map[string]windowState)
+	window.savedStates = make(map[state]windowState)
 
 	_ = util.SetBorderWidth(window.win, 0)
 
@@ -97,12 +97,6 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 		window.setFrameExtents(1)
 	} else {
 		window.setFrameExtents(0)
-	}
-
-	if window.states["_NET_WM_STATE_MAXIMIZED_VERT"] && window.states["_NET_WM_STATE_MAXIMIZED_HORZ"] {
-		window.states["_NET_WM_STATE_MAXIMIZED_VERT"] = false
-		window.states["_NET_WM_STATE_MAXIMIZED_HORZ"] = false
-		window.states["MAXIMIZED"] = true
 	}
 
 	if !window.types.Any("_NET_WM_WINDOW_TYPE_DESKTOP", "_NET_WM_WINDOW_TYPE_DOCK") {
