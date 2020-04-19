@@ -61,4 +61,8 @@ func applyStruts() {
 	heads.HeadsStruts = wh[1:]
 
 	setWorkArea(desktopmanager.GetNumDesktops())
+
+	for _, win := range managedWindows {
+		win.RootGeometryChanged()
+	}
 }

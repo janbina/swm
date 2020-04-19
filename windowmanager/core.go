@@ -146,11 +146,5 @@ func loadGeometriesAndHeads() error {
 
 	applyStruts()
 
-	setWorkArea(desktopmanager.GetNumDesktops())
-
-	for _, win := range managedWindows {
-		win.RootGeometryChanged()
-	}
-
 	return nil
 }
