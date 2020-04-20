@@ -76,7 +76,8 @@ func takeWmOwnership(X *xgbutil.XUtil, replace bool) error {
 	// wait for other wm to shut down - ICCCM 2.8
 	if otherWm != xproto.Window(xproto.WindowNone) {
 		if err := waitForWmShutdown(X, otherWm); err != nil {
-			return err
+			log.Printf("Other wm didnt destroy its window in reasonable time, will kill it.")
+			xwindow.New(X, otherWm).Kill()
 		}
 	}
 
