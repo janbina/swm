@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
+	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xprop"
 	"github.com/BurntSushi/xgbutil/xwindow"
@@ -41,6 +42,22 @@ func takeWmOwnership(X *xgbutil.XUtil, replace bool) error {
 		}
 
 		log.Println("Waiting for other wm to shutdown and transfer ownership to us.")
+	} else {
+		if err2 := xwindow.New(X, X.RootWin()).Listen(xproto.EventMaskSubstructureRedirect); err2 != nil {
+			// cannot listen to substructure redirect - there must be another wm, but it doesnt support icccm selection
+
+			// try ewmh
+			win, _ := ewmh.SupportingWmCheckGet(X, X.RootWin())
+			if win != xproto.WindowNone {
+				if !replace {
+					return fmt.Errorf("another window manager is already running, use '--replace' flag")
+				} else {
+					xwindow.New(X, win).Kill()
+				}
+			} else {
+				return fmt.Errorf("another window manager is already running and it doesn't support icccm or ewmh, so we cannot destroy it")
+			}
+		}
 	}
 
 	log.Println("Setting selection owner.")
