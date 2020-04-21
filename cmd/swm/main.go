@@ -7,8 +7,10 @@ import (
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/janbina/swm/communication"
 	"github.com/janbina/swm/windowmanager"
+	"github.com/shibukawa/configdir"
 	"log"
 	"os/exec"
+	"path/filepath"
 )
 
 func main() {
@@ -30,9 +32,11 @@ func main() {
 		log.Fatalf("Cannot setup root window: %s", err)
 	}
 
-	windowmanager.ManageExistingClients()
-
 	go communication.Listen(X.Conn())
+
+	runConfig()
+
+	windowmanager.ManageExistingClients()
 
 	keybind.KeyPressFun(
 		func(X *xgbutil.XUtil, ev xevent.KeyPressEvent) {
@@ -41,4 +45,27 @@ func main() {
 	).Connect(windowmanager.X, windowmanager.Root.Id, "control-Mod1-return", true)
 
 	windowmanager.Run()
+}
+
+func runConfig() {
+	dirName := "swm"
+	fileName := "swmrc"
+
+	log.Printf("Trying to execute config")
+	dir := configdir.New("", dirName).QueryFolderContainsFile(fileName)
+
+	if dir == nil {
+		log.Printf("No config file to execute")
+		return
+	}
+
+	file := filepath.Join(dir.Path, fileName)
+
+	log.Printf("Found config file at \"%s\"", file)
+
+	err := exec.Command(file).Run()
+
+	if err != nil {
+		log.Printf("Error executing config file: %s", err)
+	}
 }
