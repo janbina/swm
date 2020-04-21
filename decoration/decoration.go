@@ -3,7 +3,7 @@ package decoration
 import "github.com/BurntSushi/xgbutil/xrect"
 
 type Decoration interface {
-	ApplyRect(config *WinConfig, rect xrect.Rect) xrect.Rect
+	ApplyRect(config *WinConfig, rect xrect.Rect, f int) xrect.Rect
 	WidthNeeded(config *WinConfig) int
 	HeightNeeded(config *WinConfig) int
 	Left(config *WinConfig) int
@@ -22,9 +22,9 @@ type WinConfig struct {
 
 type Decorations []Decoration
 
-func (d *Decorations) ApplyRect(config *WinConfig, rect xrect.Rect) xrect.Rect {
+func (d *Decorations) ApplyRect(config *WinConfig, rect xrect.Rect, f int) xrect.Rect {
 	for _, decoration := range *d {
-		rect = decoration.ApplyRect(config, rect)
+		rect = decoration.ApplyRect(config, rect, f)
 	}
 	return rect
 }

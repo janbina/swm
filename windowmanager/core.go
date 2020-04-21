@@ -20,7 +20,7 @@ import (
 type ManagedWindow interface {
 	Destroy()
 	Move(x int, y int)
-	MoveResize(x int, y int, width int, height int, flags ...int)
+	MoveResize(validate bool, x int, y int, width int, height int, flags ...int)
 	Geometry() (xrect.Rect, error)
 	Map()
 	Unmap()

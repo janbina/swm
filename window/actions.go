@@ -3,6 +3,7 @@ package window
 import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/ewmh"
+	"github.com/BurntSushi/xgbutil/icccm"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/janbina/swm/decoration"
@@ -10,6 +11,7 @@ import (
 	"github.com/janbina/swm/stack"
 	"github.com/janbina/swm/util"
 	"log"
+	"math"
 )
 
 const (
@@ -23,21 +25,29 @@ const (
 )
 
 func (w *Window) Move(x, y int) {
-	w.MoveResize(x, y, 0, 0, ConfigPosition)
+	w.MoveResize(false, x, y, 0, 0, ConfigPosition)
 }
 
-// single function for all moving and/or resizing, which also automatically cancel fullscreen and maximized state
-func (w *Window) MoveResize(x, y, width, height int, flags ...int) {
+func (w *Window) MoveResizeWinSize(validate bool, x, y, width, height int, flags ...int) {
 	w.UnFullscreen()
 	w.UnMaximizeVert()
 	w.UnMaximizeHorz()
-	w.moveResizeInternal(x, y, width, height, flags...)
+	e := w.GetFrameExtents()
+	w.moveResizeInternal(validate, x, y, width+e.Left+e.Right, height+e.Top+e.Bottom, flags...)
+}
+
+// single function for all moving and/or resizing, which also automatically cancel fullscreen and maximized state
+func (w *Window) MoveResize(validate bool, x, y, width, height int, flags ...int) {
+	w.UnFullscreen()
+	w.UnMaximizeVert()
+	w.UnMaximizeHorz()
+	w.moveResizeInternal(validate, x, y, width, height, flags...)
 }
 
 // single function for all moving and/or resizing, without any side effects
 // call this if you are sure you dont want any side effects (canceled fullscreen and maximized state), otherwise,
 // use MoveResize() or Move()
-func (w *Window) moveResizeInternal(x, y, width, height int, flags ...int) {
+func (w *Window) moveResizeInternal(validate bool, x, y, width, height int, flags ...int) {
 	f := 0
 	for _, flag := range flags {
 		f |= flag
@@ -51,25 +61,25 @@ func (w *Window) moveResizeInternal(x, y, width, height int, flags ...int) {
 		w.sendConfigureNotify()
 	} else {
 		extents := w.GetFrameExtents()
-		parentWidth := width + extents.Left + extents.Right
-		parentHeight := height + extents.Top + extents.Bottom
+		innerWidth := width - extents.Left - extents.Right
+		innerHeight := height - extents.Top - extents.Bottom
+
+		if validate {
+			innerWidth = int(w.ValidateWidth(uint(innerWidth)))
+			innerHeight = int(w.ValidateHeight(uint(innerHeight)))
+		}
+
+		parentWidth := innerWidth + extents.Left + extents.Right
+		parentHeight := innerHeight + extents.Top + extents.Bottom
 
 		w.parent.MROpt(f, x, y, parentWidth, parentHeight)
 
 		rect := xrect.New(0, 0, parentWidth, parentHeight)
-		newRect := w.decorations.ApplyRect(&decoration.WinConfig{Fullscreen:w.fullscreen}, rect)
+		newRect := w.decorations.ApplyRect(&decoration.WinConfig{Fullscreen: w.fullscreen}, rect, f)
 
-
-		//g, _ := w.Geometry()
-		//realWidth := width - 2*g.BorderWidth()
-		//realHeight := height - 2*g.BorderWidth()
-		//
-		//if realWidth < int(w.normalHints.MinWidth) {
-		//	realWidth = int(w.normalHints.MinWidth)
-		//}
-		//if realHeight < int(w.normalHints.MinHeight) {
-		//	realHeight = int(w.normalHints.MinHeight)
-		//}
+		if newRect.Width() != innerWidth || newRect.Height() != innerHeight {
+			log.Printf("Bad window size")
+		}
 
 		w.win.MROpt(f, newRect.X(), newRect.Y(), newRect.Width(), newRect.Height())
 		w.sendConfigureNotify()
@@ -92,7 +102,7 @@ func (w *Window) MaximizeVert() {
 	if err != nil {
 		log.Printf("Cannot get screen geometry: %s", err)
 	}
-	w.moveResizeInternal(0, g.Y(), 0, g.Height(), ConfigY, ConfigHeight)
+	w.moveResizeInternal(false, 0, g.Y(), 0, g.Height(), ConfigY, ConfigHeight)
 }
 
 func (w *Window) UnMaximizeVert() {
@@ -129,7 +139,7 @@ func (w *Window) MaximizeHorz() {
 	if err != nil {
 		log.Printf("Cannot get screen geometry: %s", err)
 	}
-	w.moveResizeInternal(g.X(), 0, g.Width(), 0, ConfigX, ConfigWidth)
+	w.moveResizeInternal(false, g.X(), 0, g.Width(), 0, ConfigX, ConfigWidth)
 }
 
 func (w *Window) UnMaximizeHorz() {
@@ -226,6 +236,7 @@ func (w *Window) UnFullscreen() {
 	w.RemoveStates("_NET_WM_STATE_FULLSCREEN")
 
 	w.LoadWindowState(StatePriorFullscreen)
+	w.updateFrameExtents()
 
 	w.layer = stack.LayerDefault
 	stack.ReStack()
@@ -247,7 +258,8 @@ func (w *Window) Fullscreen() {
 	if err != nil {
 		log.Printf("Cannot get screen geometry: %s", err)
 	}
-	w.moveResizeInternal(g.X(), g.Y(), g.Width(), g.Height())
+	w.moveResizeInternal(false, g.X(), g.Y(), g.Width(), g.Height())
+	w.updateFrameExtents()
 
 	w.layer = stack.LayerFullscreen
 	stack.ReStack()
@@ -303,7 +315,7 @@ func (w *Window) ConfigureRequest(e xevent.ConfigureRequestEvent) {
 	x, y, width, height := int(e.X), int(e.Y), int(e.Width), int(e.Height)
 
 	if flags&ConfigAll != 0 {
-		w.MoveResize(x, y, width, height, flags)
+		w.MoveResizeWinSize(true, x, y, width, height, flags)
 	}
 }
 
@@ -329,7 +341,7 @@ func (w *Window) RootGeometryChanged() {
 		flags |= ConfigY
 	}
 	if flags != 0 {
-		w.MoveResize(g.X()+dX, g.Y()+dY, 0, 0, flags)
+		w.MoveResize(true, g.X()+dX, g.Y()+dY, 0, 0, flags)
 	}
 
 	if maxedVert {
@@ -344,15 +356,16 @@ func (w *Window) RootGeometryChanged() {
 }
 
 func (w *Window) sendConfigureNotify() {
+	e := w.GetFrameExtents()
 	if g, err := w.Geometry(); err == nil {
 		e := xproto.ConfigureNotifyEvent{
 			Event:            w.win.Id,
 			Window:           w.win.Id,
 			AboveSibling:     0,
-			X:                int16(g.X()) + 1,
-			Y:                int16(g.Y()) + 1,
-			Width:            uint16(g.Width()),
-			Height:           uint16(g.Height()),
+			X:                int16(g.X() + e.Left),
+			Y:                int16(g.Y() + e.Top),
+			Width:            uint16(g.Width() - e.Left - e.Right),
+			Height:           uint16(g.Height() - e.Top - e.Bottom),
 			BorderWidth:      0,
 			OverrideRedirect: false,
 		}
@@ -378,4 +391,47 @@ func (w *Window) GetFrameExtents() *ewmh.FrameExtents {
 		Top:    w.decorations.Top(config),
 		Bottom: w.decorations.Bottom(config),
 	}
+}
+
+func (w *Window) ValidateHeight(height uint) uint {
+	h := w.normalHints
+	return w.validateSize(height, h.MinHeight, h.MaxHeight, h.BaseHeight, h.HeightInc)
+}
+
+func (w *Window) ValidateWidth(width uint) uint {
+	h := w.normalHints
+	return w.validateSize(width, h.MinWidth, h.MaxWidth, h.BaseWidth, h.WidthInc)
+}
+
+func (w *Window) validateSize(size, min, max, base, inc uint) uint {
+	hints := w.normalHints
+
+	if !hasFlag(hints, icccm.SizeHintPMinSize) && hasFlag(hints, icccm.SizeHintPBaseSize) {
+		min = base
+	}
+	if !hasFlag(hints, icccm.SizeHintPBaseSize) && hasFlag(hints, icccm.SizeHintPMinSize) {
+		base = min
+	}
+	hasMin := hasFlag(hints, icccm.SizeHintPMinSize) || hasFlag(hints, icccm.SizeHintPBaseSize)
+	hasBase := hasMin
+
+	if size < min && hasMin {
+		return min
+	}
+	if size > max && hasFlag(hints, icccm.SizeHintPMaxSize) {
+		return max
+	}
+	if inc > 1 && hasFlag(hints, icccm.SizeHintPResizeInc) && hasBase {
+		// size = base + (i * inc)
+		rem := size - base
+		i := uint(math.Round(float64(rem)/float64(inc)))
+
+		return base + i * inc
+	}
+
+	return size
+}
+
+func hasFlag(hints *icccm.NormalHints, flag uint) bool {
+	return hints.Flags & flag > 0
 }

@@ -111,7 +111,7 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 
 	window.decorations = decorations
 
-	window.moveResizeInternal(g.Pieces())
+	window.MoveResizeWinSize(true, g.X(), g.Y(), g.Width(), g.Height())
 
 	if !window.types.Any("_NET_WM_WINDOW_TYPE_DESKTOP", "_NET_WM_WINDOW_TYPE_DOCK") {
 		focus.InitialAdd(window)
@@ -126,6 +126,8 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 	}
 
 	window.iconified = window.normalHints.Flags&icccm.HintState > 0 && window.hints.InitialState == icccm.StateIconic
+
+	window.updateFrameExtents()
 
 	return window
 }
@@ -159,7 +161,7 @@ func (w *Window) Id() xproto.Window {
 }
 
 func (w *Window) Geometry() (xrect.Rect, error) {
-	return w.win.Geometry()
+	return w.parent.Geometry()
 }
 
 func (w *Window) Listen(evMasks ...int) error {

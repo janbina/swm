@@ -113,10 +113,10 @@ func dragMoveStep(w *Window) xgbutil.MouseDragFun {
 		log.Printf("Drag move step: %d, %d, %d, %d", rx, ry, ex, ey)
 
 		g := w.moveState.startGeom
-		g.XSet(g.X() + rx - w.moveState.rx)
-		g.YSet(g.Y() + ry - w.moveState.ry)
+		x := g.X() + rx - w.moveState.rx
+		y := g.Y() + ry - w.moveState.ry
 
-		w.Move(g.X(), g.Y())
+		w.Move(x, y)
 	}
 }
 
@@ -220,51 +220,52 @@ func dragResizeBegin(w *Window, direction int) xgbutil.MouseDragBeginFun {
 	}
 }
 
-func dragResizeStep(w *Window) xgbutil.MouseDragFun {
+func dragResizeStep(win *Window) xgbutil.MouseDragFun {
 	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
 		log.Printf("Drag resize step: %d, %d, %d, %d", rx, ry, ex, ey)
 
-		d := w.resizeState.direction
+		d := win.resizeState.direction
 		changeX := d == ewmh.SizeLeft || d == ewmh.SizeTopLeft || d == ewmh.SizeBottomLeft
 		changeY := d == ewmh.SizeTop || d == ewmh.SizeTopLeft || d == ewmh.SizeTopRight
 		changeW := d != ewmh.SizeTop && d != ewmh.SizeBottom
 		changeH := d != ewmh.SizeLeft && d != ewmh.SizeRight
 
-		xDiff := rx - w.resizeState.rx
-		yDiff := ry - w.resizeState.ry
+		xDiff := rx - win.resizeState.rx
+		yDiff := ry - win.resizeState.ry
 
-		g := w.resizeState.startGeom
+		g := win.resizeState.startGeom
+		x, y, w, h := g.Pieces()
 		if changeX {
-			g.XSet(g.X() + xDiff)
+			x += xDiff
 		}
 		if changeY {
-			g.YSet(g.Y() + yDiff)
+			y += yDiff
 		}
 		if changeW {
 			if changeX {
-				g.WidthSet(g.Width() - xDiff)
+				w -= xDiff
 			} else {
-				g.WidthSet(g.Width() + xDiff)
+				w += xDiff
 			}
 		}
 		if changeH {
 			if changeY {
-				g.HeightSet(g.Height() - yDiff)
+				h -= yDiff
 			} else {
-				g.HeightSet(g.Height() + yDiff)
+				h += yDiff
 			}
 		}
 
 		flags := ConfigAll
-		if g.Width() < int(w.normalHints.MinWidth) {
-			g.WidthSet(int(w.normalHints.MinWidth))
+		if w < int(win.normalHints.MinWidth) {
+			w = int(win.normalHints.MinWidth)
 			flags &= ^ConfigX
 		}
-		if g.Height() < int(w.normalHints.MinHeight) {
-			g.HeightSet(int(w.normalHints.MinHeight))
+		if h < int(win.normalHints.MinHeight) {
+			h = int(win.normalHints.MinHeight)
 			flags &= ^ConfigY
 		}
-		w.MoveResize(g.X(), g.Y(), g.Width(), g.Height(), flags)
+		win.MoveResize(true, x, y, w, h, flags)
 	}
 }
 

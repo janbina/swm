@@ -4,7 +4,6 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
-	"log"
 )
 
 type Position int
@@ -56,7 +55,7 @@ func CreateAllBorders(
 	return borders
 }
 
-func (b *Border) ApplyRect(config *WinConfig, rect xrect.Rect) xrect.Rect {
+func (b *Border) ApplyRect(config *WinConfig, rect xrect.Rect, f int) xrect.Rect {
 	newRect := xrect.New(rect.Pieces())
 
 	if config.Fullscreen {
@@ -89,7 +88,7 @@ func (b *Border) ApplyRect(config *WinConfig, rect xrect.Rect) xrect.Rect {
 		h = b.size
 	}
 
-	b.win.MoveResize(x, y, w, h)
+	b.win.MROpt(f, x, y, w, h)
 	b.win.Map()
 
 	switch b.position {
@@ -133,19 +132,16 @@ func (b *Border) Bottom(config *WinConfig) int {
 }
 
 func (b *Border) Active() {
-	log.Printf("CHANGING TO ACTIVE")
 	b.win.Change(xproto.CwBackPixel, b.colorActive)
 	b.win.ClearAll()
 }
 
 func (b *Border) InActive() {
-	log.Printf("CHANGING TO INACTIVE")
 	b.win.Change(xproto.CwBackPixel, b.colorNormal)
 	b.win.ClearAll()
 }
 
 func (b *Border) Attention() {
-	log.Printf("CHANGING TO ATT")
 	b.win.Change(xproto.CwBackPixel, b.colorAttention)
 	b.win.ClearAll()
 }
