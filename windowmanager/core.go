@@ -12,7 +12,6 @@ import (
 	"github.com/janbina/swm/cursors"
 	"github.com/janbina/swm/desktopmanager"
 	"github.com/janbina/swm/focus"
-	"github.com/janbina/swm/geometry"
 	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
 	"log"
@@ -21,8 +20,8 @@ import (
 type ManagedWindow interface {
 	Destroy()
 	Move(x int, y int)
-	MoveResize(x int, y int, width int, height int, flags ...int)
-	Geometry() (*geometry.Geometry, error)
+	MoveResize(validate bool, x int, y int, width int, height int, flags ...int)
+	Geometry() (xrect.Rect, error)
 	Map()
 	Unmap()
 	IsHidden() bool

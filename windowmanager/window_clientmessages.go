@@ -116,5 +116,5 @@ func handleMoveResizeMessage2(win *win, data []uint32) {
 	//gravity := int(data[0] & 0xff)
 	//flags := int((data[0] >> 8) & 0xf)
 	x, y, w, h := int(data[1]), int(data[2]), int(data[3]), int(data[4])
-	win.MoveResize(x, y, w, h)
+	win.MoveResizeWinSize(true, x, y, w, h)
 }

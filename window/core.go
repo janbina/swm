@@ -7,9 +7,10 @@ import (
 	"github.com/BurntSushi/xgbutil/icccm"
 	"github.com/BurntSushi/xgbutil/motif"
 	"github.com/BurntSushi/xgbutil/xevent"
+	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
+	"github.com/janbina/swm/decoration"
 	"github.com/janbina/swm/focus"
-	"github.com/janbina/swm/geometry"
 	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
 	"github.com/janbina/swm/util"
@@ -25,6 +26,7 @@ const (
 type Window struct {
 	win         *xwindow.Window
 	parent      *xwindow.Window
+	decorations decoration.Decorations
 	moveState   *MoveState
 	resizeState *ResizeState
 	savedStates map[state]windowState
@@ -52,13 +54,13 @@ type Window struct {
 
 type MoveState struct {
 	rx, ry    int
-	startGeom geometry.Geometry
+	startGeom xrect.Rect
 }
 
 type ResizeState struct {
 	rx, ry    int
 	direction int
-	startGeom geometry.Geometry
+	startGeom xrect.Rect
 }
 
 func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
@@ -88,16 +90,28 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 		}
 	}
 
-	window.parent.MoveResize(g.Pieces())
+	decorations := make(decoration.Decorations, 0)
 
 	if window.shouldDecorate() {
-		if err := util.SetBorder(window.parent, 1, borderColorInactive); err != nil {
-			log.Printf("Cannot set window border")
-		}
-		window.setFrameExtents(1)
-	} else {
-		window.setFrameExtents(0)
+		decorations = append(decorations,
+			decoration.CreateBorder(
+				window.parent, decoration.Top, 3, borderColorInactive, borderColorActive, borderColorAttention,
+			),
+			decoration.CreateBorder(
+				window.parent, decoration.Bottom, 1, borderColorInactive, borderColorActive, borderColorAttention,
+			),
+			decoration.CreateBorder(
+				window.parent, decoration.Left, 1, borderColorInactive, borderColorActive, borderColorAttention,
+			),
+			decoration.CreateBorder(
+				window.parent, decoration.Right, 1, borderColorInactive, borderColorActive, borderColorAttention,
+			),
+		)
 	}
+
+	window.decorations = decorations
+
+	window.MoveResizeWinSize(true, g.X(), g.Y(), g.Width(), g.Height())
 
 	if !window.types.Any("_NET_WM_WINDOW_TYPE_DESKTOP", "_NET_WM_WINDOW_TYPE_DOCK") {
 		focus.InitialAdd(window)
@@ -112,6 +126,8 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 	}
 
 	window.iconified = window.normalHints.Flags&icccm.HintState > 0 && window.hints.InitialState == icccm.StateIconic
+
+	window.updateFrameExtents()
 
 	return window
 }
@@ -144,8 +160,8 @@ func (w *Window) Id() xproto.Window {
 	return w.win.Id
 }
 
-func (w *Window) Geometry() (*geometry.Geometry, error) {
-	return geometry.Get(w.parent)
+func (w *Window) Geometry() (xrect.Rect, error) {
+	return w.parent.Geometry()
 }
 
 func (w *Window) Listen(evMasks ...int) error {

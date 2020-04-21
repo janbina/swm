@@ -41,7 +41,7 @@ func (w *Window) Focused() {
 	w.StopAttention()
 	w.focused = true
 	focus.SetFocus(w)
-	_ = util.SetBorderColor(w.parent, borderColorActive)
+	w.decorations.Active()
 	_ = ewmh.ActiveWindowSet(w.win.X, w.win.Id)
 	w.AddStates("_NET_WM_STATE_FOCUSED")
 	if w.layer == stack.LayerFullscreen {
@@ -57,7 +57,7 @@ func (w *Window) Unfocused() {
 		w.tmpDeiconified = false
 		w.IconifyToggle()
 	}
-	_ = util.SetBorderColor(w.parent, borderColorInactive)
+	w.decorations.InActive()
 	_ = ewmh.ActiveWindowSet(w.win.X, 0)
 	w.RemoveStates("_NET_WM_STATE_FOCUSED")
 	if w.layer == stack.LayerFullscreen {
