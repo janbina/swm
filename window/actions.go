@@ -4,6 +4,8 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/xevent"
+	"github.com/BurntSushi/xgbutil/xrect"
+	"github.com/janbina/swm/decoration"
 	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
 	"github.com/janbina/swm/util"
@@ -48,18 +50,28 @@ func (w *Window) moveResizeInternal(x, y, width, height int, flags ...int) {
 		w.parent.Move(x, y)
 		w.sendConfigureNotify()
 	} else {
-		g, _ := w.Geometry()
-		realWidth := width - 2*g.BorderWidth()
-		realHeight := height - 2*g.BorderWidth()
+		extents := w.GetFrameExtents()
+		parentWidth := width + extents.Left + extents.Right
+		parentHeight := height + extents.Top + extents.Bottom
 
-		if realWidth < int(w.normalHints.MinWidth) {
-			realWidth = int(w.normalHints.MinWidth)
-		}
-		if realHeight < int(w.normalHints.MinHeight) {
-			realHeight = int(w.normalHints.MinHeight)
-		}
-		w.parent.MROpt(f, x, y, realWidth, realHeight)
-		w.win.MROpt(f, 0, 0, realWidth, realHeight)
+		w.parent.MROpt(f, x, y, parentWidth, parentHeight)
+
+		rect := xrect.New(0, 0, parentWidth, parentHeight)
+		newRect := w.decorations.ApplyRect(&decoration.WinConfig{Fullscreen:w.fullscreen}, rect)
+
+
+		//g, _ := w.Geometry()
+		//realWidth := width - 2*g.BorderWidth()
+		//realHeight := height - 2*g.BorderWidth()
+		//
+		//if realWidth < int(w.normalHints.MinWidth) {
+		//	realWidth = int(w.normalHints.MinWidth)
+		//}
+		//if realHeight < int(w.normalHints.MinHeight) {
+		//	realHeight = int(w.normalHints.MinHeight)
+		//}
+
+		w.win.MROpt(f, newRect.X(), newRect.Y(), newRect.Width(), newRect.Height())
 		w.sendConfigureNotify()
 	}
 }
@@ -188,13 +200,13 @@ func (w *Window) StackBelowToggle() {
 
 func (w *Window) StopAttention() {
 	w.demandsAttention = false
-	_ = util.SetBorderColor(w.parent, borderColorInactive)
+	w.decorations.InActive()
 	w.RemoveStates("_NET_WM_STATE_DEMANDS_ATTENTION")
 }
 
 func (w *Window) StartAttention() {
 	w.demandsAttention = true
-	_ = util.SetBorderColor(w.parent, borderColorAttention)
+	w.decorations.Attention()
 	w.AddStates("_NET_WM_STATE_DEMANDS_ATTENTION")
 }
 
@@ -363,4 +375,14 @@ func (w *Window) setFrameExtents(width int) {
 		Top:    width,
 		Bottom: width,
 	})
+}
+
+func (w *Window) GetFrameExtents() *ewmh.FrameExtents {
+	config := &decoration.WinConfig{Fullscreen: w.fullscreen}
+	return &ewmh.FrameExtents{
+		Left:   w.decorations.Left(config),
+		Right:  w.decorations.Right(config),
+		Top:    w.decorations.Top(config),
+		Bottom: w.decorations.Bottom(config),
+	}
 }

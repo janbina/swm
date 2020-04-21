@@ -8,6 +8,7 @@ import (
 	"github.com/BurntSushi/xgbutil/motif"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xwindow"
+	"github.com/janbina/swm/decoration"
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/geometry"
 	"github.com/janbina/swm/heads"
@@ -25,6 +26,7 @@ const (
 type Window struct {
 	win         *xwindow.Window
 	parent      *xwindow.Window
+	decorations decoration.Decorations
 	moveState   *MoveState
 	resizeState *ResizeState
 	savedStates map[state]windowState
@@ -88,16 +90,28 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 		}
 	}
 
-	window.parent.MoveResize(g.Pieces())
+	decorations := make(decoration.Decorations, 0)
 
 	if window.shouldDecorate() {
-		if err := util.SetBorder(window.parent, 1, borderColorInactive); err != nil {
-			log.Printf("Cannot set window border")
-		}
-		window.setFrameExtents(1)
-	} else {
-		window.setFrameExtents(0)
+		decorations = append(decorations,
+			decoration.CreateBorder(
+				window.parent, decoration.Top, 3, borderColorInactive, borderColorActive, borderColorAttention,
+			),
+			decoration.CreateBorder(
+				window.parent, decoration.Bottom, 1, borderColorInactive, borderColorActive, borderColorAttention,
+			),
+			decoration.CreateBorder(
+				window.parent, decoration.Left, 1, borderColorInactive, borderColorActive, borderColorAttention,
+			),
+			decoration.CreateBorder(
+				window.parent, decoration.Right, 1, borderColorInactive, borderColorActive, borderColorAttention,
+			),
+		)
 	}
+
+	window.decorations = decorations
+
+	window.moveResizeInternal(g.Pieces())
 
 	if !window.types.Any("_NET_WM_WINDOW_TYPE_DESKTOP", "_NET_WM_WINDOW_TYPE_DOCK") {
 		focus.InitialAdd(window)
