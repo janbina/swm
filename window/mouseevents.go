@@ -75,8 +75,8 @@ func (w *Window) DragResizeBeginEvent(xr, yr, xe, ye int16) {
 		X,
 		xevent.ButtonPressEvent{
 			ButtonPressEvent: &xproto.ButtonPressEvent{
-				RootX: xr,
-				RootY: yr,
+				RootX:  xr,
+				RootY:  yr,
 				EventX: xe,
 				EventY: ye,
 			},
@@ -98,7 +98,7 @@ func dragMoveBegin(w *Window) xgbutil.MouseDragBeginFun {
 		w.moveState = &MoveState{
 			rx:        rx,
 			ry:        ry,
-			startGeom: *g,
+			startGeom: g,
 		}
 
 		w.Focus()
@@ -113,8 +113,8 @@ func dragMoveStep(w *Window) xgbutil.MouseDragFun {
 		log.Printf("Drag move step: %d, %d, %d, %d", rx, ry, ex, ey)
 
 		g := w.moveState.startGeom
-		g.AddX(rx - w.moveState.rx)
-		g.AddY(ry - w.moveState.ry)
+		g.XSet(g.X() + rx - w.moveState.rx)
+		g.YSet(g.Y() + ry - w.moveState.ry)
 
 		w.Move(g.X(), g.Y())
 	}
@@ -210,7 +210,7 @@ func dragResizeBegin(w *Window, direction int) xgbutil.MouseDragBeginFun {
 			rx:        rx,
 			ry:        ry,
 			direction: dir,
-			startGeom: *g,
+			startGeom: g,
 		}
 
 		w.Focus()
@@ -235,33 +235,33 @@ func dragResizeStep(w *Window) xgbutil.MouseDragFun {
 
 		g := w.resizeState.startGeom
 		if changeX {
-			g.AddX(xDiff)
+			g.XSet(g.X() + xDiff)
 		}
 		if changeY {
-			g.AddY(yDiff)
+			g.YSet(g.Y() + yDiff)
 		}
 		if changeW {
 			if changeX {
-				g.AddWidth(-xDiff)
+				g.WidthSet(g.Width() - xDiff)
 			} else {
-				g.AddWidth(xDiff)
+				g.WidthSet(g.Width() + xDiff)
 			}
 		}
 		if changeH {
 			if changeY {
-				g.AddHeight(-yDiff)
+				g.HeightSet(g.Height() - yDiff)
 			} else {
-				g.AddHeight(yDiff)
+				g.HeightSet(g.Height() + yDiff)
 			}
 		}
 
 		flags := ConfigAll
 		if g.Width() < int(w.normalHints.MinWidth) {
-			g.SetWidth(int(w.normalHints.MinWidth))
+			g.WidthSet(int(w.normalHints.MinWidth))
 			flags &= ^ConfigX
 		}
 		if g.Height() < int(w.normalHints.MinHeight) {
-			g.SetHeight(int(w.normalHints.MinHeight))
+			g.HeightSet(int(w.normalHints.MinHeight))
 			flags &= ^ConfigY
 		}
 		w.MoveResize(g.X(), g.Y(), g.Width(), g.Height(), flags)

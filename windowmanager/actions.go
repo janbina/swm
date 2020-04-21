@@ -7,7 +7,6 @@ import (
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/janbina/swm/desktopmanager"
 	"github.com/janbina/swm/focus"
-	"github.com/janbina/swm/geometry"
 	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
 	"github.com/janbina/swm/util"
@@ -62,7 +61,7 @@ func GetWindowScreenGeometry(id int) (xrect.Rect, error) {
 	if err != nil {
 		return nil, err
 	}
-	return heads.GetHeadForRect(winGeom.RectTotal())
+	return heads.GetHeadForRect(winGeom)
 }
 
 func GetWindowScreenGeometryStruts(id int) (xrect.Rect, error) {
@@ -70,10 +69,10 @@ func GetWindowScreenGeometryStruts(id int) (xrect.Rect, error) {
 	if err != nil {
 		return nil, err
 	}
-	return heads.GetHeadForRectStruts(winGeom.RectTotal())
+	return heads.GetHeadForRectStruts(winGeom)
 }
 
-func GetWindowGeometry(id int) (*geometry.Geometry, error) {
+func GetWindowGeometry(id int) (xrect.Rect, error) {
 	win, err := GetWindowById(id)
 	if err != nil {
 		return nil, err

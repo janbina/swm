@@ -1,8 +1,7 @@
 package window
 
 import (
-	"github.com/janbina/swm/geometry"
-	"github.com/janbina/swm/util"
+	"github.com/BurntSushi/xgbutil/xrect"
 )
 
 type state uint
@@ -14,12 +13,12 @@ const (
 )
 
 type windowState struct {
-	geom geometry.Geometry
+	geom xrect.Rect
 }
 
 func (w *Window) SaveWindowState(s state) {
 	g, _ := w.Geometry()
-	w.savedStates[s] = windowState{geom: *g}
+	w.savedStates[s] = windowState{geom: g}
 }
 
 func (w *Window) LoadWindowState(s state) {
@@ -33,8 +32,6 @@ func (w *Window) LoadWindowState(s state) {
 	} else if s == StatePriorMaxHorz {
 		w.moveResizeInternal(g.X(), 0, g.Width(), 0, ConfigX, ConfigWidth)
 	} else {
-		w.moveResizeInternal(g.PiecesTotal())
+		w.moveResizeInternal(g.Pieces())
 	}
-	util.SetBorderWidth(w.parent, uint32(g.BorderWidth()))
-	w.setFrameExtents(g.BorderWidth())
 }

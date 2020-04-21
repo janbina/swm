@@ -7,10 +7,10 @@ import (
 	"github.com/BurntSushi/xgbutil/icccm"
 	"github.com/BurntSushi/xgbutil/motif"
 	"github.com/BurntSushi/xgbutil/xevent"
+	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"github.com/janbina/swm/decoration"
 	"github.com/janbina/swm/focus"
-	"github.com/janbina/swm/geometry"
 	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
 	"github.com/janbina/swm/util"
@@ -54,13 +54,13 @@ type Window struct {
 
 type MoveState struct {
 	rx, ry    int
-	startGeom geometry.Geometry
+	startGeom xrect.Rect
 }
 
 type ResizeState struct {
 	rx, ry    int
 	direction int
-	startGeom geometry.Geometry
+	startGeom xrect.Rect
 }
 
 func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
@@ -158,8 +158,8 @@ func (w *Window) Id() xproto.Window {
 	return w.win.Id
 }
 
-func (w *Window) Geometry() (*geometry.Geometry, error) {
-	return geometry.Get(w.parent)
+func (w *Window) Geometry() (xrect.Rect, error) {
+	return w.win.Geometry()
 }
 
 func (w *Window) Listen(evMasks ...int) error {

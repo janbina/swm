@@ -116,8 +116,8 @@ func resizeCommand(args []string) string {
 	x := winGeom.X() - *west
 	y := winGeom.Y() - *north
 
-	width := winGeom.TotalWidth() + *west + *east
-	height := winGeom.TotalHeight() + *north + *south
+	width := winGeom.Width() + *west + *east
+	height := winGeom.Height() + *north + *south
 
 	if err := windowmanager.MoveResizeWindow(*id, x, y, width, height); err != nil {
 		return err.Error()
@@ -167,11 +167,11 @@ func moveResizeCommand(args []string) string {
 	}
 
 	if *w <= 0 {
-		*w = winGeom.TotalWidth()
+		*w = winGeom.Width()
 	}
 
 	if *h <= 0 {
-		*h = winGeom.TotalHeight()
+		*h = winGeom.Height()
 	}
 
 	var realY int

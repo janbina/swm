@@ -88,7 +88,7 @@ func (w *Window) MaximizeVert() {
 	if err != nil {
 		log.Printf("Cannot get window geometry: %s", err)
 	}
-	g, err := heads.GetHeadForRectStruts(winG.RectTotal())
+	g, err := heads.GetHeadForRectStruts(winG)
 	if err != nil {
 		log.Printf("Cannot get screen geometry: %s", err)
 	}
@@ -125,7 +125,7 @@ func (w *Window) MaximizeHorz() {
 	if err != nil {
 		log.Printf("Cannot get window geometry: %s", err)
 	}
-	g, err := heads.GetHeadForRectStruts(winG.RectTotal())
+	g, err := heads.GetHeadForRectStruts(winG)
 	if err != nil {
 		log.Printf("Cannot get screen geometry: %s", err)
 	}
@@ -243,12 +243,10 @@ func (w *Window) Fullscreen() {
 	if err != nil {
 		log.Printf("Cannot get window geometry: %s", err)
 	}
-	g, err := heads.GetHeadForRect(winG.RectTotal())
+	g, err := heads.GetHeadForRect(winG)
 	if err != nil {
 		log.Printf("Cannot get screen geometry: %s", err)
 	}
-	util.SetBorderWidth(w.parent, 0)
-	w.setFrameExtents(0)
 	w.moveResizeInternal(g.X(), g.Y(), g.Width(), g.Height())
 
 	w.layer = stack.LayerFullscreen
@@ -322,7 +320,7 @@ func (w *Window) RootGeometryChanged() {
 
 	g, _ := w.Geometry()
 
-	dX, dY := util.MinMovement(g.Rect(), heads.HeadsStruts, 50)
+	dX, dY := util.MinMovement(g, heads.HeadsStruts, 50)
 	flags := 0
 	if dX != 0 {
 		flags |= ConfigX
@@ -368,13 +366,8 @@ func (w *Window) sendConfigureNotify() {
 	}
 }
 
-func (w *Window) setFrameExtents(width int) {
-	_ = ewmh.FrameExtentsSet(w.win.X, w.win.Id, &ewmh.FrameExtents{
-		Left:   width,
-		Right:  width,
-		Top:    width,
-		Bottom: width,
-	})
+func (w *Window) updateFrameExtents() {
+	_ = ewmh.FrameExtentsSet(w.win.X, w.win.Id, w.GetFrameExtents())
 }
 
 func (w *Window) GetFrameExtents() *ewmh.FrameExtents {
