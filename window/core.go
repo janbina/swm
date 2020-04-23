@@ -74,7 +74,10 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 
 	_ = util.SetBorderWidth(window.win, 0)
 
-	g, _ := window.win.Geometry()
+	g, err := window.win.Geometry()
+	if err != nil {
+		return nil
+	}
 
 	window.parent, _ = reparent(x, xWin)
 

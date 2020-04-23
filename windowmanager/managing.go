@@ -26,6 +26,12 @@ func manageWindow(w xproto.Window) {
 	}
 
 	win := window.New(X, w)
+
+	if win == nil {
+		log.Printf("Cannot manage window id %d", w)
+		return
+	}
+
 	managedWindows[w] = win
 	desktopmanager.AddWindow(w)
 
