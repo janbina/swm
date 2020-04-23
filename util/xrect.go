@@ -2,7 +2,6 @@ package util
 
 import (
 	"github.com/BurntSushi/xgbutil/xrect"
-	"log"
 	"math"
 )
 
@@ -10,7 +9,6 @@ import (
 // with some of rects by at least minOverlap pixels on both axis
 // That movement will be minimal - to the closest rect from rects
 func MinMovement(rect xrect.Rect, rects []xrect.Rect, minOverlap int) (x, y int) {
-	log.Printf("Min movement of %s:", rect)
 	minMovement, minX, minY := math.MaxInt32, 0, 0
 	minOverlapX := min(rect.Width(), minOverlap)
 	minOverlapY := min(rect.Height(), minOverlap)
@@ -21,8 +19,6 @@ func MinMovement(rect xrect.Rect, rects []xrect.Rect, minOverlap int) (x, y int)
 
 		x := neededMovement(rect.X(), rect.Width(), test.X(), test.Width(), minOverlapX)
 		y := neededMovement(rect.Y(), rect.Height(), test.Y(), test.Height(), minOverlapY)
-
-		log.Printf("\tTesting %s, got x: %d, y: %d", test, x, y)
 
 		if x == 0 && y == 0 {
 			return 0, 0
