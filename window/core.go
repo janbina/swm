@@ -9,18 +9,13 @@ import (
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
+	"github.com/janbina/swm/config"
 	"github.com/janbina/swm/decoration"
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
 	"github.com/janbina/swm/util"
 	"log"
-)
-
-const (
-	borderColorActive    = 0x00BCD4
-	borderColorInactive  = 0xB0BEC5
-	borderColorAttention = 0xF44336
 )
 
 type Window struct {
@@ -96,48 +91,7 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 	decorations := make(decoration.Decorations, 0)
 
 	if window.shouldDecorate() {
-		decorations = append(decorations,
-			decoration.CreateBorder(
-				window.parent,
-				decoration.Top,
-				&decoration.BorderConfig{
-					Size:           3,
-					ColorNormal:    borderColorInactive,
-					ColorActive:    borderColorActive,
-					ColorAttention: borderColorAttention,
-				},
-			),
-			decoration.CreateBorder(
-				window.parent,
-				decoration.Bottom,
-				&decoration.BorderConfig{
-					Size:           1,
-					ColorNormal:    borderColorInactive,
-					ColorActive:    borderColorActive,
-					ColorAttention: borderColorAttention,
-				},
-			),
-			decoration.CreateBorder(
-				window.parent,
-				decoration.Left,
-				&decoration.BorderConfig{
-					Size:           1,
-					ColorNormal:    borderColorInactive,
-					ColorActive:    borderColorActive,
-					ColorAttention: borderColorAttention,
-				},
-			),
-			decoration.CreateBorder(
-				window.parent,
-				decoration.Right,
-				&decoration.BorderConfig{
-					Size:           1,
-					ColorNormal:    borderColorInactive,
-					ColorActive:    borderColorActive,
-					ColorAttention: borderColorAttention,
-				},
-			),
-		)
+		decorations = append(decorations, createBorders(window.parent)...)
 	}
 
 	window.decorations = decorations
@@ -185,6 +139,15 @@ func reparent(X *xgbutil.XUtil, xWin xproto.Window) (*xwindow.Window, error) {
 	}
 
 	return parent, nil
+}
+
+func createBorders(parent *xwindow.Window) decoration.Decorations {
+	return decoration.Decorations{
+		decoration.CreateBorder(parent, decoration.Top, config.BorderTop),
+		decoration.CreateBorder(parent, decoration.Bottom, config.BorderBottom),
+		decoration.CreateBorder(parent, decoration.Left, config.BorderLeft),
+		decoration.CreateBorder(parent, decoration.Right, config.BorderRight),
+	}
 }
 
 func (w *Window) Id() xproto.Window {
