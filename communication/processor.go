@@ -3,11 +3,13 @@ package communication
 import (
 	"flag"
 	"fmt"
+	"github.com/janbina/swm/config"
 	"github.com/janbina/swm/desktopmanager"
 	"github.com/janbina/swm/windowmanager"
 	"github.com/mattn/go-shellwords"
 	"log"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -24,6 +26,7 @@ var commands = map[string]func([]string) string{
 	"resize-drag-shortcut": resizeDragShortcutCommand,
 	"begin-mouse-move":     mouseMoveCommand,
 	"begin-mouse-resize":   mouseResizeCommand,
+	"config":               configCommand,
 }
 
 func processCommand(msg string) string {
@@ -254,4 +257,73 @@ func mouseResizeCommand(_ []string) string {
 		return err.Error()
 	}
 	return ""
+}
+
+func configCommand(args []string) string {
+	switch args[0] {
+	case "border":
+		s, n, ac, att, err := parseBorderConfig(args[1:])
+		if err != nil {
+			return err.Error()
+		}
+		config.SetAllBorders(s, n, ac, att)
+	case "border-top":
+		s, n, ac, att, err := parseBorderConfig(args[1:])
+		if err != nil {
+			return err.Error()
+		}
+		config.SetTopBorder(s, n, ac, att)
+	case "border-bottom":
+		s, n, ac, att, err := parseBorderConfig(args[1:])
+		if err != nil {
+			return err.Error()
+		}
+		config.SetBottomBorder(s, n, ac, att)
+	case "border-left":
+		s, n, ac, att, err := parseBorderConfig(args[1:])
+		if err != nil {
+			return err.Error()
+		}
+		config.SetLeftBorder(s, n, ac, att)
+	case "border-right":
+		s, n, ac, att, err := parseBorderConfig(args[1:])
+		if err != nil {
+			return err.Error()
+		}
+		config.SetRightBorder(s, n, ac, att)
+	default:
+		return "Unsupported config argument"
+	}
+	return ""
+}
+
+func parseBorderConfig(args []string) (int, uint32, uint32, uint32, error) {
+	if len(args) < 4 {
+		return 0, 0, 0, 0, fmt.Errorf("too few arguments for border config")
+	}
+	var err error
+	s, err := strconv.Atoi(args[0])
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+	n, err := hex2int(args[1])
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+	ac, err := hex2int(args[2])
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+	att, err := hex2int(args[3])
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+	return s, uint32(n), uint32(ac), uint32(att), nil
+}
+
+func hex2int(hexStr string) (uint64, error) {
+	hexStr = strings.Replace(hexStr, "0x", "", 1)
+	hexStr = strings.Replace(hexStr, "#", "", 1)
+
+	return strconv.ParseUint(hexStr, 16, 64)
 }
