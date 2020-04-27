@@ -98,16 +98,44 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 	if window.shouldDecorate() {
 		decorations = append(decorations,
 			decoration.CreateBorder(
-				window.parent, decoration.Top, 3, borderColorInactive, borderColorActive, borderColorAttention,
+				window.parent,
+				decoration.Top,
+				&decoration.BorderConfig{
+					Size:           3,
+					ColorNormal:    borderColorInactive,
+					ColorActive:    borderColorActive,
+					ColorAttention: borderColorAttention,
+				},
 			),
 			decoration.CreateBorder(
-				window.parent, decoration.Bottom, 1, borderColorInactive, borderColorActive, borderColorAttention,
+				window.parent,
+				decoration.Bottom,
+				&decoration.BorderConfig{
+					Size:           1,
+					ColorNormal:    borderColorInactive,
+					ColorActive:    borderColorActive,
+					ColorAttention: borderColorAttention,
+				},
 			),
 			decoration.CreateBorder(
-				window.parent, decoration.Left, 1, borderColorInactive, borderColorActive, borderColorAttention,
+				window.parent,
+				decoration.Left,
+				&decoration.BorderConfig{
+					Size:           1,
+					ColorNormal:    borderColorInactive,
+					ColorActive:    borderColorActive,
+					ColorAttention: borderColorAttention,
+				},
 			),
 			decoration.CreateBorder(
-				window.parent, decoration.Right, 1, borderColorInactive, borderColorActive, borderColorAttention,
+				window.parent,
+				decoration.Right,
+				&decoration.BorderConfig{
+					Size:           1,
+					ColorNormal:    borderColorInactive,
+					ColorActive:    borderColorActive,
+					ColorAttention: borderColorAttention,
+				},
 			),
 		)
 	}
