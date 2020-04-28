@@ -160,8 +160,17 @@ func CycleWinEnd() {
 	}
 }
 
-func SetGroupForWindow(w *window.Window, desktop int) {
-	changes := groupmanager.SetGroupForWindow(w.Id(), desktop)
+func SetGroupForActiveWindow(group int) error {
+	active := getActiveWindow()
+	if active == nil {
+		return fmt.Errorf("cannot get active window")
+	}
+	SetGroupForWindow(active.Id(), group)
+	return nil
+}
+
+func SetGroupForWindow(w xproto.Window, desktop int) {
+	changes := groupmanager.SetGroupForWindow(w, desktop)
 	applyChanges(changes)
 	focus.FocusLast()
 }

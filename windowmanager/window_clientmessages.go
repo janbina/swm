@@ -104,7 +104,7 @@ func updateWinState(win *win, action int, state string) {
 }
 
 func handleWmDesktop(win *win, data []uint32) {
-	SetGroupForWindow(win, int(data[0]))
+	SetGroupForWindow(win.Id(), int(data[0]))
 }
 
 func handleCloseWindowMessage(win *win, _ []uint32) {
