@@ -91,6 +91,8 @@ func testGroupWindowCreation() int {
 
 	_ = ewmh.NumberOfDesktopsReq(X, maxDesks)
 
+	// automatic mode - inferring
+	swmctl("group", "mode", "auto")
 	for i := 0; i < maxDesks; i++ {
 		_ = ewmh.CurrentDesktopReq(X, i)
 		sleepMillis(10)
@@ -99,6 +101,18 @@ func testGroupWindowCreation() int {
 		sleepMillis(10)
 		d, _ := ewmh.WmDesktopGet(X, w.Id)
 		assertEquals(i, int(d), "Incorrect desktop for window", &errorCnt)
+	}
+
+	// sticky mode
+	swmctl("group", "mode", "sticky")
+	for i := 0; i < maxDesks; i++ {
+		_ = ewmh.CurrentDesktopReq(X, i)
+		sleepMillis(10)
+		w := createWindow()
+		wins = append(wins, w)
+		sleepMillis(10)
+		d, _ := ewmh.WmDesktopGet(X, w.Id)
+		assertEquals(0xFFFFFFFF, int(d), "Incorrect desktop for window", &errorCnt)
 	}
 
 	destroyWindows(wins)
