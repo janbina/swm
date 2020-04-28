@@ -43,7 +43,7 @@ func testDesktopNames() int {
 	return errorCnt
 }
 
-func testDesktopBasics() int {
+func testGroupBasics() int {
 	errorCnt := 0
 
 	maxDesks := 10
@@ -68,13 +68,6 @@ func testDesktopBasics() int {
 		sleepMillis(10)
 		assertEquals(i, activeDesktop(), "Incorrect active desktop", &errorCnt)
 	}
-	// invalid desktops
-	_ = ewmh.CurrentDesktopReq(X, -1)
-	sleepMillis(10)
-	assertEquals(maxDesks - 1, activeDesktop(), "Incorrect active desktop", &errorCnt)
-	_ = ewmh.CurrentDesktopReq(X, maxDesks)
-	sleepMillis(10)
-	assertEquals(maxDesks - 1, activeDesktop(), "Incorrect active desktop", &errorCnt)
 
 	// shrinking is ok and updates current desktop
 	_ = ewmh.NumberOfDesktopsReq(X, maxDesks)
@@ -90,8 +83,7 @@ func testDesktopBasics() int {
 	return errorCnt
 }
 
-//window is created on current desktop
-func testDesktopWindowCreation() int {
+func testGroupWindowCreation() int {
 	errorCnt := 0
 
 	maxDesks := 10
@@ -114,7 +106,7 @@ func testDesktopWindowCreation() int {
 	return errorCnt
 }
 
-func testDesktopWindowMovement() int {
+func testGroupWindowMovement() int {
 	errorCnt := 0
 
 	maxDesks := 10

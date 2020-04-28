@@ -18,10 +18,10 @@ type test struct {
 
 var tests = []test{
 	{"cycling", testCycling},
-	{"desktop basics", testDesktopBasics},
 	{"desktop names", testDesktopNames},
-	{"desktop window creation", testDesktopWindowCreation},
-	{"desktop window movement", testDesktopWindowMovement},
+	{"group basics", testGroupBasics},
+	{"group window creation", testGroupWindowCreation},
+	{"group window movement", testGroupWindowMovement},
 }
 
 var errorLogger = log.New(os.Stdout, "    error: ", log.Lshortfile)
