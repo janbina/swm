@@ -10,7 +10,7 @@ import (
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"github.com/janbina/swm/cursors"
-	"github.com/janbina/swm/desktopmanager"
+	"github.com/janbina/swm/groupmanager"
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
@@ -52,7 +52,7 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 	cursors.Initialize(X)
 	focus.Initialize(X)
 	stack.Initialize(X)
-	desktopmanager.Initialize(X)
+	groupmanager.Initialize(X)
 
 	if err = takeWmOwnership(X, replace); err != nil {
 		return err
@@ -65,8 +65,8 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 	managedWindows = make(map[xproto.Window]ManagedWindow)
 	strutWindows = make(map[xproto.Window]bool)
 
-	desktopmanager.SetDesktops()
-	desktopmanager.SetCurrentDesktop()
+	groupmanager.SetDesktops()
+	groupmanager.SetCurrentDesktop()
 
 	if err = loadGeometriesAndHeads(); err != nil {
 		return err

@@ -1,6 +1,6 @@
 package focus
 
-import "github.com/janbina/swm/desktopmanager"
+import "github.com/janbina/swm/groupmanager"
 
 var cyclingState []FocusableWindow
 var cyclableWindows []FocusableWindow
@@ -11,7 +11,7 @@ func CyclingFocus(state int) FocusableWindow {
 		copy(cyclingState, windows)
 		cyclableWindows = make([]FocusableWindow, 0, len(windows))
 		for _, win := range windows {
-			if desktopmanager.IsWinDesktopVisible(win.Id()) {
+			if groupmanager.IsWinDesktopVisible(win.Id()) {
 				cyclableWindows = append(cyclableWindows, win)
 			}
 		}

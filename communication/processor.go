@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/janbina/swm/config"
-	"github.com/janbina/swm/desktopmanager"
+	"github.com/janbina/swm/groupmanager"
 	"github.com/janbina/swm/windowmanager"
 	"github.com/mattn/go-shellwords"
 	"log"
@@ -215,7 +215,7 @@ func cycleWinEndCommand(_ []string) string {
 }
 
 func setDesktopNamesCommand(args []string) string {
-	desktopmanager.SetDesktopNames(args)
+	groupmanager.SetDesktopNames(args)
 	return ""
 }
 

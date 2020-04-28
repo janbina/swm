@@ -1,4 +1,4 @@
-package desktopmanager
+package groupmanager
 
 import (
 	"github.com/BurntSushi/xgb/xproto"

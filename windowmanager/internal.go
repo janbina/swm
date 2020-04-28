@@ -7,7 +7,7 @@ import (
 	"github.com/BurntSushi/xgbutil/xinerama"
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
-	"github.com/janbina/swm/desktopmanager"
+	"github.com/janbina/swm/groupmanager"
 	"github.com/janbina/swm/heads"
 	"log"
 )
@@ -60,7 +60,7 @@ func applyStruts() {
 	RootGeometryStruts = wh[0]
 	heads.HeadsStruts = wh[1:]
 
-	setWorkArea(desktopmanager.GetNumDesktops())
+	setWorkArea(groupmanager.GetNumDesktops())
 
 	for _, win := range managedWindows {
 		win.RootGeometryChanged()

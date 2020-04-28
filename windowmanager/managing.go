@@ -5,7 +5,7 @@ import (
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/xevent"
-	"github.com/janbina/swm/desktopmanager"
+	"github.com/janbina/swm/groupmanager"
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/window"
 	"log"
@@ -33,7 +33,7 @@ func manageWindow(w xproto.Window) {
 	}
 
 	managedWindows[w] = win
-	desktopmanager.AddWindow(w)
+	groupmanager.AddWindow(w)
 
 	xproto.ChangeSaveSet(X.Conn(), xproto.SetModeInsert, w)
 
@@ -51,7 +51,7 @@ func manageWindow(w xproto.Window) {
 
 	setWmAllowedActions(w)
 
-	if !win.IsIconified() && !win.IsHidden() && desktopmanager.IsWinDesktopVisible(w) {
+	if !win.IsIconified() && !win.IsHidden() && groupmanager.IsWinDesktopVisible(w) {
 		win.Map()
 		win.Focus()
 		win.Raise()
@@ -68,7 +68,7 @@ func unmanageWindow(w xproto.Window) {
 		return
 	}
 	win.Destroyed()
-	desktopmanager.RemoveWindow(w)
+	groupmanager.RemoveWindow(w)
 	xproto.ChangeSaveSet(X.Conn(), xproto.SetModeDelete, w)
 	focus.FocusLast()
 	delete(managedWindows, w)

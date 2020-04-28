@@ -6,7 +6,7 @@ import (
 	"github.com/BurntSushi/xgbutil/mousebind"
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/janbina/swm/config"
-	"github.com/janbina/swm/desktopmanager"
+	"github.com/janbina/swm/groupmanager"
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
@@ -79,25 +79,25 @@ func GetWindowGeometry(id int) (xrect.Rect, error) {
 }
 
 func setNumberOfDesktops(num int) {
-	changes := desktopmanager.SetNumberOfDesktops(num)
+	changes := groupmanager.SetNumberOfDesktops(num)
 	applyChanges(changes)
-	setWorkArea(desktopmanager.GetNumDesktops())
+	setWorkArea(groupmanager.GetNumDesktops())
 	focus.FocusLast()
 }
 
 func switchToDesktop(index int) {
-	changes := desktopmanager.SwitchToDesktop(index)
+	changes := groupmanager.SwitchToDesktop(index)
 	applyChanges(changes)
 	focus.FocusLast()
 }
 
 func switchToWindowDesktop(win xproto.Window) {
-	if !desktopmanager.IsWinDesktopVisible(win) {
-		desktopmanager.SwitchToDesktop(desktopmanager.GetWinDesktop(win))
+	if !groupmanager.IsWinDesktopVisible(win) {
+		groupmanager.SwitchToDesktop(groupmanager.GetWinDesktop(win))
 	}
 }
 
-func applyChanges(changes *desktopmanager.Changes) {
+func applyChanges(changes *groupmanager.Changes) {
 	for _, w := range changes.Invisible {
 		win := managedWindows[w]
 		if win == nil {
@@ -139,7 +139,7 @@ func CycleWinEnd() {
 }
 
 func MoveWindowToDesktop(w *window.Window, desktop int) {
-	changes := desktopmanager.MoveWindowToDesktop(w.Id(), desktop)
+	changes := groupmanager.MoveWindowToDesktop(w.Id(), desktop)
 	applyChanges(changes)
 	focus.FocusLast()
 }
