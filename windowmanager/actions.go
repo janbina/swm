@@ -186,7 +186,9 @@ func ToggleGroupVisibility(group int) {
 	changes := groupmanager.ToggleGroupVisibility(group)
 	applyChanges(changes)
 	raiseChanges(changes)
-	focus.FocusLast()
+	focus.FocusLastWithPreference(func(win xproto.Window) bool {
+		return groupmanager.GetWinGroup(win) == group
+	})
 }
 
 func ShowGroupOnly(group int) {
@@ -199,7 +201,9 @@ func ShowGroup(group int) {
 	changes := groupmanager.ShowGroup(group)
 	applyChanges(changes)
 	raiseChanges(changes)
-	focus.FocusLast()
+	focus.FocusLastWithPreference(func(win xproto.Window) bool {
+		return groupmanager.GetWinGroup(win) == group
+	})
 }
 
 func HideGroup(group int) {
