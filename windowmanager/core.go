@@ -65,9 +65,6 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 	managedWindows = make(map[xproto.Window]ManagedWindow)
 	strutWindows = make(map[xproto.Window]bool)
 
-	groupmanager.SetDesktops()
-	groupmanager.SetCurrentDesktop()
-
 	if err = loadGeometriesAndHeads(); err != nil {
 		return err
 	}

@@ -79,21 +79,21 @@ func GetWindowGeometry(id int) (xrect.Rect, error) {
 }
 
 func setNumberOfDesktops(num int) {
-	changes := groupmanager.SetNumberOfDesktops(num)
+	changes := groupmanager.SetNumberOfGroups(num)
 	applyChanges(changes)
-	setWorkArea(groupmanager.GetNumDesktops())
+	setWorkArea(groupmanager.GetNumGroups())
 	focus.FocusLast()
 }
 
 func switchToDesktop(index int) {
-	changes := groupmanager.SwitchToDesktop(index)
+	changes := groupmanager.ShowGroupOnly(index)
 	applyChanges(changes)
 	focus.FocusLast()
 }
 
-func switchToWindowDesktop(win xproto.Window) {
-	if !groupmanager.IsWinDesktopVisible(win) {
-		groupmanager.SwitchToDesktop(groupmanager.GetWinDesktop(win))
+func showWindowGroup(win xproto.Window) {
+	if !groupmanager.IsWinGroupVisible(win) {
+		groupmanager.ToggleGroupVisibility(groupmanager.GetWinGroup(win))
 	}
 }
 
@@ -138,8 +138,8 @@ func CycleWinEnd() {
 	}
 }
 
-func MoveWindowToDesktop(w *window.Window, desktop int) {
-	changes := groupmanager.MoveWindowToDesktop(w.Id(), desktop)
+func SetGroupForWindow(w *window.Window, desktop int) {
+	changes := groupmanager.SetGroupForWindow(w.Id(), desktop)
 	applyChanges(changes)
 	focus.FocusLast()
 }

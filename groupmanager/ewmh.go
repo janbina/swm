@@ -6,7 +6,7 @@ import (
 )
 
 func defaultDesktopName(pos int) string {
-	return fmt.Sprintf("D.%d", pos+1)
+	return fmt.Sprintf("G.%d", pos+1)
 }
 
 func getDesktopNames(from, to int) []string {
@@ -28,18 +28,15 @@ func getDesktopNames(from, to int) []string {
 
 func getDesktops() []string {
 	num, _ := ewmh.NumberOfDesktopsGet(X)
-	if num < minDesktops {
-		num = minDesktops
-	}
 	return getDesktopNames(0, int(num)-1)
 }
 
-func SetDesktops() {
-	_ = ewmh.NumberOfDesktopsSet(X, uint(len(desktops)))
+func setDesktops() {
+	_ = ewmh.NumberOfDesktopsSet(X, uint(len(groups)))
 	fromEwmh, _ := ewmh.DesktopNamesGet(X)
-	if len(fromEwmh) < len(desktops) {
+	if len(fromEwmh) < len(groups) {
 		// dont set names when shrinking
-		setDesktopNames(desktops)
+		setDesktopNames(groups)
 	}
 }
 
@@ -47,11 +44,6 @@ func setDesktopNames(names []string) {
 	_ = ewmh.DesktopNamesSet(X, names)
 }
 
-func getCurrentDesktopEwmh() int {
-	d, _ := ewmh.CurrentDesktopGet(X)
-	return int(d)
-}
-
-func SetCurrentDesktop() {
-	_ = ewmh.CurrentDesktopSet(X, uint(currentDesktop))
+func setCurrentDesktop() {
+	_ = ewmh.CurrentDesktopSet(X, uint(currentGroup))
 }

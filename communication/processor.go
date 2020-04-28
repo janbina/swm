@@ -215,7 +215,7 @@ func cycleWinEndCommand(_ []string) string {
 }
 
 func setDesktopNamesCommand(args []string) string {
-	groupmanager.SetDesktopNames(args)
+	groupmanager.SetGroupNames(args)
 	return ""
 }
 

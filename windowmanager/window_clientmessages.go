@@ -74,7 +74,7 @@ func handleWmChangeStateMessage(win *win, data []uint32) {
 }
 
 func handleActiveWindowMessage(win *win, _ []uint32) {
-	switchToWindowDesktop(win.Id())
+	showWindowGroup(win.Id())
 	win.Focus()
 	win.Raise()
 }
@@ -104,7 +104,7 @@ func updateWinState(win *win, action int, state string) {
 }
 
 func handleWmDesktop(win *win, data []uint32) {
-	MoveWindowToDesktop(win, int(data[0]))
+	SetGroupForWindow(win, int(data[0]))
 }
 
 func handleCloseWindowMessage(win *win, _ []uint32) {

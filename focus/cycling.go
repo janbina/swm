@@ -11,7 +11,7 @@ func CyclingFocus(state int) FocusableWindow {
 		copy(cyclingState, windows)
 		cyclableWindows = make([]FocusableWindow, 0, len(windows))
 		for _, win := range windows {
-			if groupmanager.IsWinDesktopVisible(win.Id()) {
+			if groupmanager.IsWinGroupVisible(win.Id()) {
 				cyclableWindows = append(cyclableWindows, win)
 			}
 		}

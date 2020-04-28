@@ -12,173 +12,217 @@ type Changes struct {
 }
 
 const (
-	minDesktops = 1 //minimum number of desktops created at startup
-	allDesktops = 0xFFFFFFFF
+	// Id of group which is always visible
+	// Taken from ewmh desktop specification: "0xFFFFFFFF indicates that the window should appear on all groups"
+	alwaysVisibleGroup = 0xFFFFFFFF
 )
 
 var (
 	X *xgbutil.XUtil
 
-	desktops       []string
-	desktopToWins  map[int]map[xproto.Window]bool
-	winToDesktop   map[xproto.Window]int
-	currentDesktop int
+	groups        []string
+	groupToWins   map[int]map[xproto.Window]bool
+	winToGroup    map[xproto.Window]int
+	currentGroup  int
+	visibleGroups map[int]bool
 )
 
 func Initialize(x *xgbutil.XUtil) {
 	X = x
 
-	desktopToWins = make(map[int]map[xproto.Window]bool)
-	desktopToWins[allDesktops] = make(map[xproto.Window]bool)
-	winToDesktop = make(map[xproto.Window]int)
-	desktops = getDesktops()
-	currentDesktop = getCurrentDesktopEwmh()
+	groupToWins = make(map[int]map[xproto.Window]bool)
+	groupToWins[alwaysVisibleGroup] = make(map[xproto.Window]bool)
+	winToGroup = make(map[xproto.Window]int)
+	groups = getDesktops()
+	currentGroup = alwaysVisibleGroup
+	visibleGroups = make(map[int]bool)
+	setDesktops()
+	setCurrentDesktop()
 }
 
 func AddWindow(win xproto.Window) {
-	d := getInitialDesktopForWindow(win)
-	winToDesktop[win] = d
-	ensureDesktop(d)
-	desktopToWins[d][win] = true
-	_ = ewmh.WmDesktopSet(X, win, uint(d))
+	g := getInitialGroupForWindow(win)
+	winToGroup[win] = g
+	ensureGroup(g)
+	groupToWins[g][win] = true
+	_ = ewmh.WmDesktopSet(X, win, uint(g))
 }
 
 func RemoveWindow(win xproto.Window) {
-	d := winToDesktop[win]
-	delete(winToDesktop, win)
-	delete(desktopToWins[d], win)
+	d := winToGroup[win]
+	delete(winToGroup, win)
+	delete(groupToWins[d], win)
 }
 
-func GetNumDesktops() int {
-	return len(desktops)
+func GetNumGroups() int {
+	return len(groups)
 }
 
-func IsDesktopVisible(desktop int) bool {
-	return desktop == allDesktops || desktop == currentDesktop
+func IsGroupVisible(group int) bool {
+	return group == alwaysVisibleGroup || visibleGroups[group]
 }
 
-func IsWinDesktopVisible(win xproto.Window) bool {
-	return IsDesktopVisible(winToDesktop[win])
+func IsWinGroupVisible(win xproto.Window) bool {
+	return IsGroupVisible(winToGroup[win])
 }
 
-func GetCurrentDesktop() int {
-	return currentDesktop
+func GetWinGroup(win xproto.Window) int {
+	return winToGroup[win]
 }
 
-func GetWinDesktop(win xproto.Window) int {
-	return winToDesktop[win]
-}
-
-func SetDesktopNames(names []string) {
+func SetGroupNames(names []string) {
 	for i, name := range names {
-		if i < len(desktops) {
-			desktops[i] = name
+		if i < len(groups) {
+			groups[i] = name
 		}
 	}
-	if len(names) > len(desktops) {
+	if len(names) > len(groups) {
 		setDesktopNames(names)
 	} else {
-		setDesktopNames(desktops)
+		setDesktopNames(groups)
 	}
 }
 
-func SetNumberOfDesktops(num int) *Changes {
-	if num < 1 {
-		num = 1
-	}
-	currentNum := len(desktops)
+func SetNumberOfGroups(num int) *Changes {
+	//if num < 1 {
+	//	num = 1
+	//}
+	//currentNum := len(groups)
+	//newLast := num - 1
+	//
+	//if num < currentNum {
+	//	for i := num; i < currentNum; i++ {
+	//		moveWinsToGroup(i, newLast)
+	//	}
+	//	groups = groups[:num]
+	//	setDesktops()
+	//	if currentGroup > newLast {
+	//		return SwitchToDesktop(newLast)
+	//	} else if currentGroup == newLast {
+	//		return createChanges(nil, winsOfGroup(currentGroup))
+	//	}
+	//} else if num > currentNum {
+	//	groups = append(groups, getDesktopNames(currentNum, newLast)...)
+	//	setDesktops()
+	//	return createChanges(nil, nil)
+	//}
+
+	currentNum := len(groups)
 	newLast := num - 1
-	if num < currentNum {
-		for i := num; i < currentNum; i++ {
-			moveWinsToDesktop(i, newLast)
-		}
-		desktops = desktops[:num]
-		SetDesktops()
-		if currentDesktop > newLast {
-			return SwitchToDesktop(newLast)
-		} else if currentDesktop == newLast {
-			return createChanges(nil, winsOfDesktop(currentDesktop))
-		}
-	} else if num > currentNum {
-		desktops = append(desktops, getDesktopNames(currentNum, newLast)...)
-		SetDesktops()
+	if num > currentNum {
+		groups = append(groups, getDesktopNames(currentNum, newLast)...)
+		setDesktops()
+		return createChanges(nil, nil)
 	}
 
 	return createChanges(nil, nil)
 }
 
-func SwitchToDesktop(index int) *Changes {
-	if currentDesktop == index || index >= len(desktops) {
+func ToggleGroupVisibility(group int) *Changes {
+	if group == alwaysVisibleGroup {
 		return createChanges(nil, nil)
 	}
+	wasVisible := visibleGroups[group]
+	visibleGroups[group] = !wasVisible
 
-	invisible := make([]xproto.Window, 0, len(desktopToWins[currentDesktop]))
-	visible := make([]xproto.Window, 0, len(desktopToWins[index]))
+	wins := make([]xproto.Window, 0, len(groupToWins[group]))
+	for w := range groupToWins[group] {
+		wins = append(wins, w)
+	}
 
-	for w := range desktopToWins[currentDesktop] {
-		invisible = append(invisible, w)
+	currentGroup = group
+	setCurrentDesktop()
+
+	if wasVisible {
+		return createChanges(wins, nil)
+	} else {
+		return createChanges(nil, wins)
 	}
-	for w := range desktopToWins[index] {
-		visible = append(visible, w)
+}
+
+func ShowGroupOnly(group int) *Changes {
+	invisible := make([]xproto.Window, 0)
+	var visible []xproto.Window
+
+	for g, v := range visibleGroups {
+		if v && g != group {
+			visibleGroups[g] = false
+			invisible = append(invisible, winsOfGroup(g)...)
+		}
 	}
-	currentDesktop = index
-	SetCurrentDesktop()
+
+	if !visibleGroups[group] {
+		visibleGroups[group] = true
+		visible = winsOfGroup(group)
+	}
+
+	currentGroup = group
+	setCurrentDesktop()
 
 	return createChanges(invisible, visible)
 }
 
-func MoveWindowToDesktop(win xproto.Window, desktop int) *Changes {
-	prev := winToDesktop[win]
-	if prev == desktop || (desktop >= len(desktops) && desktop != allDesktops) {
+func SetGroupForWindow(win xproto.Window, group int) *Changes {
+	prev := winToGroup[win]
+	if prev == group {
 		return createChanges(nil, nil)
 	}
-	delete(desktopToWins[prev], win)
-	ensureDesktop(desktop)
-	desktopToWins[desktop][win] = true
-	winToDesktop[win] = desktop
-	_ = ewmh.WmDesktopSet(X, win, uint(desktop))
+	ensureEnoughGroups(group)
+	delete(groupToWins[prev], win)
+	ensureGroup(group)
+	groupToWins[group][win] = true
+	winToGroup[win] = group
+	_ = ewmh.WmDesktopSet(X, win, uint(group))
 
-	if IsDesktopVisible(prev) && !IsDesktopVisible(desktop) {
+	if IsGroupVisible(prev) && !IsGroupVisible(group) {
 		return createChanges([]xproto.Window{win}, nil)
-	} else if !IsDesktopVisible(prev) && IsDesktopVisible(desktop) {
+	} else if !IsGroupVisible(prev) && IsGroupVisible(group) {
 		return createChanges(nil, []xproto.Window{win})
 	}
 	return createChanges(nil, nil)
 }
 
-func getInitialDesktopForWindow(win xproto.Window) int {
-	_d, err := ewmh.WmDesktopGet(X, win)
-	d := int(_d)
+func getInitialGroupForWindow(win xproto.Window) int {
+	_g, err := ewmh.WmDesktopGet(X, win)
+	g := int(_g)
 	if err != nil {
 		// not specified
-		return currentDesktop
+		return currentGroup
 	}
-	if d == allDesktops || d < len(desktops) {
-		return d
+	if g == alwaysVisibleGroup || g < len(groups) {
+		return g
 	}
-	// TODO: Current, last, create additional desktops, or what?
-	return len(desktops) - 1
+	// TODO: Current, last, create additional groups, or what?
+	return len(groups) - 1
 }
 
-func moveWinsToDesktop(from, to int) {
-	ensureDesktop(to)
-	for w := range desktopToWins[from] {
-		desktopToWins[to][w] = true
-		winToDesktop[w] = to
+func moveWinsToGroup(from, to int) {
+	ensureGroup(to)
+	for w := range groupToWins[from] {
+		groupToWins[to][w] = true
+		winToGroup[w] = to
 		_ = ewmh.WmDesktopSet(X, w, uint(to))
 	}
-	delete(desktopToWins, from)
+	delete(groupToWins, from)
 }
 
-func ensureDesktop(d int) {
-	if desktopToWins[d] == nil {
-		desktopToWins[d] = make(map[xproto.Window]bool)
+func ensureGroup(d int) {
+	if groupToWins[d] == nil {
+		groupToWins[d] = make(map[xproto.Window]bool)
 	}
 }
 
-func winsOfDesktop(d int) []xproto.Window {
-	ret := make([]xproto.Window, 0, len(desktopToWins[d]))
-	for w := range desktopToWins[d] {
+func ensureEnoughGroups(group int) {
+	if group == alwaysVisibleGroup || group < len(groups) {
+		return
+	}
+	// we can safely ignore changes, cause we are adding new groups, so there are none
+	_ = SetNumberOfGroups(group + 1)
+}
+
+func winsOfGroup(d int) []xproto.Window {
+	ret := make([]xproto.Window, 0, len(groupToWins[d]))
+	for w := range groupToWins[d] {
 		ret = append(ret, w)
 	}
 	return ret

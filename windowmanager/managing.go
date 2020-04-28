@@ -51,7 +51,7 @@ func manageWindow(w xproto.Window) {
 
 	setWmAllowedActions(w)
 
-	if !win.IsIconified() && !win.IsHidden() && groupmanager.IsWinDesktopVisible(w) {
+	if !win.IsIconified() && !win.IsHidden() && groupmanager.IsWinGroupVisible(w) {
 		win.Map()
 		win.Focus()
 		win.Raise()
