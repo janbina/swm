@@ -78,66 +78,6 @@ func GetWindowGeometry(id int) (xrect.Rect, error) {
 	return win.Geometry()
 }
 
-func setNumberOfDesktops(num int) {
-	changes := groupmanager.SetNumberOfGroups(num)
-	applyChanges(changes)
-	setWorkArea(groupmanager.GetNumGroups())
-	focus.FocusLast()
-}
-
-func switchToDesktop(index int) {
-	changes := groupmanager.ShowGroupOnly(index)
-	applyChanges(changes)
-	focus.FocusLast()
-}
-
-func showWindowGroup(win xproto.Window) {
-	ShowGroup(groupmanager.GetWinGroup(win))
-}
-
-func ToggleGroupVisibility(group int) {
-	changes := groupmanager.ToggleGroupVisibility(group)
-	applyChanges(changes)
-	focus.FocusLast()
-}
-
-func ShowGroupOnly(group int) {
-	changes := groupmanager.ShowGroupOnly(group)
-	applyChanges(changes)
-	focus.FocusLast()
-}
-
-func ShowGroup(group int) {
-	changes := groupmanager.ShowGroup(group)
-	applyChanges(changes)
-	focus.FocusLast()
-}
-
-func HideGroup(group int) {
-	changes := groupmanager.HideGroup(group)
-	applyChanges(changes)
-	focus.FocusLast()
-}
-
-func applyChanges(changes *groupmanager.Changes) {
-	for _, w := range changes.Invisible {
-		win := managedWindows[w]
-		if win == nil {
-			panic("This shouldnt happen anymore")
-		}
-		win.Unmap()
-	}
-	for _, w := range changes.Visible {
-		win := managedWindows[w]
-		if win == nil {
-			panic("This shouldnt happen anymore")
-		}
-		if !win.IsHidden() {
-			win.Map()
-		}
-	}
-}
-
 func CycleWin() {
 	cycleState--
 	if win, ok := focus.CyclingFocus(cycleState).(*window.Window); ok {
@@ -158,21 +98,6 @@ func CycleWinEnd() {
 		win.RemoveTmpDeiconified()
 		win.Raise()
 	}
-}
-
-func SetGroupForActiveWindow(group int) error {
-	active := getActiveWindow()
-	if active == nil {
-		return fmt.Errorf("cannot get active window")
-	}
-	SetGroupForWindow(active.Id(), group)
-	return nil
-}
-
-func SetGroupForWindow(w xproto.Window, desktop int) {
-	changes := groupmanager.SetGroupForWindow(w, desktop)
-	applyChanges(changes)
-	focus.FocusLast()
 }
 
 func SetMoveDragShortcut(s string) error {
@@ -223,4 +148,79 @@ func BeginMouseResizeFromPointer() error {
 	}
 	win.(*window.Window).DragResizeBeginEvent(int16(p.X), int16(p.Y), int16(p.WinX), int16(p.WinY))
 	return nil
+}
+
+// GROUPS
+
+func SetGroupForWindow(w xproto.Window, desktop int) {
+	changes := groupmanager.SetGroupForWindow(w, desktop)
+	applyChanges(changes)
+	focus.FocusLast()
+}
+
+func SetGroupForActiveWindow(group int) error {
+	active := getActiveWindow()
+	if active == nil {
+		return fmt.Errorf("cannot get active window")
+	}
+	SetGroupForWindow(active.Id(), group)
+	return nil
+}
+
+func setNumberOfDesktops(num int) {
+	changes := groupmanager.SetNumberOfGroups(num)
+	applyChanges(changes)
+	setWorkArea(groupmanager.GetNumGroups())
+	focus.FocusLast()
+}
+
+func switchToDesktop(index int) {
+	ShowGroupOnly(index)
+}
+
+func showWindowGroup(win xproto.Window) {
+	ShowGroup(groupmanager.GetWinGroup(win))
+}
+
+func ToggleGroupVisibility(group int) {
+	changes := groupmanager.ToggleGroupVisibility(group)
+	applyChanges(changes)
+	focus.FocusLast()
+}
+
+func ShowGroupOnly(group int) {
+	changes := groupmanager.ShowGroupOnly(group)
+	applyChanges(changes)
+	focus.FocusLast()
+}
+
+func ShowGroup(group int) {
+	changes := groupmanager.ShowGroup(group)
+	applyChanges(changes)
+	focus.FocusLast()
+}
+
+func HideGroup(group int) {
+	changes := groupmanager.HideGroup(group)
+	applyChanges(changes)
+	focus.FocusLast()
+}
+
+func applyChanges(changes *groupmanager.Changes) {
+	for _, w := range changes.Invisible {
+		win := managedWindows[w]
+		if win == nil {
+			panic("This shouldnt happen anymore")
+		}
+		win.Unmap()
+	}
+	for _, w := range changes.Visible {
+		win := managedWindows[w]
+		if win == nil {
+			panic("This shouldnt happen anymore")
+		}
+		if !win.IsHidden() {
+			win.Map()
+		}
+	}
 }

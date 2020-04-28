@@ -18,6 +18,9 @@ const (
 	// Taken from ewmh desktop specification: "0xFFFFFFFF indicates that the window should appear on all groups"
 	alwaysVisibleGroup = 0xFFFFFFFF
 
+	// Mode for initial window group:
+	// * sticky - all windows are initially in group id 0xFFFFFFFF, which is always visible
+	// * auto - window is in group which we get from _NET_WM_DESKTOP, or currentGroup
 	ModeSticky Mode = iota
 	ModeAuto
 )
@@ -25,11 +28,14 @@ const (
 var (
 	X *xgbutil.XUtil
 
+	// names of all groups
+	// used also to get the number of groups
 	groups        []string
 	groupToWins   map[int]map[xproto.Window]bool
 	winToGroup    map[xproto.Window]int
-	currentGroup  int
 	visibleGroups map[int]bool
+	// group which was made visible *last*
+	currentGroup  int
 	GroupMode     Mode
 )
 
@@ -90,36 +96,29 @@ func SetGroupNames(names []string) {
 	}
 }
 
+// SetNumberOfGroups
+// 1) If we are increasing number of groups, we just update internals and ewmh properties
+// 2) If we are increasing number of groups, windows from removed groups are moved to group with highest index.
+//    If current group is out of bounds after decrease, we show the group with highest index
 func SetNumberOfGroups(num int) *Changes {
-	//if num < 1 {
-	//	num = 1
-	//}
-	//currentNum := len(groups)
-	//newLast := num - 1
-	//
-	//if num < currentNum {
-	//	for i := num; i < currentNum; i++ {
-	//		moveWinsToGroup(i, newLast)
-	//	}
-	//	groups = groups[:num]
-	//	setDesktops()
-	//	if currentGroup > newLast {
-	//		return SwitchToDesktop(newLast)
-	//	} else if currentGroup == newLast {
-	//		return createChanges(nil, winsOfGroup(currentGroup))
-	//	}
-	//} else if num > currentNum {
-	//	groups = append(groups, getDesktopNames(currentNum, newLast)...)
-	//	setDesktops()
-	//	return createChanges(nil, nil)
-	//}
-
+	if num < 1 {
+		num = 1
+	}
 	currentNum := len(groups)
 	newLast := num - 1
-	if num > currentNum {
+
+	if num < currentNum {
+		for i := num; i < currentNum; i++ {
+			moveWinsToGroup(i, newLast)
+		}
+		groups = groups[:num]
+		setDesktops()
+		if currentGroup >= newLast {
+			return showGroupForce(newLast, true)
+		}
+	} else if num > currentNum {
 		groups = append(groups, getDesktopNames(currentNum, newLast)...)
 		setDesktops()
-		return createChanges(nil, nil)
 	}
 
 	return createChanges(nil, nil)
@@ -132,13 +131,9 @@ func ToggleGroupVisibility(group int) *Changes {
 	wasVisible := visibleGroups[group]
 	visibleGroups[group] = !wasVisible
 
-	wins := make([]xproto.Window, 0, len(groupToWins[group]))
-	for w := range groupToWins[group] {
-		wins = append(wins, w)
-	}
+	wins := winsOfGroup(group)
 
-	currentGroup = group
-	setCurrentDesktop()
+	updateCurrentGroup(group)
 
 	if wasVisible {
 		return createChanges(wins, nil)
@@ -163,17 +158,27 @@ func ShowGroupOnly(group int) *Changes {
 		visible = winsOfGroup(group)
 	}
 
-	currentGroup = group
-	setCurrentDesktop()
+	updateCurrentGroup(group)
 
 	return createChanges(invisible, visible)
 }
 
-func ShowGroup(group int) *Changes {
+func showGroupForce(group int, force bool) *Changes {
 	if !IsGroupVisible(group) {
 		return ToggleGroupVisibility(group)
 	}
+	if force {
+		wins := winsOfGroup(group)
+
+		updateCurrentGroup(group)
+
+		return createChanges(nil, wins)
+	}
 	return createChanges(nil, nil)
+}
+
+func ShowGroup(group int) *Changes {
+	return showGroupForce(group, false)
 }
 
 func HideGroup(group int) *Changes {
@@ -246,6 +251,13 @@ func winsOfGroup(d int) []xproto.Window {
 		ret = append(ret, w)
 	}
 	return ret
+}
+
+func updateCurrentGroup(group int) {
+	if IsGroupVisible(group) {
+		currentGroup = group
+		setCurrentDesktop()
+	}
 }
 
 func createChanges(invisible, visible []xproto.Window) *Changes {
