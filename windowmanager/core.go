@@ -14,21 +14,9 @@ import (
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
+	"github.com/janbina/swm/window"
 	"log"
 )
-
-type ManagedWindow interface {
-	Destroy()
-	Move(x int, y int)
-	MoveResize(validate bool, x int, y int, width int, height int, flags ...int)
-	Geometry() (xrect.Rect, error)
-	Map()
-	Unmap()
-	IsHidden() bool
-	SetupMouseEvents()
-	Destroyed()
-	RootGeometryChanged()
-}
 
 var (
 	X                  *xgbutil.XUtil
@@ -36,7 +24,7 @@ var (
 	RootGeometry       xrect.Rect
 	RootGeometryStruts xrect.Rect
 
-	managedWindows map[xproto.Window]ManagedWindow
+	managedWindows map[xproto.Window]*window.Window
 	strutWindows   map[xproto.Window]bool
 
 	cycleState int
@@ -62,7 +50,7 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 
 	Root.Change(xproto.CwCursor, uint32(cursors.LeftPtr))
 
-	managedWindows = make(map[xproto.Window]ManagedWindow)
+	managedWindows = make(map[xproto.Window]*window.Window)
 	strutWindows = make(map[xproto.Window]bool)
 
 	if err = loadGeometriesAndHeads(); err != nil {

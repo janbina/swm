@@ -47,7 +47,7 @@ func handleWindowClientMessage(X *xgbutil.XUtil, e xevent.ClientMessageEvent) {
 	if f, ok := windowCmHandlers[name]; !ok {
 		log.Printf("Unsupported client message: %s", name)
 	} else {
-		if w, ok := managedWindows[e.Window].(*win); ok {
+		if w, ok := managedWindows[e.Window]; ok {
 			f(w, e.Data.Data32)
 		}
 	}

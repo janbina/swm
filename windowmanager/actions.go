@@ -18,7 +18,7 @@ func getActiveWindow() focus.FocusableWindow {
 	return focus.Current()
 }
 
-func GetWindowById(id int) (ManagedWindow, error) {
+func GetWindowById(id int) (*window.Window, error) {
 	if id == 0 {
 		if active := getActiveWindow(); active == nil {
 			return nil, fmt.Errorf("cannot get active window")
@@ -33,7 +33,7 @@ func GetWindowById(id int) (ManagedWindow, error) {
 	}
 }
 
-func doOnWindow(id int, action func(win ManagedWindow)) error {
+func doOnWindow(id int, action func(win *window.Window)) error {
 	win, err := GetWindowById(id)
 	if err != nil {
 		return err
@@ -43,13 +43,13 @@ func doOnWindow(id int, action func(win ManagedWindow)) error {
 }
 
 func MoveWindow(id int, x, y int) error {
-	return doOnWindow(id, func(win ManagedWindow) {
+	return doOnWindow(id, func(win *window.Window) {
 		win.Move(x, y)
 	})
 }
 
 func MoveResizeWindow(id int, x, y, width, height int) error {
-	return doOnWindow(id, func(win ManagedWindow) {
+	return doOnWindow(id, func(win *window.Window) {
 		win.MoveResize(true, x, y, width, height)
 	})
 }
@@ -133,7 +133,7 @@ func BeginMouseMoveFromPointer() error {
 	if err != nil {
 		return fmt.Errorf("no client window underneath the pointer")
 	}
-	win.(*window.Window).DragMoveBegin(int16(p.X), int16(p.Y))
+	win.DragMoveBegin(int16(p.X), int16(p.Y))
 	return nil
 }
 
@@ -146,7 +146,7 @@ func BeginMouseResizeFromPointer() error {
 	if err != nil {
 		return fmt.Errorf("no client window underneath the pointer")
 	}
-	win.(*window.Window).DragResizeBeginEvent(int16(p.X), int16(p.Y), int16(p.WinX), int16(p.WinY))
+	win.DragResizeBeginEvent(int16(p.X), int16(p.Y), int16(p.WinX), int16(p.WinY))
 	return nil
 }
 
@@ -237,7 +237,7 @@ func raiseChanges(changes *groupmanager.Changes) {
 	wins := make([]stack.StackingWindow, 0, len(changes.Visible))
 	for _, id := range changes.Visible {
 		if win := managedWindows[id]; win != nil {
-			wins = append(wins, win.(stack.StackingWindow))
+			wins = append(wins, win)
 		}
 	}
 	stack.RaiseMulti(wins)
