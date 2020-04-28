@@ -25,7 +25,7 @@ type ManagedWindow interface {
 	Map()
 	Unmap()
 	IsHidden() bool
-	SetupMouseEvents(moveShortcut string, resizeShortcut string)
+	SetupMouseEvents()
 	Destroyed()
 	RootGeometryChanged()
 }

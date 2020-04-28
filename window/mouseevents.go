@@ -6,26 +6,27 @@ import (
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/mousebind"
 	"github.com/BurntSushi/xgbutil/xevent"
+	"github.com/janbina/swm/config"
 	"github.com/janbina/swm/cursors"
 	"log"
 )
 
-func (w *Window) SetupMouseEvents(moveShortcut string, resizeShortcut string) {
+func (w *Window) SetupMouseEvents() {
 	X := w.win.X
 
 	// Detach old events
 	mousebind.Detach(X, w.win.Id)
 
-	if _, _, err := mousebind.ParseString(X, moveShortcut); err == nil {
+	if _, _, err := mousebind.ParseString(X, config.MoveDragShortcut); err == nil {
 		mousebind.Drag(
-			X, X.Dummy(), w.win.Id, moveShortcut, true,
+			X, X.Dummy(), w.win.Id, config.MoveDragShortcut, true,
 			dragMoveBegin(w), dragMoveStep(w), dragMoveEnd(w),
 		)
 	}
 
-	if _, _, err := mousebind.ParseString(X, resizeShortcut); err == nil {
+	if _, _, err := mousebind.ParseString(X, config.ResizeDragShortcut); err == nil {
 		mousebind.Drag(
-			X, X.Dummy(), w.win.Id, resizeShortcut, true,
+			X, X.Dummy(), w.win.Id, config.ResizeDragShortcut, true,
 			dragResizeBegin(w, ewmh.Infer), dragResizeStep(w), dragResizeEnd(w),
 		)
 	}

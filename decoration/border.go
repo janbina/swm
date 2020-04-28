@@ -16,43 +16,29 @@ const (
 )
 
 type Border struct {
-	position       Position
-	size           int
-	win            *xwindow.Window
-	colorNormal    uint32
-	colorActive    uint32
-	colorAttention uint32
+	position Position
+	win      *xwindow.Window
+	config   *BorderConfig
 }
 
-func CreateBorder(
-	parent *xwindow.Window, position Position, size int, colorNormal, colorActive, colorAttention uint32,
-) Decoration {
+type BorderConfig struct {
+	Size           int
+	ColorNormal    uint32
+	ColorActive    uint32
+	ColorAttention uint32
+}
+
+func CreateBorder(parent *xwindow.Window, position Position, config *BorderConfig) Decoration {
 	X := parent.X
 
 	win, _ := xwindow.Create(X, parent.Id)
-	win.Change(xproto.CwBackPixel, colorNormal)
+	win.Change(xproto.CwBackPixel, config.ColorNormal)
 
 	return &Border{
-		position:       position,
-		size:           size,
-		win:            win,
-		colorNormal:    colorNormal,
-		colorActive:    colorActive,
-		colorAttention: colorAttention,
+		position: position,
+		win:      win,
+		config:   config,
 	}
-}
-
-func CreateAllBorders(
-	parent *xwindow.Window, size int, colorNormal, colorActive, colorAttention uint32,
-) []Decoration {
-	pos := []Position{Left, Right, Top, Bottom}
-	borders := make([]Decoration, 4)
-
-	for i, p := range pos {
-		borders[i] = CreateBorder(parent, p, size, colorNormal, colorActive, colorAttention)
-	}
-
-	return borders
 }
 
 func (b *Border) ApplyRect(config *WinConfig, rect xrect.Rect, f int) xrect.Rect {
@@ -69,23 +55,23 @@ func (b *Border) ApplyRect(config *WinConfig, rect xrect.Rect, f int) xrect.Rect
 	case Left:
 		x = rect.X()
 		y = rect.Y()
-		w = b.size
+		w = b.config.Size
 		h = rect.Height()
 	case Top:
 		x = rect.X()
 		y = rect.Y()
 		w = rect.Width()
-		h = b.size
+		h = b.config.Size
 	case Right:
-		x = rect.X() + rect.Width() - b.size
+		x = rect.X() + rect.Width() - b.config.Size
 		y = rect.Y()
-		w = b.size
+		w = b.config.Size
 		h = rect.Height()
 	case Bottom:
 		x = rect.X()
-		y = rect.Y() + rect.Height() - b.size
+		y = rect.Y() + rect.Height() - b.config.Size
 		w = rect.Width()
-		h = b.size
+		h = b.config.Size
 	}
 
 	b.win.MROpt(f, x, y, w, h)
@@ -93,15 +79,15 @@ func (b *Border) ApplyRect(config *WinConfig, rect xrect.Rect, f int) xrect.Rect
 
 	switch b.position {
 	case Left:
-		newRect.XSet(newRect.X() + b.size)
-		newRect.WidthSet(newRect.Width() - b.size)
+		newRect.XSet(newRect.X() + b.config.Size)
+		newRect.WidthSet(newRect.Width() - b.config.Size)
 	case Top:
-		newRect.YSet(newRect.Y() + b.size)
-		newRect.HeightSet(newRect.Height() - b.size)
+		newRect.YSet(newRect.Y() + b.config.Size)
+		newRect.HeightSet(newRect.Height() - b.config.Size)
 	case Right:
-		newRect.WidthSet(newRect.Width() - b.size)
+		newRect.WidthSet(newRect.Width() - b.config.Size)
 	case Bottom:
-		newRect.HeightSet(newRect.Height() - b.size)
+		newRect.HeightSet(newRect.Height() - b.config.Size)
 	}
 
 	return newRect
@@ -132,17 +118,17 @@ func (b *Border) Bottom(config *WinConfig) int {
 }
 
 func (b *Border) Active() {
-	b.win.Change(xproto.CwBackPixel, b.colorActive)
+	b.win.Change(xproto.CwBackPixel, b.config.ColorActive)
 	b.win.ClearAll()
 }
 
 func (b *Border) InActive() {
-	b.win.Change(xproto.CwBackPixel, b.colorNormal)
+	b.win.Change(xproto.CwBackPixel, b.config.ColorNormal)
 	b.win.ClearAll()
 }
 
 func (b *Border) Attention() {
-	b.win.Change(xproto.CwBackPixel, b.colorAttention)
+	b.win.Change(xproto.CwBackPixel, b.config.ColorAttention)
 	b.win.ClearAll()
 }
 
@@ -156,7 +142,7 @@ func (b *Border) sizeIfPos(config *WinConfig, pos ...Position) int {
 	}
 	for _, p := range pos {
 		if b.position == p {
-			return b.size
+			return b.config.Size
 		}
 	}
 	return 0
