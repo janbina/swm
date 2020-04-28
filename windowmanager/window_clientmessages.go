@@ -30,7 +30,6 @@ var windowStateHandlers = map[string][3]func(window *win){
 	"_NET_WM_STATE_ABOVE":             {(*win).UnStackAbove, (*win).StackAbove, (*win).StackAboveToggle},
 	"_NET_WM_STATE_BELOW":             {(*win).UnStackBelow, (*win).StackBelow, (*win).StackBelowToggle},
 	"_NET_WM_STATE_DEMANDS_ATTENTION": {(*win).StopAttention, (*win).StartAttention, (*win).ToggleAttention},
-	"_NET_WM_STATE_STICKY":            {UnstickWindow, StickWindow, ToggleWindowSticky},
 	"_NET_WM_STATE_FULLSCREEN":        {(*win).UnFullscreen, (*win).Fullscreen, (*win).FullscreenToggle},
 	"_NET_WM_STATE_HIDDEN":            {(*win).DeIconify, (*win).Iconify, (*win).IconifyToggle},
 	"_NET_WM_STATE_FOCUSED":           {(*win).Unfocused, (*win).Focused, (*win).FocusToggle},
