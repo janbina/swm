@@ -169,6 +169,20 @@ func ShowGroupOnly(group int) *Changes {
 	return createChanges(invisible, visible)
 }
 
+func ShowGroup(group int) *Changes {
+	if !IsGroupVisible(group) {
+		return ToggleGroupVisibility(group)
+	}
+	return createChanges(nil, nil)
+}
+
+func HideGroup(group int) *Changes {
+	if IsGroupVisible(group) {
+		return ToggleGroupVisibility(group)
+	}
+	return createChanges(nil, nil)
+}
+
 func SetGroupForWindow(win xproto.Window, group int) *Changes {
 	prev := winToGroup[win]
 	if prev == group {

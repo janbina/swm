@@ -92,9 +92,31 @@ func switchToDesktop(index int) {
 }
 
 func showWindowGroup(win xproto.Window) {
-	if !groupmanager.IsWinGroupVisible(win) {
-		groupmanager.ToggleGroupVisibility(groupmanager.GetWinGroup(win))
-	}
+	ShowGroup(groupmanager.GetWinGroup(win))
+}
+
+func ToggleGroupVisibility(group int) {
+	changes := groupmanager.ToggleGroupVisibility(group)
+	applyChanges(changes)
+	focus.FocusLast()
+}
+
+func ShowGroupOnly(group int) {
+	changes := groupmanager.ShowGroupOnly(group)
+	applyChanges(changes)
+	focus.FocusLast()
+}
+
+func ShowGroup(group int) {
+	changes := groupmanager.ShowGroup(group)
+	applyChanges(changes)
+	focus.FocusLast()
+}
+
+func HideGroup(group int) {
+	changes := groupmanager.HideGroup(group)
+	applyChanges(changes)
+	focus.FocusLast()
 }
 
 func applyChanges(changes *groupmanager.Changes) {

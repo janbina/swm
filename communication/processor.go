@@ -310,6 +310,26 @@ func groupCommand(args []string) string {
 		default:
 			return "Unsupported group mode"
 		}
+	case "toggle", "show", "hide", "only":
+		if len(args) < 2 {
+			return "No group id to work with"
+		}
+		if id, err := strconv.Atoi(args[1]); err != nil {
+			return "Invalid group id"
+		} else {
+			switch args[0] {
+			case "toggle":
+				windowmanager.ToggleGroupVisibility(id)
+			case "show":
+				windowmanager.ShowGroup(id)
+			case "hide":
+				windowmanager.HideGroup(id)
+			case "only":
+				windowmanager.ShowGroupOnly(id)
+			default:
+				panic("Unreachable")
+			}
+		}
 	default:
 		return "Unsupported group argument"
 	}
