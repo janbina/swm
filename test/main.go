@@ -22,6 +22,7 @@ var tests = []test{
 	{"group basics", testGroupBasics},
 	{"group window creation", testGroupWindowCreation},
 	{"group window movement", testGroupWindowMovement},
+	{"group visibility", testGroupVisibility},
 }
 
 var errorLogger = log.New(os.Stdout, "    error: ", log.Lshortfile)

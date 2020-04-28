@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"github.com/BurntSushi/xgbutil/ewmh"
+	"github.com/BurntSushi/xgbutil/icccm"
 	"github.com/BurntSushi/xgbutil/xwindow"
 )
 
@@ -152,6 +154,83 @@ func testGroupWindowMovement() int {
 	return errorCnt
 }
 
+//noinspection GoNilness
+func testGroupVisibility() int {
+	errorCnt := 0
+
+	maxDesks := 10
+	_ = ewmh.NumberOfDesktopsReq(X, maxDesks)
+	var wins []*xwindow.Window
+	swmctl("group", "mode", "auto")
+
+	// create one window on each desktop and one sticky
+	for i := 0; i < maxDesks; i++ {
+		_ = ewmh.CurrentDesktopReq(X, i)
+		sleepMillis(10)
+		w := createWindow()
+		wins = append(wins, w)
+		sleepMillis(10)
+		d, _ := ewmh.WmDesktopGet(X, w.Id)
+		assertEquals(i, int(d), "Incorrect desktop for window", &errorCnt)
+	}
+	sticky := createWindow()
+	_ = ewmh.WmDesktopSet(X, sticky.Id, 0xFFFFFFFF)
+	sleepMillis(10)
+	d, _ := ewmh.WmDesktopGet(X, sticky.Id)
+	assertEquals(0xFFFFFFFF, int(d), "Incorrect desktop for window", &errorCnt)
+
+	// set the only group to be the sticky one - no window should be mapped but the sticky one
+	swmctl("group", "only", "-1")
+	sleepMillis(10)
+	for _, win := range wins {
+		assert(isWinIconified(win), "Window should be iconified", &errorCnt)
+	}
+	assert(isWinMapped(sticky), "Window should be mapped", &errorCnt)
+
+	// set the only visible group and check that only windows from that group and sticky window is mapped
+	for i := 0; i < maxDesks; i++ {
+		swmctl("group", "only", fmt.Sprintf("%d", i))
+		sleepMillis(10)
+		assert(isWinMapped(sticky), "Window should be mapped", &errorCnt)
+		for j, win := range wins {
+			if i == j {
+				assert(isWinMapped(win), "Window should be mapped", &errorCnt)
+			} else {
+				assert(isWinIconified(win), "Window should be iconified", &errorCnt)
+			}
+		}
+	}
+
+	//multiple groups together, show, hide, toggle...
+	swmctl("group", "only", "-1")
+	swmctl("group", "show", "1")
+	swmctl("group", "show", "3")
+	swmctl("group", "toggle", "5")
+	sleepMillis(10)
+	assert(isWinMapped(wins[1]), "Window should be mapped", &errorCnt)
+	assert(isWinIconified(wins[2]), "Window should be iconified", &errorCnt)
+	assert(isWinMapped(wins[3]), "Window should be mapped", &errorCnt)
+	assert(isWinIconified(wins[4]), "Window should be iconified", &errorCnt)
+	assert(isWinMapped(wins[5]), "Window should be mapped", &errorCnt)
+	assert(isWinIconified(wins[6]), "Window should be iconified", &errorCnt)
+	swmctl("group", "hide", "3")
+	swmctl("group", "show", "4")
+	swmctl("group", "toggle", "5")
+	swmctl("group", "toggle", "6")
+	sleepMillis(10)
+	assert(isWinMapped(wins[1]), "Window should be mapped", &errorCnt)
+	assert(isWinIconified(wins[2]), "Window should be iconified", &errorCnt)
+	assert(isWinIconified(wins[3]), "Window should be mapped", &errorCnt)
+	assert(isWinMapped(wins[4]), "Window should be iconified", &errorCnt)
+	assert(isWinIconified(wins[5]), "Window should be mapped", &errorCnt)
+	assert(isWinMapped(wins[6]), "Window should be iconified", &errorCnt)
+
+	destroyWindows(wins)
+	sticky.Destroy()
+
+	return errorCnt
+}
+
 func activeDesktop() int {
 	d, _ := ewmh.CurrentDesktopGet(X)
 	return int(d)
@@ -160,4 +239,14 @@ func activeDesktop() int {
 func numDesktops() int {
 	n, _ := ewmh.NumberOfDesktopsGet(X)
 	return int(n)
+}
+
+func isWinIconified(win *xwindow.Window) bool {
+	state, _ := icccm.WmStateGet(X, win.Id)
+	return state.State == icccm.StateIconic
+}
+
+func isWinMapped(win *xwindow.Window) bool {
+	state, _ := icccm.WmStateGet(X, win.Id)
+	return state.State == icccm.StateNormal
 }
