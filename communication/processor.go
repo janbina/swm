@@ -22,8 +22,6 @@ var commands = map[string]func([]string) string{
 	"cycle-win-rev":        cycleWinRevCommand,
 	"cycle-win-end":        cycleWinEndCommand,
 	"set-desktop-names":    setDesktopNamesCommand,
-	"move-drag-shortcut":   moveDragShortcutCommand,
-	"resize-drag-shortcut": resizeDragShortcutCommand,
 	"begin-mouse-move":     mouseMoveCommand,
 	"begin-mouse-resize":   mouseResizeCommand,
 	"config":               configCommand,
@@ -221,30 +219,6 @@ func setDesktopNamesCommand(args []string) string {
 	return ""
 }
 
-func moveDragShortcutCommand(args []string) string {
-	if len(args) == 0 {
-		return "No shortcut provided"
-	}
-	s := args[0]
-	err := windowmanager.SetMoveDragShortcut(s)
-	if err != nil {
-		return "Invalid shortcut"
-	}
-	return ""
-}
-
-func resizeDragShortcutCommand(args []string) string {
-	if len(args) == 0 {
-		return "No shortcut provided"
-	}
-	s := args[0]
-	err := windowmanager.SetResizeDragShortcut(s)
-	if err != nil {
-		return "Invalid shortcut"
-	}
-	return ""
-}
-
 func mouseMoveCommand(_ []string) string {
 	if err := windowmanager.BeginMouseMoveFromPointer(); err != nil {
 		return err.Error()
@@ -260,6 +234,9 @@ func mouseResizeCommand(_ []string) string {
 }
 
 func configCommand(args []string) string {
+	if len(args) == 0 {
+		return "Nothing to configure"
+	}
 	switch args[0] {
 	case "border":
 		s, n, ac, att, err := parseBorderConfig(args[1:])
@@ -291,6 +268,24 @@ func configCommand(args []string) string {
 			return err.Error()
 		}
 		config.SetRightBorder(s, n, ac, att)
+	case "move-drag-shortcut":
+		if len(args) < 2 {
+			return "No shortcut provided"
+		}
+		s := args[1]
+		err := windowmanager.SetMoveDragShortcut(s)
+		if err != nil {
+			return "Invalid shortcut"
+		}
+	case "resize-drag-shortcut":
+		if len(args) < 2 {
+			return "No shortcut provided"
+		}
+		s := args[1]
+		err := windowmanager.SetResizeDragShortcut(s)
+		if err != nil {
+			return "Invalid shortcut"
+		}
 	default:
 		return "Unsupported config argument"
 	}

@@ -5,6 +5,7 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/mousebind"
 	"github.com/BurntSushi/xgbutil/xrect"
+	"github.com/janbina/swm/config"
 	"github.com/janbina/swm/desktopmanager"
 	"github.com/janbina/swm/focus"
 	"github.com/janbina/swm/heads"
@@ -12,9 +13,6 @@ import (
 	"github.com/janbina/swm/util"
 	"github.com/janbina/swm/window"
 )
-
-var moveDragShortcut = "Mod1-1"
-var resizeDragShortcut = "Mod1-3"
 
 func getActiveWindow() focus.FocusableWindow {
 	return focus.Current()
@@ -170,7 +168,7 @@ func SetMoveDragShortcut(s string) error {
 	if _, _, err := mousebind.ParseString(X, s); err != nil {
 		return err
 	}
-	moveDragShortcut = s
+	config.MoveDragShortcut = s
 	mouseShortcutsChanged()
 	return nil
 }
@@ -179,14 +177,14 @@ func SetResizeDragShortcut(s string) error {
 	if _, _, err := mousebind.ParseString(X, s); err != nil {
 		return err
 	}
-	resizeDragShortcut = s
+	config.ResizeDragShortcut = s
 	mouseShortcutsChanged()
 	return nil
 }
 
 func mouseShortcutsChanged() {
 	for _, win := range managedWindows {
-		win.SetupMouseEvents(moveDragShortcut, resizeDragShortcut)
+		win.SetupMouseEvents()
 	}
 }
 

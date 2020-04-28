@@ -80,7 +80,7 @@ func unmanageWindow(w xproto.Window) {
 }
 
 func setupListeners(w xproto.Window, win *window.Window) {
-	win.SetupMouseEvents(moveDragShortcut, resizeDragShortcut)
+	win.SetupMouseEvents()
 
 	_ = win.Listen(
 		xproto.EventMaskStructureNotify,
