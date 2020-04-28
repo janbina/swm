@@ -207,6 +207,9 @@ func HideGroup(group int) {
 }
 
 func applyChanges(changes *groupmanager.Changes) {
+	if changes == nil {
+		return
+	}
 	for _, w := range changes.Invisible {
 		win := managedWindows[w]
 		if win == nil {

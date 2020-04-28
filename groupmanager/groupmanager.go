@@ -121,12 +121,12 @@ func SetNumberOfGroups(num int) *Changes {
 		setDesktops()
 	}
 
-	return createChanges(nil, nil)
+	return nil
 }
 
 func ToggleGroupVisibility(group int) *Changes {
 	if group == alwaysVisibleGroup {
-		return createChanges(nil, nil)
+		return nil
 	}
 	wasVisible := visibleGroups[group]
 	visibleGroups[group] = !wasVisible
@@ -174,7 +174,7 @@ func showGroupForce(group int, force bool) *Changes {
 
 		return createChanges(nil, wins)
 	}
-	return createChanges(nil, nil)
+	return nil
 }
 
 func ShowGroup(group int) *Changes {
@@ -185,13 +185,13 @@ func HideGroup(group int) *Changes {
 	if IsGroupVisible(group) {
 		return ToggleGroupVisibility(group)
 	}
-	return createChanges(nil, nil)
+	return nil
 }
 
 func SetGroupForWindow(win xproto.Window, group int) *Changes {
 	prev := winToGroup[win]
 	if prev == group {
-		return createChanges(nil, nil)
+		return nil
 	}
 	ensureEnoughGroups(group)
 	delete(groupToWins[prev], win)
@@ -205,7 +205,7 @@ func SetGroupForWindow(win xproto.Window, group int) *Changes {
 	} else if !IsGroupVisible(prev) && IsGroupVisible(group) {
 		return createChanges(nil, []xproto.Window{win})
 	}
-	return createChanges(nil, nil)
+	return nil
 }
 
 func getInitialGroupForWindow(win xproto.Window) int {
