@@ -62,6 +62,39 @@ func Raise(win StackingWindow) {
 	ReStack()
 }
 
+// RaiseMulti raises multiple windows based on their previous order
+// Used to raise whole group of windows
+func RaiseMulti(wins []StackingWindow) {
+	t := time.Now().UnixNano()
+
+	// If window is not tracked yet, track it
+	for _, win := range wins {
+		if _, ok := raiseTimestamp[win.Id()]; !ok {
+			windows = append(windows, win)
+			raiseTimestamp[win.Id()] = t
+		}
+	}
+
+	// sort windows by their previous timestamp
+	sort.Slice(wins, func(i, j int) bool {
+		return raiseTimestamp[wins[i].Id()] < raiseTimestamp[wins[j].Id()]
+	})
+
+	for _, win := range wins {
+		t += 2
+		raiseTimestamp[win.Id()] = t
+		for _, w := range windows {
+			if w.TransientFor(win) {
+				raiseTimestamp[w.Id()] = t + 1
+			}
+		}
+	}
+
+	tmpStacking = false
+
+	ReStack()
+}
+
 // ReStack sorts windows by stacking order (layer, raise timestamp)
 // and invokes realiseStacking(). Usually called from Raise() after raising window,
 // but can be also called standalone, typically when we change some windows layer
