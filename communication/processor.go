@@ -25,6 +25,7 @@ var commands = map[string]func([]string) string{
 	"begin-mouse-move":     mouseMoveCommand,
 	"begin-mouse-resize":   mouseResizeCommand,
 	"config":               configCommand,
+	"group":                groupCommand,
 }
 
 func processCommand(msg string) string {
@@ -288,6 +289,29 @@ func configCommand(args []string) string {
 		}
 	default:
 		return "Unsupported config argument"
+	}
+	return ""
+}
+
+func groupCommand(args []string) string {
+	if len(args) == 0 {
+		return "No arguments for group command"
+	}
+	switch args[0] {
+	case "mode":
+		if len(args) < 2 {
+			return "No group mode specified"
+		}
+		switch args[1] {
+		case "sticky":
+			groupmanager.GroupMode = groupmanager.ModeSticky
+		case "auto":
+			groupmanager.GroupMode = groupmanager.ModeAuto
+		default:
+			return "Unsupported group mode"
+		}
+	default:
+		return "Unsupported group argument"
 	}
 	return ""
 }

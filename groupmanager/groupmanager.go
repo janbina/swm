@@ -11,10 +11,15 @@ type Changes struct {
 	Visible   []xproto.Window
 }
 
+type Mode int
+
 const (
 	// Id of group which is always visible
 	// Taken from ewmh desktop specification: "0xFFFFFFFF indicates that the window should appear on all groups"
 	alwaysVisibleGroup = 0xFFFFFFFF
+
+	ModeSticky Mode = iota
+	ModeAuto
 )
 
 var (
@@ -25,6 +30,7 @@ var (
 	winToGroup    map[xproto.Window]int
 	currentGroup  int
 	visibleGroups map[int]bool
+	GroupMode     Mode
 )
 
 func Initialize(x *xgbutil.XUtil) {
@@ -36,6 +42,7 @@ func Initialize(x *xgbutil.XUtil) {
 	groups = getDesktops()
 	currentGroup = alwaysVisibleGroup
 	visibleGroups = make(map[int]bool)
+	GroupMode = ModeAuto
 	setDesktops()
 	setCurrentDesktop()
 }
@@ -183,17 +190,16 @@ func SetGroupForWindow(win xproto.Window, group int) *Changes {
 }
 
 func getInitialGroupForWindow(win xproto.Window) int {
-	_g, err := ewmh.WmDesktopGet(X, win)
-	g := int(_g)
+	if GroupMode == ModeSticky {
+		return alwaysVisibleGroup
+	}
+	g, err := ewmh.WmDesktopGet(X, win)
 	if err != nil {
 		// not specified
 		return currentGroup
 	}
-	if g == alwaysVisibleGroup || g < len(groups) {
-		return g
-	}
-	// TODO: Current, last, create additional groups, or what?
-	return len(groups) - 1
+	ensureEnoughGroups(int(g))
+	return int(g)
 }
 
 func moveWinsToGroup(from, to int) {
