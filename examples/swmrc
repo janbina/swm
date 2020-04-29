@@ -14,3 +14,5 @@ swmctl config border-top 3 B0BEC5 00BCD4 F44336
 swmctl config move-drag-shortcut Mod1-1
 swmctl config resize-drag-shortcut Mod1-3
 
+swmctl group mode auto # or sticky
+
