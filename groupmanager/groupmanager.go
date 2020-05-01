@@ -4,6 +4,7 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
+	"time"
 )
 
 type Changes struct {
@@ -30,13 +31,14 @@ var (
 
 	// names of all groups
 	// used also to get the number of groups
-	groups        []string
-	groupToWins   map[int]map[xproto.Window]bool
-	winToGroup    map[xproto.Window]int
-	visibleGroups map[int]bool
+	groups         []string
+	groupToWins    map[int]map[xproto.Window]bool
+	winToGroup     map[xproto.Window]int
+	visibleGroups  map[int]bool
+	shownTimestamp map[int]int64
 	// group which was made visible *last*
-	currentGroup  int
-	GroupMode     Mode
+	currentGroup int
+	GroupMode    Mode
 )
 
 func Initialize(x *xgbutil.XUtil) {
@@ -48,6 +50,7 @@ func Initialize(x *xgbutil.XUtil) {
 	groups = getDesktops()
 	currentGroup = alwaysVisibleGroup
 	visibleGroups = make(map[int]bool)
+	shownTimestamp = make(map[int]int64)
 	GroupMode = ModeAuto
 	setDesktops()
 	setCurrentDesktop()
@@ -133,13 +136,18 @@ func ToggleGroupVisibility(group int) *Changes {
 
 	wins := winsOfGroup(group)
 
-	updateCurrentGroup(group)
+	var changes *Changes
 
 	if wasVisible {
-		return createChanges(wins, nil)
+		shownTimestamp[group] = 0
+		changes = createChanges(wins, nil)
 	} else {
-		return createChanges(nil, wins)
+		shownTimestamp[group] = time.Now().UnixNano()
+		changes = createChanges(nil, wins)
 	}
+
+	updateCurrentGroup()
+	return changes
 }
 
 func ShowGroupOnly(group int) *Changes {
@@ -158,7 +166,8 @@ func ShowGroupOnly(group int) *Changes {
 		visible = winsOfGroup(group)
 	}
 
-	updateCurrentGroup(group)
+	shownTimestamp = map[int]int64{ group: time.Now().UnixNano() }
+	updateCurrentGroup()
 
 	return createChanges(invisible, visible)
 }
@@ -170,7 +179,8 @@ func showGroupForce(group int, force bool) *Changes {
 	if force {
 		wins := winsOfGroup(group)
 
-		updateCurrentGroup(group)
+		shownTimestamp[group] = time.Now().UnixNano()
+		updateCurrentGroup()
 
 		return createChanges(nil, wins)
 	}
@@ -253,11 +263,17 @@ func winsOfGroup(d int) []xproto.Window {
 	return ret
 }
 
-func updateCurrentGroup(group int) {
-	if IsGroupVisible(group) {
-		currentGroup = group
-		setCurrentDesktop()
+func updateCurrentGroup() {
+	group := alwaysVisibleGroup
+	max := int64(0)
+	for g, t := range shownTimestamp {
+		if t > max {
+			max = t
+			group = g
+		}
 	}
+	currentGroup = group
+	setCurrentDesktop()
 }
 
 func createChanges(invisible, visible []xproto.Window) *Changes {
