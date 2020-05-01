@@ -131,6 +131,7 @@ func ToggleGroupVisibility(group int) *Changes {
 	if group == alwaysVisibleGroup {
 		return nil
 	}
+	ensureEnoughGroups(group)
 	wasVisible := visibleGroups[group]
 	visibleGroups[group] = !wasVisible
 
@@ -153,6 +154,8 @@ func ToggleGroupVisibility(group int) *Changes {
 func ShowGroupOnly(group int) *Changes {
 	invisible := make([]xproto.Window, 0)
 	var visible []xproto.Window
+
+	ensureEnoughGroups(group)
 
 	for g, v := range visibleGroups {
 		if v && g != group {
@@ -178,6 +181,8 @@ func showGroupForce(group int, force bool) *Changes {
 	}
 	if force {
 		wins := winsOfGroup(group)
+
+		ensureEnoughGroups(group)
 
 		shownTimestamp[group] = time.Now().UnixNano()
 		updateCurrentGroup()
