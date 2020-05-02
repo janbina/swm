@@ -3,7 +3,10 @@ package groupmanager
 import (
 	"fmt"
 	"github.com/BurntSushi/xgbutil/ewmh"
+	"github.com/BurntSushi/xgbutil/xprop"
 )
+
+const SWM_VISIBLE_GROUPS_ATOM = "_SWM_VISIBLE_GROUPS"
 
 func getGroupNames(groups []*group) []string {
 	names := make([]string, len(groups))
@@ -54,4 +57,8 @@ func setDesktopNames(names []string) {
 
 func setCurrentDesktop() {
 	_ = ewmh.CurrentDesktopSet(X, uint(currentGroup))
+}
+
+func setVisibleGroups() {
+	_ = xprop.ChangeProp32(X, X.RootWin(), SWM_VISIBLE_GROUPS_ATOM, "CARDINAL", GetVisibleGroups()...)
 }

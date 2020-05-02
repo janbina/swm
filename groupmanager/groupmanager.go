@@ -51,6 +51,7 @@ func Initialize(x *xgbutil.XUtil) {
 	GroupMode = ModeAuto
 	setDesktops()
 	setCurrentDesktop()
+	setVisibleGroups()
 }
 
 func AddWindow(win xproto.Window) {
@@ -115,6 +116,7 @@ func SetNumberOfGroups(num int) *Changes {
 		}
 		groups = groups[:num]
 		setDesktops()
+		setVisibleGroups()
 		if currentGroup >= newLast {
 			return showGroupForce(newLast, true)
 		}
@@ -144,6 +146,7 @@ func ToggleGroupVisibility(group int) *Changes {
 	wins := winsOfGroup(group)
 
 	updateCurrentGroup()
+	setVisibleGroups()
 
 	if wasVisible {
 		return createChanges(wins, nil)
@@ -175,6 +178,7 @@ func ShowGroupOnly(group int) *Changes {
 	}
 
 	updateCurrentGroup()
+	setVisibleGroups()
 
 	return createChanges(invisible, visible)
 }
@@ -190,6 +194,7 @@ func showGroupForce(group int, force bool) *Changes {
 
 		getGroup(group).shownTimestamp = time.Now().UnixNano()
 		updateCurrentGroup()
+		setVisibleGroups()
 
 		return createChanges(nil, wins)
 	}
@@ -229,11 +234,11 @@ func SetGroupForWindow(win xproto.Window, group int) *Changes {
 	return nil
 }
 
-func GetVisibleGroups() []int {
-	ids := make([]int, 0)
+func GetVisibleGroups() []uint {
+	ids := make([]uint, 0)
 	for i, group := range groups {
 		if group.isVisible() {
-			ids = append(ids, i)
+			ids = append(ids, uint(i))
 		}
 	}
 	return ids
