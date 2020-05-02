@@ -5,6 +5,14 @@ import (
 	"github.com/BurntSushi/xgbutil/ewmh"
 )
 
+func getGroupNames(groups []*group) []string {
+	names := make([]string, len(groups))
+	for i, group := range groups {
+		names[i] = group.name
+	}
+	return names
+}
+
 func defaultDesktopName(pos int) string {
 	return fmt.Sprintf("G.%d", pos+1)
 }
@@ -36,7 +44,7 @@ func setDesktops() {
 	fromEwmh, _ := ewmh.DesktopNamesGet(X)
 	if len(fromEwmh) < len(groups) {
 		// dont set names when shrinking
-		setDesktopNames(groups)
+		setDesktopNames(getGroupNames(groups))
 	}
 }
 

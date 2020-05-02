@@ -17,7 +17,7 @@ type Mode int
 const (
 	// Id of group which is always visible
 	// Taken from ewmh desktop specification: "0xFFFFFFFF indicates that the window should appear on all groups"
-	alwaysVisibleGroup = 0xFFFFFFFF
+	stickyGroupID = 0xFFFFFFFF
 
 	// Mode for initial window group:
 	// * sticky - all windows are initially in group id 0xFFFFFFFF, which is always visible
@@ -29,28 +29,25 @@ const (
 var (
 	X *xgbutil.XUtil
 
-	// names of all groups
-	// used also to get the number of groups
-	groups         []string
-	groupToWins    map[int]map[xproto.Window]bool
-	winToGroup     map[xproto.Window]int
-	visibleGroups  map[int]bool
-	shownTimestamp map[int]int64
-	// group which was made visible *last*
-	currentGroup int
+	groups       []*group
+	stickyGroup  *group
+	winToGroup   map[xproto.Window]int
+	currentGroup int // group which was made visible *last*
 	GroupMode    Mode
 )
 
 func Initialize(x *xgbutil.XUtil) {
 	X = x
 
-	groupToWins = make(map[int]map[xproto.Window]bool)
-	groupToWins[alwaysVisibleGroup] = make(map[xproto.Window]bool)
-	winToGroup = make(map[xproto.Window]int)
-	groups = getDesktops()
-	currentGroup = alwaysVisibleGroup
-	visibleGroups = make(map[int]bool)
-	shownTimestamp = make(map[int]int64)
+	desktops := getDesktops()
+	groups := make([]*group, len(desktops))
+	for i, name := range getDesktops() {
+		groups[i] = createGroup(name)
+	}
+
+	stickyGroup = createGroup("sticky")
+	winToGroup = map[xproto.Window]int{}
+	currentGroup = stickyGroupID
 	GroupMode = ModeAuto
 	setDesktops()
 	setCurrentDesktop()
@@ -59,15 +56,14 @@ func Initialize(x *xgbutil.XUtil) {
 func AddWindow(win xproto.Window) {
 	g := getInitialGroupForWindow(win)
 	winToGroup[win] = g
-	ensureGroup(g)
-	groupToWins[g][win] = true
+	getGroup(g).windows[win] = true
 	_ = ewmh.WmDesktopSet(X, win, uint(g))
 }
 
 func RemoveWindow(win xproto.Window) {
-	d := winToGroup[win]
+	g := winToGroup[win]
 	delete(winToGroup, win)
-	delete(groupToWins[d], win)
+	delete(getGroup(g).windows, win)
 }
 
 func GetNumGroups() int {
@@ -75,7 +71,10 @@ func GetNumGroups() int {
 }
 
 func IsGroupVisible(group int) bool {
-	return group == alwaysVisibleGroup || visibleGroups[group]
+	if group == stickyGroupID {
+		return true
+	}
+	return group >= 0 && group < len(groups) && getGroup(group).isVisible()
 }
 
 func IsWinGroupVisible(win xproto.Window) bool {
@@ -89,13 +88,13 @@ func GetWinGroup(win xproto.Window) int {
 func SetGroupNames(names []string) {
 	for i, name := range names {
 		if i < len(groups) {
-			groups[i] = name
+			getGroup(i).name = name
 		}
 	}
 	if len(names) > len(groups) {
 		setDesktopNames(names)
 	} else {
-		setDesktopNames(groups)
+		setDesktopNames(getGroupNames(groups))
 	}
 }
 
@@ -120,7 +119,10 @@ func SetNumberOfGroups(num int) *Changes {
 			return showGroupForce(newLast, true)
 		}
 	} else if num > currentNum {
-		groups = append(groups, getDesktopNames(currentNum, newLast)...)
+		names := getDesktopNames(currentNum, newLast)
+		for _, name := range names {
+			groups = append(groups, createGroup(name))
+		}
 		setDesktops()
 	}
 
@@ -128,27 +130,26 @@ func SetNumberOfGroups(num int) *Changes {
 }
 
 func ToggleGroupVisibility(group int) *Changes {
-	if group == alwaysVisibleGroup {
+	if group == stickyGroupID {
 		return nil
 	}
 	ensureEnoughGroups(group)
-	wasVisible := visibleGroups[group]
-	visibleGroups[group] = !wasVisible
+	wasVisible := IsGroupVisible(group)
+	if wasVisible {
+		getGroup(group).shownTimestamp = 0
+	} else {
+		getGroup(group).shownTimestamp = time.Now().UnixNano()
+	}
 
 	wins := winsOfGroup(group)
 
-	var changes *Changes
+	updateCurrentGroup()
 
 	if wasVisible {
-		shownTimestamp[group] = 0
-		changes = createChanges(wins, nil)
+		return createChanges(wins, nil)
 	} else {
-		shownTimestamp[group] = time.Now().UnixNano()
-		changes = createChanges(nil, wins)
+		return createChanges(nil, wins)
 	}
-
-	updateCurrentGroup()
-	return changes
 }
 
 func ShowGroupOnly(group int) *Changes {
@@ -157,19 +158,18 @@ func ShowGroupOnly(group int) *Changes {
 
 	ensureEnoughGroups(group)
 
-	for g, v := range visibleGroups {
-		if v && g != group {
-			visibleGroups[g] = false
-			invisible = append(invisible, winsOfGroup(g)...)
+	for i, g := range groups {
+		if i != group && g.isVisible() {
+			g.shownTimestamp = 0
+			invisible = append(invisible, winsOfGroup(i)...)
 		}
 	}
 
-	if !visibleGroups[group] {
-		visibleGroups[group] = true
+	if !getGroup(group).isVisible() {
+		getGroup(group).shownTimestamp = time.Now().UnixNano()
 		visible = winsOfGroup(group)
 	}
 
-	shownTimestamp = map[int]int64{ group: time.Now().UnixNano() }
 	updateCurrentGroup()
 
 	return createChanges(invisible, visible)
@@ -184,7 +184,7 @@ func showGroupForce(group int, force bool) *Changes {
 
 		ensureEnoughGroups(group)
 
-		shownTimestamp[group] = time.Now().UnixNano()
+		getGroup(group).shownTimestamp = time.Now().UnixNano()
 		updateCurrentGroup()
 
 		return createChanges(nil, wins)
@@ -209,9 +209,8 @@ func SetGroupForWindow(win xproto.Window, group int) *Changes {
 		return nil
 	}
 	ensureEnoughGroups(group)
-	delete(groupToWins[prev], win)
-	ensureGroup(group)
-	groupToWins[group][win] = true
+	delete(getGroup(prev).windows, win)
+	getGroup(group).windows[win] = true
 	winToGroup[win] = group
 	_ = ewmh.WmDesktopSet(X, win, uint(group))
 
@@ -225,7 +224,7 @@ func SetGroupForWindow(win xproto.Window, group int) *Changes {
 
 func getInitialGroupForWindow(win xproto.Window) int {
 	if GroupMode == ModeSticky {
-		return alwaysVisibleGroup
+		return stickyGroupID
 	}
 	g, err := ewmh.WmDesktopGet(X, win)
 	if err != nil {
@@ -237,48 +236,48 @@ func getInitialGroupForWindow(win xproto.Window) int {
 }
 
 func moveWinsToGroup(from, to int) {
-	ensureGroup(to)
-	for w := range groupToWins[from] {
-		groupToWins[to][w] = true
+	for w := range getGroup(from).windows {
+		getGroup(to).windows[w] = true
 		winToGroup[w] = to
 		_ = ewmh.WmDesktopSet(X, w, uint(to))
 	}
-	delete(groupToWins, from)
-}
-
-func ensureGroup(d int) {
-	if groupToWins[d] == nil {
-		groupToWins[d] = make(map[xproto.Window]bool)
-	}
+	getGroup(from).windows = map[xproto.Window]bool{}
 }
 
 func ensureEnoughGroups(group int) {
-	if group == alwaysVisibleGroup || group < len(groups) {
+	if group == stickyGroupID || group < len(groups) {
 		return
 	}
 	// we can safely ignore changes, cause we are adding new groups, so there are none
 	_ = SetNumberOfGroups(group + 1)
 }
 
-func winsOfGroup(d int) []xproto.Window {
-	ret := make([]xproto.Window, 0, len(groupToWins[d]))
-	for w := range groupToWins[d] {
+func winsOfGroup(g int) []xproto.Window {
+	ret := make([]xproto.Window, 0, len(getGroup(g).windows))
+	for w := range getGroup(g).windows {
 		ret = append(ret, w)
 	}
 	return ret
 }
 
 func updateCurrentGroup() {
-	group := alwaysVisibleGroup
+	group := stickyGroupID
 	max := int64(0)
-	for g, t := range shownTimestamp {
-		if t > max {
-			max = t
-			group = g
+	for i, g := range groups {
+		if g.shownTimestamp > max {
+			max = g.shownTimestamp
+			group = i
 		}
 	}
 	currentGroup = group
 	setCurrentDesktop()
+}
+
+func getGroup(id int) *group {
+	if id == stickyGroupID {
+		return stickyGroup
+	}
+	return groups[id]
 }
 
 func createChanges(invisible, visible []xproto.Window) *Changes {
