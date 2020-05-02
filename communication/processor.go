@@ -334,6 +334,15 @@ func groupCommand(args []string) string {
 				panic("Unreachable")
 			}
 		}
+	case "get-visible":
+		var r strings.Builder
+		for i, id := range groupmanager.GetVisibleGroups() {
+			if i > 0 {
+				r.WriteByte('\n')
+			}
+			r.WriteString(fmt.Sprintf("%d", id))
+		}
+		return r.String()
 	default:
 		return "Unsupported group argument"
 	}

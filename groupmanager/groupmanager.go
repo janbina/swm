@@ -222,6 +222,16 @@ func SetGroupForWindow(win xproto.Window, group int) *Changes {
 	return nil
 }
 
+func GetVisibleGroups() []int {
+	ids := make([]int, 0)
+	for i, group := range groups {
+		if group.isVisible() {
+			ids = append(ids, i)
+		}
+	}
+	return ids
+}
+
 func getInitialGroupForWindow(win xproto.Window) int {
 	if GroupMode == ModeSticky {
 		return stickyGroupID
