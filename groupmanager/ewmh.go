@@ -2,6 +2,7 @@ package groupmanager
 
 import (
 	"fmt"
+	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/xprop"
 )
@@ -61,4 +62,9 @@ func setCurrentDesktop() {
 
 func setVisibleGroups() {
 	_ = xprop.ChangeProp32(X, X.RootWin(), SWM_VISIBLE_GROUPS_ATOM, "CARDINAL", GetVisibleGroups()...)
+}
+
+func setWinDesktop(win xproto.Window) {
+	d := winToGroup[win]
+	_ = xprop.ChangeProp32(X, win, "_NET_WM_DESKTOP", "CARDINAL", uint(d))
 }

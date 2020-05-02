@@ -58,7 +58,7 @@ func AddWindow(win xproto.Window) {
 	g := getInitialGroupForWindow(win)
 	winToGroup[win] = g
 	getGroup(g).windows[win] = true
-	_ = ewmh.WmDesktopSet(X, win, uint(g))
+	setWinDesktop(win)
 }
 
 func RemoveWindow(win xproto.Window) {
@@ -224,7 +224,7 @@ func SetGroupForWindow(win xproto.Window, group int) *Changes {
 	delete(getGroup(prev).windows, win)
 	getGroup(group).windows[win] = true
 	winToGroup[win] = group
-	_ = ewmh.WmDesktopSet(X, win, uint(group))
+	setWinDesktop(win)
 
 	if IsGroupVisible(prev) && !IsGroupVisible(group) {
 		return createChanges([]xproto.Window{win}, nil)
@@ -261,7 +261,7 @@ func moveWinsToGroup(from, to int) {
 	for w := range getGroup(from).windows {
 		getGroup(to).windows[w] = true
 		winToGroup[w] = to
-		_ = ewmh.WmDesktopSet(X, w, uint(to))
+		setWinDesktop(w)
 	}
 	getGroup(from).windows = map[xproto.Window]bool{}
 }
