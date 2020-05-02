@@ -130,7 +130,7 @@ func SetNumberOfGroups(num int) *Changes {
 }
 
 func ToggleGroupVisibility(group int) *Changes {
-	if group == stickyGroupID {
+	if group < 0 || group == stickyGroupID {
 		return nil
 	}
 	ensureEnoughGroups(group)
@@ -153,6 +153,10 @@ func ToggleGroupVisibility(group int) *Changes {
 }
 
 func ShowGroupOnly(group int) *Changes {
+	if group < 0 {
+		group = stickyGroupID
+	}
+
 	invisible := make([]xproto.Window, 0)
 	var visible []xproto.Window
 
@@ -204,6 +208,9 @@ func HideGroup(group int) *Changes {
 }
 
 func SetGroupForWindow(win xproto.Window, group int) *Changes {
+	if group < 0 {
+		group = stickyGroupID
+	}
 	prev := winToGroup[win]
 	if prev == group {
 		return nil
