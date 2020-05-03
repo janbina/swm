@@ -36,7 +36,7 @@ super + alt + {h,j,k,l}
 
 # move active window to group 0-9
 ctrl + super + {1-9,0}
-    swmctl group set {0-9}
+    swmctl group set -g {0-9}
     # also xdotool getactivewindow set_desktop_for_window {0-9}
 
 # toggle visibility of group 0-9
