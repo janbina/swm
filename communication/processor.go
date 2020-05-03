@@ -343,6 +343,19 @@ func groupCommand(args []string) string {
 			r.WriteString(fmt.Sprintf("%d", id))
 		}
 		return r.String()
+	case "get":
+		g, err := windowmanager.GetActiveWindowGroups()
+		if err != nil {
+			return err.Error()
+		}
+		var r strings.Builder
+		for i, id := range g {
+			if i > 0 {
+				r.WriteByte('\n')
+			}
+			r.WriteString(fmt.Sprintf("%d", id))
+		}
+		return r.String()
 	default:
 		return "Unsupported group argument"
 	}

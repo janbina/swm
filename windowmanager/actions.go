@@ -167,6 +167,14 @@ func SetGroupForActiveWindow(group int) error {
 	return nil
 }
 
+func GetActiveWindowGroups() ([]uint, error) {
+	active := getActiveWindow()
+	if active == nil {
+		return nil, fmt.Errorf("cannot get active window")
+	}
+	return groupmanager.GetWinGroups(active.Id()), nil
+}
+
 func setNumberOfDesktops(num int) {
 	changes := groupmanager.SetNumberOfGroups(num)
 	applyChanges(changes)
