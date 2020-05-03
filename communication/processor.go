@@ -22,7 +22,6 @@ var commands = map[string]func([]string) string{
 	"cycle-win":            cycleWinCommand,
 	"cycle-win-rev":        cycleWinRevCommand,
 	"cycle-win-end":        cycleWinEndCommand,
-	"set-desktop-names":    setDesktopNamesCommand,
 	"begin-mouse-move":     mouseMoveCommand,
 	"begin-mouse-resize":   mouseResizeCommand,
 	"config":               configCommand,
@@ -216,11 +215,6 @@ func cycleWinEndCommand(_ []string) string {
 	return ""
 }
 
-func setDesktopNamesCommand(args []string) string {
-	groupmanager.SetGroupNames(args)
-	return ""
-}
-
 func mouseMoveCommand(_ []string) string {
 	if err := windowmanager.BeginMouseMoveFromPointer(); err != nil {
 		return err.Error()
@@ -378,6 +372,11 @@ func groupCommand(args []string) string {
 		if err := fun(*id, *group); err != nil {
 			return err.Error()
 		}
+	case "names":
+		if len(args) < 2 {
+			return "No names provided"
+		}
+		groupmanager.SetGroupNames(args[1:])
 	case "get-visible":
 		var r strings.Builder
 		for i, id := range groupmanager.GetVisibleGroups() {
