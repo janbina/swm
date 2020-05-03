@@ -73,6 +73,10 @@ func GetNumGroups() int {
 	return len(groups)
 }
 
+func GetCurrentGroup() int {
+	return currentGroup
+}
+
 func IsGroupVisible(group int) bool {
 	if group == stickyGroupID {
 		return true
@@ -221,6 +225,42 @@ func SetGroupForWindow(win xproto.Window, group int) *Changes {
 	getGroup(group).windows[win] = true
 
 	winToGroups[win] = map[int]bool{group: true}
+	setWinDesktop(win)
+
+	return createChanges()
+}
+
+func AddWindowToGroup(win xproto.Window, group int) *Changes {
+	if group < 0 {
+		group = stickyGroupID
+	}
+
+	ensureEnoughGroups(group)
+	getGroup(group).windows[win] = true
+	winToGroups[win][group] = true
+	setWinDesktop(win)
+
+	return createChanges()
+}
+
+func RemoveWindowFromGroup(win xproto.Window, group int) *Changes {
+	if group < 0 {
+		group = stickyGroupID
+	}
+	if group != stickyGroupID && group >= len(groups) {
+		return nil
+	}
+
+	delete(getGroup(group).windows, win)
+	delete(winToGroups[win], group)
+
+	if len(winToGroups[win]) == 0 {
+		// window has to be in some group...
+		g := getInitialGroupForWindow(win)
+		winToGroups[win] = map[int]bool{g: true}
+		getGroup(g).windows[win] = true
+	}
+
 	setWinDesktop(win)
 
 	return createChanges()

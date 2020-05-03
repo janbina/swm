@@ -152,27 +152,42 @@ func BeginMouseResizeFromPointer() error {
 
 // GROUPS
 
-func SetGroupForWindow(w xproto.Window, desktop int) {
-	changes := groupmanager.SetGroupForWindow(w, desktop)
-	applyChanges(changes)
-	focus.FocusLast()
-}
-
-func SetGroupForActiveWindow(group int) error {
-	active := getActiveWindow()
-	if active == nil {
-		return fmt.Errorf("cannot get active window")
+func SetGroupForWindow(id int, group int) error {
+	win, err := GetWindowById(id)
+	if err != nil {
+		return err
 	}
-	SetGroupForWindow(active.Id(), group)
+	changes := groupmanager.SetGroupForWindow(win.Id(), group)
+	applyChanges(changes)
 	return nil
 }
 
-func GetActiveWindowGroups() ([]uint, error) {
-	active := getActiveWindow()
-	if active == nil {
-		return nil, fmt.Errorf("cannot get active window")
+func AddWindowToGroup(id int, group int) error {
+	win, err := GetWindowById(id)
+	if err != nil {
+		return err
 	}
-	return groupmanager.GetWinGroups(active.Id()), nil
+	changes := groupmanager.AddWindowToGroup(win.Id(), group)
+	applyChanges(changes)
+	return nil
+}
+
+func RemoveWindowFromGroup(id int, group int) error {
+	win, err := GetWindowById(id)
+	if err != nil {
+		return err
+	}
+	changes := groupmanager.RemoveWindowFromGroup(win.Id(), group)
+	applyChanges(changes)
+	return nil
+}
+
+func GetWindowGroups(id int) ([]uint, error) {
+	win, err := GetWindowById(id)
+	if err != nil {
+		return nil, err
+	}
+	return groupmanager.GetWinGroups(win.Id()), nil
 }
 
 func setNumberOfDesktops(num int) {
