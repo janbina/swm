@@ -7,7 +7,7 @@ import (
 	"github.com/BurntSushi/xgbutil/xprop"
 )
 
-const SWM_VISIBLE_GROUPS_ATOM = "_SWM_VISIBLE_GROUPS"
+const SwmVisibleGroupsAtom = "_SWM_VISIBLE_GROUPS"
 
 func getGroupNames(groups []*group) []string {
 	names := make([]string, len(groups))
@@ -61,10 +61,9 @@ func setCurrentDesktop() {
 }
 
 func setVisibleGroups() {
-	_ = xprop.ChangeProp32(X, X.RootWin(), SWM_VISIBLE_GROUPS_ATOM, "CARDINAL", GetVisibleGroups()...)
+	_ = xprop.ChangeProp32(X, X.RootWin(), SwmVisibleGroupsAtom, "CARDINAL", GetVisibleGroups()...)
 }
 
 func setWinDesktop(win xproto.Window) {
-	d := winToGroup[win]
-	_ = xprop.ChangeProp32(X, win, "_NET_WM_DESKTOP", "CARDINAL", uint(d))
+	_ = xprop.ChangeProp32(X, win, "_NET_WM_DESKTOP", "CARDINAL", GetWinGroups(win)...)
 }

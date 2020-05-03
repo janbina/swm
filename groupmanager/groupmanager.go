@@ -4,6 +4,7 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
+	"sort"
 )
 
 type Changes struct {
@@ -31,7 +32,7 @@ var (
 
 	groups       []*group
 	stickyGroup  *group
-	winToGroup   map[xproto.Window]int
+	winToGroups  map[xproto.Window]map[int]bool
 	currentGroup int // group which was made visible *last*
 	GroupMode    Mode
 )
@@ -46,7 +47,7 @@ func Initialize(x *xgbutil.XUtil) {
 	}
 
 	stickyGroup = createGroup("sticky")
-	winToGroup = map[xproto.Window]int{}
+	winToGroups = map[xproto.Window]map[int]bool{}
 	currentGroup = stickyGroupID
 	GroupMode = ModeAuto
 	setDesktops()
@@ -56,15 +57,16 @@ func Initialize(x *xgbutil.XUtil) {
 
 func AddWindow(win xproto.Window) {
 	g := getInitialGroupForWindow(win)
-	winToGroup[win] = g
+	winToGroups[win] = map[int]bool{g: true}
 	getGroup(g).windows[win] = true
 	setWinDesktop(win)
 }
 
 func RemoveWindow(win xproto.Window) {
-	g := winToGroup[win]
-	delete(winToGroup, win)
-	delete(getGroup(g).windows, win)
+	for g := range winToGroups[win] {
+		delete(getGroup(g).windows, win)
+	}
+	delete(winToGroups, win)
 }
 
 func GetNumGroups() int {
@@ -79,11 +81,27 @@ func IsGroupVisible(group int) bool {
 }
 
 func IsWinGroupVisible(win xproto.Window) bool {
-	return IsGroupVisible(winToGroup[win])
+	for g := range winToGroups[win] {
+		if IsGroupVisible(g) {
+			return true
+		}
+	}
+	return false
 }
 
-func GetWinGroup(win xproto.Window) int {
-	return winToGroup[win]
+func GetWinGroups(win xproto.Window) []uint {
+	groups := make([]uint, 0, len(winToGroups[win]))
+	for g := range winToGroups[win] {
+		groups = append(groups, uint(g))
+	}
+	sort.Slice(groups, func(i, j int) bool {
+		return groups[i] < groups[j]
+	})
+	return groups
+}
+
+func IsWinInGroup(win xproto.Window, group int) bool {
+	return winToGroups[win][group]
 }
 
 func SetGroupNames(names []string) {
@@ -195,14 +213,14 @@ func SetGroupForWindow(win xproto.Window, group int) *Changes {
 	if group < 0 {
 		group = stickyGroupID
 	}
-	prev := winToGroup[win]
-	if prev == group {
-		return nil
-	}
+
 	ensureEnoughGroups(group)
-	delete(getGroup(prev).windows, win)
+	for g := range winToGroups[win] {
+		delete(getGroup(g).windows, win)
+	}
 	getGroup(group).windows[win] = true
-	winToGroup[win] = group
+
+	winToGroups[win] = map[int]bool{group: true}
 	setWinDesktop(win)
 
 	return createChanges()
@@ -232,10 +250,13 @@ func getInitialGroupForWindow(win xproto.Window) int {
 }
 
 func moveWinsToGroup(from, to int) {
+	// only if from is windows only group
 	for w := range getGroup(from).windows {
-		getGroup(to).windows[w] = true
-		winToGroup[w] = to
-		setWinDesktop(w)
+		if len(winToGroups[w]) == 1 {
+			getGroup(to).windows[w] = true
+			winToGroups[w] = map[int]bool{to: true}
+			setWinDesktop(w)
+		}
 	}
 	getGroup(from).windows = map[xproto.Window]bool{}
 }
@@ -246,14 +267,6 @@ func ensureEnoughGroups(group int) {
 	}
 	// we can safely ignore changes, cause we are adding new groups, so there are none
 	_ = SetNumberOfGroups(group + 1)
-}
-
-func winsOfGroup(g int) []xproto.Window {
-	ret := make([]xproto.Window, 0, len(getGroup(g).windows))
-	for w := range getGroup(g).windows {
-		ret = append(ret, w)
-	}
-	return ret
 }
 
 func updateCurrentGroup() {
@@ -285,13 +298,13 @@ func createChangesWithRaise(raiseGroup int) *Changes {
 	visible := make([]xproto.Window, 0)
 	raise := make([]xproto.Window, 0)
 
-	for win := range winToGroup {
+	for win := range winToGroups {
 		if IsWinGroupVisible(win) {
 			visible = append(visible, win)
 		} else {
 			invisible = append(invisible, win)
 		}
-		if winToGroup[win] == raiseGroup {
+		if winToGroups[win][raiseGroup] {
 			raise = append(raise, win)
 		}
 	}
