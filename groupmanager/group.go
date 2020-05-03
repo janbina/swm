@@ -1,6 +1,9 @@
 package groupmanager
 
-import "github.com/BurntSushi/xgb/xproto"
+import (
+	"github.com/BurntSushi/xgb/xproto"
+	"time"
+)
 
 type group struct {
 	name           string
@@ -18,4 +21,20 @@ func createGroup(name string) *group {
 
 func (g *group) isVisible() bool {
 	return g.shownTimestamp > 0
+}
+
+func (g *group) makeVisible() {
+	g.shownTimestamp = time.Now().UnixNano()
+}
+
+func (g *group) makeInvisible() {
+	g.shownTimestamp = 0
+}
+
+func (g *group) toggleVisibility() {
+	if g.isVisible() {
+		g.makeInvisible()
+	} else {
+		g.makeVisible()
+	}
 }

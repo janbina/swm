@@ -4,7 +4,6 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
-	"time"
 )
 
 type Changes struct {
@@ -137,12 +136,7 @@ func ToggleGroupVisibility(group int) *Changes {
 		return nil
 	}
 	ensureEnoughGroups(group)
-	wasVisible := IsGroupVisible(group)
-	if wasVisible {
-		getGroup(group).shownTimestamp = 0
-	} else {
-		getGroup(group).shownTimestamp = time.Now().UnixNano()
-	}
+	getGroup(group).toggleVisibility()
 
 	updateCurrentGroup()
 	setVisibleGroups()
@@ -158,14 +152,11 @@ func ShowGroupOnly(group int) *Changes {
 	ensureEnoughGroups(group)
 
 	for i, g := range groups {
-		if i != group && g.isVisible() {
-			g.shownTimestamp = 0
+		if i != group {
+			g.makeInvisible()
 		}
 	}
-
-	if !getGroup(group).isVisible() {
-		getGroup(group).shownTimestamp = time.Now().UnixNano()
-	}
+	getGroup(group).makeVisible()
 
 	updateCurrentGroup()
 	setVisibleGroups()
@@ -180,7 +171,7 @@ func showGroupForce(group int, force bool) *Changes {
 	if force {
 		ensureEnoughGroups(group)
 
-		getGroup(group).shownTimestamp = time.Now().UnixNano()
+		getGroup(group).makeVisible()
 		updateCurrentGroup()
 		setVisibleGroups()
 
