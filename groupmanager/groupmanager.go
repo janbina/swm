@@ -1,6 +1,7 @@
 package groupmanager
 
 import (
+	"fmt"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
@@ -102,6 +103,22 @@ func GetWinGroups(win xproto.Window) []uint {
 		return groups[i] < groups[j]
 	})
 	return groups
+}
+
+func GetWinGroupNames(win xproto.Window) []string {
+	groups := GetWinGroups(win)
+	names := make([]string, len(groups))
+	for i, g := range groups {
+		if g == stickyGroupID {
+			names[i] = "S"
+		} else {
+			names[i] = getGroup(int(g)).name
+			if len(names[i]) == 0 {
+				names[i] = fmt.Sprintf("%d", g)
+			}
+		}
+	}
+	return names
 }
 
 func IsWinInGroup(win xproto.Window, group int) bool {

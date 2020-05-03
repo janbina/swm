@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/janbina/swm/config"
 	"github.com/janbina/swm/groupmanager"
+	"github.com/janbina/swm/util"
 	"github.com/janbina/swm/windowmanager"
 	"github.com/mattn/go-shellwords"
 	"log"
@@ -286,6 +287,29 @@ func configCommand(args []string) string {
 		err := windowmanager.SetResizeDragShortcut(s)
 		if err != nil {
 			return "Invalid shortcut"
+		}
+	case "font":
+		if len(args) < 2 {
+			return "No font provided"
+		}
+		path := args[1]
+		_, err := util.GetFont(path)
+		if err != nil {
+			return fmt.Sprintf("Cannot load provided font: %s", err)
+		}
+		config.FontPath = path
+	case "info-bg-color", "info-text-color":
+		if len(args) < 2 {
+			return "No color provided"
+		}
+		color, err := hex2int(args[1])
+		if err != nil {
+			return "Invalid color"
+		}
+		if args[0] == "info-bg-color" {
+			config.InfoBoxBgColor = uint32(color)
+		} else {
+			config.InfoBoxTextColor = uint32(color)
 		}
 	default:
 		return "Unsupported config argument"

@@ -6,12 +6,14 @@ import (
 	"github.com/BurntSushi/xgbutil/mousebind"
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/janbina/swm/config"
-	"github.com/janbina/swm/groupmanager"
 	"github.com/janbina/swm/focus"
+	"github.com/janbina/swm/groupmanager"
 	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
 	"github.com/janbina/swm/util"
 	"github.com/janbina/swm/window"
+	"strings"
+	"time"
 )
 
 func getActiveWindow() focus.FocusableWindow {
@@ -159,6 +161,7 @@ func SetGroupForWindow(id int, group int) error {
 	}
 	changes := groupmanager.SetGroupForWindow(win.Id(), group)
 	applyChanges(changes)
+	ShowGroupInfo(win)
 	return nil
 }
 
@@ -169,6 +172,7 @@ func AddWindowToGroup(id int, group int) error {
 	}
 	changes := groupmanager.AddWindowToGroup(win.Id(), group)
 	applyChanges(changes)
+	ShowGroupInfo(win)
 	return nil
 }
 
@@ -179,6 +183,7 @@ func RemoveWindowFromGroup(id int, group int) error {
 	}
 	changes := groupmanager.RemoveWindowFromGroup(win.Id(), group)
 	applyChanges(changes)
+	ShowGroupInfo(win)
 	return nil
 }
 
@@ -234,6 +239,12 @@ func HideGroup(group int) {
 	changes := groupmanager.HideGroup(group)
 	applyChanges(changes)
 	focus.FocusLast()
+}
+
+func ShowGroupInfo(win *window.Window) {
+	groupNames := groupmanager.GetWinGroupNames(win.Id())
+	text := strings.Join(groupNames, ",")
+	win.ShowInfoBox(text, time.Second * 3)
 }
 
 func applyChanges(changes *groupmanager.Changes) {
