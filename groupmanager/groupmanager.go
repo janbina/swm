@@ -140,7 +140,7 @@ func SetNumberOfGroups(num int) *Changes {
 		setDesktops()
 		setVisibleGroups()
 		if currentGroup >= newLast {
-			return showGroupForce(newLast, true)
+			return ShowGroup(newLast)
 		}
 	} else if num > currentNum {
 		names := getDesktopNames(currentNum, newLast)
@@ -154,16 +154,11 @@ func SetNumberOfGroups(num int) *Changes {
 }
 
 func ToggleGroupVisibility(group int) *Changes {
-	if group < 0 || group == stickyGroupID {
-		return nil
+	if IsGroupVisible(group) {
+		return HideGroup(group)
+	} else {
+		return ShowGroup(group)
 	}
-	ensureEnoughGroups(group)
-	getGroup(group).toggleVisibility()
-
-	updateCurrentGroup()
-	setVisibleGroups()
-
-	return createChanges()
 }
 
 func ShowGroupOnly(group int) *Changes {
@@ -183,34 +178,34 @@ func ShowGroupOnly(group int) *Changes {
 	updateCurrentGroup()
 	setVisibleGroups()
 
-	return createChanges()
-}
-
-func showGroupForce(group int, force bool) *Changes {
-	if !IsGroupVisible(group) {
-		return ToggleGroupVisibility(group)
-	}
-	if force {
-		ensureEnoughGroups(group)
-
-		getGroup(group).makeVisible()
-		updateCurrentGroup()
-		setVisibleGroups()
-
-		return createChangesWithRaise(group)
-	}
-	return nil
+	return createChangesWithRaise(group)
 }
 
 func ShowGroup(group int) *Changes {
-	return showGroupForce(group, false)
+	if group < 0 || group == stickyGroupID {
+		return nil
+	}
+	ensureEnoughGroups(group)
+	getGroup(group).makeVisible()
+
+	updateCurrentGroup()
+	setVisibleGroups()
+
+	return createChangesWithRaise(group)
+
 }
 
 func HideGroup(group int) *Changes {
-	if IsGroupVisible(group) {
-		return ToggleGroupVisibility(group)
+	if group < 0 || group == stickyGroupID {
+		return nil
 	}
-	return nil
+	ensureEnoughGroups(group)
+	getGroup(group).makeInvisible()
+
+	updateCurrentGroup()
+	setVisibleGroups()
+
+	return createChanges()
 }
 
 func SetGroupForWindow(win xproto.Window, group int) *Changes {

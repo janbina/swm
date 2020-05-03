@@ -30,11 +30,3 @@ func (g *group) makeVisible() {
 func (g *group) makeInvisible() {
 	g.shownTimestamp = 0
 }
-
-func (g *group) toggleVisibility() {
-	if g.isVisible() {
-		g.makeInvisible()
-	} else {
-		g.makeVisible()
-	}
-}
