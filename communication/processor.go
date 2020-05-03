@@ -310,7 +310,7 @@ func groupCommand(args []string) string {
 		default:
 			return "Unsupported group mode"
 		}
-	case "toggle", "show", "hide", "only", "set":
+	case "toggle", "show", "hide", "only":
 		if len(args) < 2 {
 			return "No group id to work with"
 		}
@@ -326,14 +326,61 @@ func groupCommand(args []string) string {
 				windowmanager.HideGroup(id)
 			case "only":
 				windowmanager.ShowGroupOnly(id)
-			case "set":
-				if err := windowmanager.SetGroupForActiveWindow(id); err != nil {
-					return err.Error()
-				}
 			default:
 				panic("Unreachable")
 			}
 		}
+	case "set", "add", "remove":
+		f := flag.NewFlagSet("wingroup", flag.ContinueOnError)
+		id := f.Int("id", 0, "")
+		group := f.Int("g", -2, "")
+		if err := f.Parse(args[1:]); err != nil {
+			return fmt.Sprintf("Error parsing arguments: %s", err)
+		}
+		if *group == -2 {
+			*group = groupmanager.GetCurrentGroup()
+		}
+		var fun func(int, int) error
+		switch args[0] {
+		case "set":
+			fun = windowmanager.SetGroupForWindow
+		case "add":
+			fun = windowmanager.AddWindowToGroup
+		case "remove":
+			fun = windowmanager.RemoveWindowFromGroup
+		default:
+			panic("Unreachable")
+		}
+		if err := fun(*id, *group); err != nil {
+			return err.Error()
+		}
+	case "get-visible":
+		var r strings.Builder
+		for i, id := range groupmanager.GetVisibleGroups() {
+			if i > 0 {
+				r.WriteByte('\n')
+			}
+			r.WriteString(fmt.Sprintf("%d", id))
+		}
+		return r.String()
+	case "get":
+		f := flag.NewFlagSet("wingroups", flag.ContinueOnError)
+		id := f.Int("id", 0, "")
+		if err := f.Parse(args[1:]); err != nil {
+			return fmt.Sprintf("Error parsing arguments: %s", err)
+		}
+		g, err := windowmanager.GetWindowGroups(*id)
+		if err != nil {
+			return err.Error()
+		}
+		var r strings.Builder
+		for i, id := range g {
+			if i > 0 {
+				r.WriteByte('\n')
+			}
+			r.WriteString(fmt.Sprintf("%d", id))
+		}
+		return r.String()
 	default:
 		return "Unsupported group argument"
 	}

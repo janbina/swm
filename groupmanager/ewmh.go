@@ -2,8 +2,20 @@ package groupmanager
 
 import (
 	"fmt"
+	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/ewmh"
+	"github.com/BurntSushi/xgbutil/xprop"
 )
+
+const SwmVisibleGroupsAtom = "_SWM_VISIBLE_GROUPS"
+
+func getGroupNames(groups []*group) []string {
+	names := make([]string, len(groups))
+	for i, group := range groups {
+		names[i] = group.name
+	}
+	return names
+}
 
 func defaultDesktopName(pos int) string {
 	return fmt.Sprintf("G.%d", pos+1)
@@ -36,7 +48,7 @@ func setDesktops() {
 	fromEwmh, _ := ewmh.DesktopNamesGet(X)
 	if len(fromEwmh) < len(groups) {
 		// dont set names when shrinking
-		setDesktopNames(groups)
+		setDesktopNames(getGroupNames(groups))
 	}
 }
 
@@ -46,4 +58,12 @@ func setDesktopNames(names []string) {
 
 func setCurrentDesktop() {
 	_ = ewmh.CurrentDesktopSet(X, uint(currentGroup))
+}
+
+func setVisibleGroups() {
+	_ = xprop.ChangeProp32(X, X.RootWin(), SwmVisibleGroupsAtom, "CARDINAL", GetVisibleGroups()...)
+}
+
+func setWinDesktop(win xproto.Window) {
+	_ = xprop.ChangeProp32(X, win, "_NET_WM_DESKTOP", "CARDINAL", GetWinGroups(win)...)
 }

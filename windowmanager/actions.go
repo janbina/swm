@@ -152,19 +152,42 @@ func BeginMouseResizeFromPointer() error {
 
 // GROUPS
 
-func SetGroupForWindow(w xproto.Window, desktop int) {
-	changes := groupmanager.SetGroupForWindow(w, desktop)
+func SetGroupForWindow(id int, group int) error {
+	win, err := GetWindowById(id)
+	if err != nil {
+		return err
+	}
+	changes := groupmanager.SetGroupForWindow(win.Id(), group)
 	applyChanges(changes)
-	focus.FocusLast()
+	return nil
 }
 
-func SetGroupForActiveWindow(group int) error {
-	active := getActiveWindow()
-	if active == nil {
-		return fmt.Errorf("cannot get active window")
+func AddWindowToGroup(id int, group int) error {
+	win, err := GetWindowById(id)
+	if err != nil {
+		return err
 	}
-	SetGroupForWindow(active.Id(), group)
+	changes := groupmanager.AddWindowToGroup(win.Id(), group)
+	applyChanges(changes)
 	return nil
+}
+
+func RemoveWindowFromGroup(id int, group int) error {
+	win, err := GetWindowById(id)
+	if err != nil {
+		return err
+	}
+	changes := groupmanager.RemoveWindowFromGroup(win.Id(), group)
+	applyChanges(changes)
+	return nil
+}
+
+func GetWindowGroups(id int) ([]uint, error) {
+	win, err := GetWindowById(id)
+	if err != nil {
+		return nil, err
+	}
+	return groupmanager.GetWinGroups(win.Id()), nil
 }
 
 func setNumberOfDesktops(num int) {
@@ -179,15 +202,17 @@ func switchToDesktop(index int) {
 }
 
 func showWindowGroup(win xproto.Window) {
-	ShowGroup(groupmanager.GetWinGroup(win))
+	if !groupmanager.IsWinGroupVisible(win) {
+		g := groupmanager.GetWinGroups(win)[0]
+		ShowGroup(int(g))
+	}
 }
 
 func ToggleGroupVisibility(group int) {
 	changes := groupmanager.ToggleGroupVisibility(group)
 	applyChanges(changes)
-	raiseChanges(changes)
 	focus.FocusLastWithPreference(func(win xproto.Window) bool {
-		return groupmanager.GetWinGroup(win) == group
+		return groupmanager.IsWinInGroup(win, group)
 	})
 }
 
@@ -200,9 +225,8 @@ func ShowGroupOnly(group int) {
 func ShowGroup(group int) {
 	changes := groupmanager.ShowGroup(group)
 	applyChanges(changes)
-	raiseChanges(changes)
 	focus.FocusLastWithPreference(func(win xproto.Window) bool {
-		return groupmanager.GetWinGroup(win) == group
+		return groupmanager.IsWinInGroup(win, group)
 	})
 }
 
@@ -232,17 +256,13 @@ func applyChanges(changes *groupmanager.Changes) {
 			win.Map()
 		}
 	}
-}
-
-func raiseChanges(changes *groupmanager.Changes) {
-	if changes == nil {
-		return
-	}
-	wins := make([]stack.StackingWindow, 0, len(changes.Visible))
-	for _, id := range changes.Visible {
+	wins := make([]stack.StackingWindow, 0, len(changes.Raise))
+	for _, id := range changes.Raise {
 		if win := managedWindows[id]; win != nil {
 			wins = append(wins, win)
 		}
 	}
-	stack.RaiseMulti(wins)
+	if len(wins) > 0 {
+		stack.RaiseMulti(wins)
+	}
 }
