@@ -10,6 +10,7 @@ import (
 type Changes struct {
 	Invisible []xproto.Window
 	Visible   []xproto.Window
+	Raise     []xproto.Window
 }
 
 type Mode int
@@ -183,7 +184,7 @@ func showGroupForce(group int, force bool) *Changes {
 		updateCurrentGroup()
 		setVisibleGroups()
 
-		return createChanges() //TODO raising
+		return createChangesWithRaise(group)
 	}
 	return nil
 }
@@ -285,8 +286,13 @@ func getGroup(id int) *group {
 }
 
 func createChanges() *Changes {
+	return createChangesWithRaise(-1)
+}
+
+func createChangesWithRaise(raiseGroup int) *Changes {
 	invisible := make([]xproto.Window, 0)
 	visible := make([]xproto.Window, 0)
+	raise := make([]xproto.Window, 0)
 
 	for win := range winToGroup {
 		if IsWinGroupVisible(win) {
@@ -294,7 +300,10 @@ func createChanges() *Changes {
 		} else {
 			invisible = append(invisible, win)
 		}
+		if winToGroup[win] == raiseGroup {
+			raise = append(raise, win)
+		}
 	}
 
-	return &Changes{Invisible: invisible, Visible: visible}
+	return &Changes{Invisible: invisible, Visible: visible, Raise: raise}
 }

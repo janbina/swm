@@ -185,7 +185,6 @@ func showWindowGroup(win xproto.Window) {
 func ToggleGroupVisibility(group int) {
 	changes := groupmanager.ToggleGroupVisibility(group)
 	applyChanges(changes)
-	raiseChanges(changes)
 	focus.FocusLastWithPreference(func(win xproto.Window) bool {
 		return groupmanager.GetWinGroup(win) == group
 	})
@@ -200,7 +199,6 @@ func ShowGroupOnly(group int) {
 func ShowGroup(group int) {
 	changes := groupmanager.ShowGroup(group)
 	applyChanges(changes)
-	raiseChanges(changes)
 	focus.FocusLastWithPreference(func(win xproto.Window) bool {
 		return groupmanager.GetWinGroup(win) == group
 	})
@@ -232,17 +230,13 @@ func applyChanges(changes *groupmanager.Changes) {
 			win.Map()
 		}
 	}
-}
-
-func raiseChanges(changes *groupmanager.Changes) {
-	if changes == nil {
-		return
-	}
-	wins := make([]stack.StackingWindow, 0, len(changes.Visible))
-	for _, id := range changes.Visible {
+	wins := make([]stack.StackingWindow, 0, len(changes.Raise))
+	for _, id := range changes.Raise {
 		if win := managedWindows[id]; win != nil {
 			wins = append(wins, win)
 		}
 	}
-	stack.RaiseMulti(wins)
+	if len(wins) > 0 {
+		stack.RaiseMulti(wins)
+	}
 }
