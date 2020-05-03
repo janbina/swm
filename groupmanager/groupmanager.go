@@ -143,16 +143,10 @@ func ToggleGroupVisibility(group int) *Changes {
 		getGroup(group).shownTimestamp = time.Now().UnixNano()
 	}
 
-	wins := winsOfGroup(group)
-
 	updateCurrentGroup()
 	setVisibleGroups()
 
-	if wasVisible {
-		return createChanges(wins, nil)
-	} else {
-		return createChanges(nil, wins)
-	}
+	return createChanges()
 }
 
 func ShowGroupOnly(group int) *Changes {
@@ -160,27 +154,22 @@ func ShowGroupOnly(group int) *Changes {
 		group = stickyGroupID
 	}
 
-	invisible := make([]xproto.Window, 0)
-	var visible []xproto.Window
-
 	ensureEnoughGroups(group)
 
 	for i, g := range groups {
 		if i != group && g.isVisible() {
 			g.shownTimestamp = 0
-			invisible = append(invisible, winsOfGroup(i)...)
 		}
 	}
 
 	if !getGroup(group).isVisible() {
 		getGroup(group).shownTimestamp = time.Now().UnixNano()
-		visible = winsOfGroup(group)
 	}
 
 	updateCurrentGroup()
 	setVisibleGroups()
 
-	return createChanges(invisible, visible)
+	return createChanges()
 }
 
 func showGroupForce(group int, force bool) *Changes {
@@ -188,15 +177,13 @@ func showGroupForce(group int, force bool) *Changes {
 		return ToggleGroupVisibility(group)
 	}
 	if force {
-		wins := winsOfGroup(group)
-
 		ensureEnoughGroups(group)
 
 		getGroup(group).shownTimestamp = time.Now().UnixNano()
 		updateCurrentGroup()
 		setVisibleGroups()
 
-		return createChanges(nil, wins)
+		return createChanges() //TODO raising
 	}
 	return nil
 }
@@ -226,12 +213,7 @@ func SetGroupForWindow(win xproto.Window, group int) *Changes {
 	winToGroup[win] = group
 	setWinDesktop(win)
 
-	if IsGroupVisible(prev) && !IsGroupVisible(group) {
-		return createChanges([]xproto.Window{win}, nil)
-	} else if !IsGroupVisible(prev) && IsGroupVisible(group) {
-		return createChanges(nil, []xproto.Window{win})
-	}
-	return nil
+	return createChanges()
 }
 
 func GetVisibleGroups() []uint {
@@ -302,6 +284,17 @@ func getGroup(id int) *group {
 	return groups[id]
 }
 
-func createChanges(invisible, visible []xproto.Window) *Changes {
+func createChanges() *Changes {
+	invisible := make([]xproto.Window, 0)
+	visible := make([]xproto.Window, 0)
+
+	for win := range winToGroup {
+		if IsWinGroupVisible(win) {
+			visible = append(visible, win)
+		} else {
+			invisible = append(invisible, win)
+		}
+	}
+
 	return &Changes{Invisible: invisible, Visible: visible}
 }
