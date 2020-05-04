@@ -6,12 +6,14 @@ import (
 	"github.com/BurntSushi/xgbutil/icccm"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xrect"
+	"github.com/janbina/swm/config"
 	"github.com/janbina/swm/decoration"
 	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
 	"github.com/janbina/swm/util"
 	"log"
 	"math"
+	"time"
 )
 
 const (
@@ -424,14 +426,56 @@ func (w *Window) validateSize(size, min, max, base, inc uint) uint {
 	if inc > 1 && hasFlag(hints, icccm.SizeHintPResizeInc) && hasBase {
 		// size = base + (i * inc)
 		rem := size - base
-		i := uint(math.Round(float64(rem)/float64(inc)))
+		i := uint(math.Round(float64(rem) / float64(inc)))
 
-		return base + i * inc
+		return base + i*inc
 	}
 
 	return size
 }
 
 func hasFlag(hints *icccm.NormalHints, flag uint) bool {
-	return hints.Flags & flag > 0
+	return hints.Flags&flag > 0
+}
+
+func (w *Window) ShowInfoBox(text string, duration time.Duration) {
+	if w.infoTimer != nil {
+		if w.infoTimer.Stop() {
+			w.infoTimer.Reset(0)
+		}
+	}
+
+	textBox, err := util.CreateTextBox(
+		w.win.X, text, 16, 5,
+		config.InfoBoxBgColor,
+		config.InfoBoxTextColor,
+	)
+
+	if err != nil {
+		log.Printf("Cannot show info box: %s", err)
+		return
+	}
+
+	w.infoWin.MoveResize(10, 10, textBox.Rect.Dx(), textBox.Rect.Dy())
+
+	err = textBox.XSurfaceSet(w.infoWin.Id)
+	if err != nil {
+		log.Printf("Cannot set surface: %s", err)
+		return
+	}
+	textBox.XDraw()
+	textBox.XPaint(w.infoWin.Id)
+
+	w.infoWin.Map()
+
+	w.infoTimer = time.NewTimer(duration)
+	go func() {
+		<-w.infoTimer.C
+		textBox.Destroy()
+		w.HideInfoBox()
+	}()
+}
+
+func (w *Window) HideInfoBox() {
+	w.infoWin.Unmap()
 }

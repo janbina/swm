@@ -16,11 +16,14 @@ import (
 	"github.com/janbina/swm/stack"
 	"github.com/janbina/swm/util"
 	"log"
+	"time"
 )
 
 type Window struct {
 	win         *xwindow.Window
 	parent      *xwindow.Window
+	infoWin     *xwindow.Window
+	infoTimer   *time.Timer
 	decorations decoration.Decorations
 	moveState   *MoveState
 	resizeState *ResizeState
@@ -113,6 +116,8 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 	window.iconified = window.normalHints.Flags&icccm.HintState > 0 && window.hints.InitialState == icccm.StateIconic
 
 	window.updateFrameExtents()
+
+	window.infoWin, _ = xwindow.Create(x, window.parent.Id)
 
 	return window
 }

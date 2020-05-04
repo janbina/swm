@@ -34,16 +34,20 @@ ctrl + super + alt + {h, j, k, l}
 super + alt + {h,j,k,l}
     swmctl resize -{w,s,n,e} 20
 
-# go to prev/next desktop
+# move active window to group 0-9
+ctrl + super + {1-9,0}
+    swmctl group set -g {0-9}
+    # also xdotool getactivewindow set_desktop_for_window {0-9}
+
+# toggle visibility of group 0-9
+super + {1-9,0}
+    swmctl group toggle {0-9}
+
+# show only group 0-9
+shift + super + {1-9,0}
+    swmctl group only {0-9}
+    # also xdotool set_desktop {0-9}
+
+# show only prev/next group
 super + {Left,Right}
     xdotool set_desktop --relative -- {-1,1}
-
-# move active window to desktop 1-10 and jump to that desktop
-ctrl + super + {1-9,0}
-    D={0-9};\
-    wmctrl -r :ACTIVE: -t $D && wmctrl -s $D
-
-# move active window to prev/next desktop and jump to that desktop
-ctrl + super + {Left,Right}
-    D=$(relativeDesk {-1,1});\
-    wmctrl -r :ACTIVE: -t $D && wmctrl -s $D

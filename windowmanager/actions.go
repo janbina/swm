@@ -6,19 +6,21 @@ import (
 	"github.com/BurntSushi/xgbutil/mousebind"
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/janbina/swm/config"
-	"github.com/janbina/swm/desktopmanager"
 	"github.com/janbina/swm/focus"
+	"github.com/janbina/swm/groupmanager"
 	"github.com/janbina/swm/heads"
 	"github.com/janbina/swm/stack"
 	"github.com/janbina/swm/util"
 	"github.com/janbina/swm/window"
+	"strings"
+	"time"
 )
 
 func getActiveWindow() focus.FocusableWindow {
 	return focus.Current()
 }
 
-func GetWindowById(id int) (ManagedWindow, error) {
+func GetWindowById(id int) (*window.Window, error) {
 	if id == 0 {
 		if active := getActiveWindow(); active == nil {
 			return nil, fmt.Errorf("cannot get active window")
@@ -33,7 +35,7 @@ func GetWindowById(id int) (ManagedWindow, error) {
 	}
 }
 
-func doOnWindow(id int, action func(win ManagedWindow)) error {
+func doOnWindow(id int, action func(win *window.Window)) error {
 	win, err := GetWindowById(id)
 	if err != nil {
 		return err
@@ -43,13 +45,13 @@ func doOnWindow(id int, action func(win ManagedWindow)) error {
 }
 
 func MoveWindow(id int, x, y int) error {
-	return doOnWindow(id, func(win ManagedWindow) {
+	return doOnWindow(id, func(win *window.Window) {
 		win.Move(x, y)
 	})
 }
 
 func MoveResizeWindow(id int, x, y, width, height int) error {
-	return doOnWindow(id, func(win ManagedWindow) {
+	return doOnWindow(id, func(win *window.Window) {
 		win.MoveResize(true, x, y, width, height)
 	})
 }
@@ -78,44 +80,6 @@ func GetWindowGeometry(id int) (xrect.Rect, error) {
 	return win.Geometry()
 }
 
-func setNumberOfDesktops(num int) {
-	changes := desktopmanager.SetNumberOfDesktops(num)
-	applyChanges(changes)
-	setWorkArea(desktopmanager.GetNumDesktops())
-	focus.FocusLast()
-}
-
-func switchToDesktop(index int) {
-	changes := desktopmanager.SwitchToDesktop(index)
-	applyChanges(changes)
-	focus.FocusLast()
-}
-
-func switchToWindowDesktop(win xproto.Window) {
-	if !desktopmanager.IsWinDesktopVisible(win) {
-		desktopmanager.SwitchToDesktop(desktopmanager.GetWinDesktop(win))
-	}
-}
-
-func applyChanges(changes *desktopmanager.Changes) {
-	for _, w := range changes.Invisible {
-		win := managedWindows[w]
-		if win == nil {
-			panic("This shouldnt happen anymore")
-		}
-		win.Unmap()
-	}
-	for _, w := range changes.Visible {
-		win := managedWindows[w]
-		if win == nil {
-			panic("This shouldnt happen anymore")
-		}
-		if !win.IsHidden() {
-			win.Map()
-		}
-	}
-}
-
 func CycleWin() {
 	cycleState--
 	if win, ok := focus.CyclingFocus(cycleState).(*window.Window); ok {
@@ -136,12 +100,6 @@ func CycleWinEnd() {
 		win.RemoveTmpDeiconified()
 		win.Raise()
 	}
-}
-
-func MoveWindowToDesktop(w *window.Window, desktop int) {
-	changes := desktopmanager.MoveWindowToDesktop(w.Id(), desktop)
-	applyChanges(changes)
-	focus.FocusLast()
 }
 
 func SetMoveDragShortcut(s string) error {
@@ -177,7 +135,7 @@ func BeginMouseMoveFromPointer() error {
 	if err != nil {
 		return fmt.Errorf("no client window underneath the pointer")
 	}
-	win.(*window.Window).DragMoveBegin(int16(p.X), int16(p.Y))
+	win.DragMoveBegin(int16(p.X), int16(p.Y))
 	return nil
 }
 
@@ -190,6 +148,132 @@ func BeginMouseResizeFromPointer() error {
 	if err != nil {
 		return fmt.Errorf("no client window underneath the pointer")
 	}
-	win.(*window.Window).DragResizeBeginEvent(int16(p.X), int16(p.Y), int16(p.WinX), int16(p.WinY))
+	win.DragResizeBeginEvent(int16(p.X), int16(p.Y), int16(p.WinX), int16(p.WinY))
 	return nil
+}
+
+// GROUPS
+
+func SetGroupForWindow(id int, group int) error {
+	win, err := GetWindowById(id)
+	if err != nil {
+		return err
+	}
+	changes := groupmanager.SetGroupForWindow(win.Id(), group)
+	applyChanges(changes)
+	ShowGroupInfo(win)
+	return nil
+}
+
+func AddWindowToGroup(id int, group int) error {
+	win, err := GetWindowById(id)
+	if err != nil {
+		return err
+	}
+	changes := groupmanager.AddWindowToGroup(win.Id(), group)
+	applyChanges(changes)
+	ShowGroupInfo(win)
+	return nil
+}
+
+func RemoveWindowFromGroup(id int, group int) error {
+	win, err := GetWindowById(id)
+	if err != nil {
+		return err
+	}
+	changes := groupmanager.RemoveWindowFromGroup(win.Id(), group)
+	applyChanges(changes)
+	ShowGroupInfo(win)
+	return nil
+}
+
+func GetWindowGroups(id int) ([]uint, error) {
+	win, err := GetWindowById(id)
+	if err != nil {
+		return nil, err
+	}
+	return groupmanager.GetWinGroups(win.Id()), nil
+}
+
+func setNumberOfDesktops(num int) {
+	changes := groupmanager.SetNumberOfGroups(num)
+	applyChanges(changes)
+	setWorkArea(groupmanager.GetNumGroups())
+	focus.FocusLast()
+}
+
+func switchToDesktop(index int) {
+	ShowGroupOnly(index)
+}
+
+func showWindowGroup(win xproto.Window) {
+	if !groupmanager.IsWinGroupVisible(win) {
+		g := groupmanager.GetWinGroups(win)[0]
+		ShowGroup(int(g))
+	}
+}
+
+func ToggleGroupVisibility(group int) {
+	changes := groupmanager.ToggleGroupVisibility(group)
+	applyChanges(changes)
+	focus.FocusLastWithPreference(func(win xproto.Window) bool {
+		return groupmanager.IsWinInGroup(win, group)
+	})
+}
+
+func ShowGroupOnly(group int) {
+	changes := groupmanager.ShowGroupOnly(group)
+	applyChanges(changes)
+	focus.FocusLast()
+}
+
+func ShowGroup(group int) {
+	changes := groupmanager.ShowGroup(group)
+	applyChanges(changes)
+	focus.FocusLastWithPreference(func(win xproto.Window) bool {
+		return groupmanager.IsWinInGroup(win, group)
+	})
+}
+
+func HideGroup(group int) {
+	changes := groupmanager.HideGroup(group)
+	applyChanges(changes)
+	focus.FocusLast()
+}
+
+func ShowGroupInfo(win *window.Window) {
+	groupNames := groupmanager.GetWinGroupNames(win.Id())
+	text := strings.Join(groupNames, ",")
+	win.ShowInfoBox(text, time.Second * 3)
+}
+
+func applyChanges(changes *groupmanager.Changes) {
+	if changes == nil {
+		return
+	}
+	for _, w := range changes.Invisible {
+		win := managedWindows[w]
+		if win == nil {
+			panic("This shouldnt happen anymore")
+		}
+		win.Unmap()
+	}
+	for _, w := range changes.Visible {
+		win := managedWindows[w]
+		if win == nil {
+			panic("This shouldnt happen anymore")
+		}
+		if !win.IsHidden() {
+			win.Map()
+		}
+	}
+	wins := make([]stack.StackingWindow, 0, len(changes.Raise))
+	for _, id := range changes.Raise {
+		if win := managedWindows[id]; win != nil {
+			wins = append(wins, win)
+		}
+	}
+	if len(wins) > 0 {
+		stack.RaiseMulti(wins)
+	}
 }

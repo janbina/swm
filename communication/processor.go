@@ -4,7 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/janbina/swm/config"
-	"github.com/janbina/swm/desktopmanager"
+	"github.com/janbina/swm/groupmanager"
+	"github.com/janbina/swm/util"
 	"github.com/janbina/swm/windowmanager"
 	"github.com/mattn/go-shellwords"
 	"log"
@@ -21,10 +22,10 @@ var commands = map[string]func([]string) string{
 	"cycle-win":            cycleWinCommand,
 	"cycle-win-rev":        cycleWinRevCommand,
 	"cycle-win-end":        cycleWinEndCommand,
-	"set-desktop-names":    setDesktopNamesCommand,
 	"begin-mouse-move":     mouseMoveCommand,
 	"begin-mouse-resize":   mouseResizeCommand,
 	"config":               configCommand,
+	"group":                groupCommand,
 }
 
 func processCommand(msg string) string {
@@ -214,11 +215,6 @@ func cycleWinEndCommand(_ []string) string {
 	return ""
 }
 
-func setDesktopNamesCommand(args []string) string {
-	desktopmanager.SetDesktopNames(args)
-	return ""
-}
-
 func mouseMoveCommand(_ []string) string {
 	if err := windowmanager.BeginMouseMoveFromPointer(); err != nil {
 		return err.Error()
@@ -286,8 +282,130 @@ func configCommand(args []string) string {
 		if err != nil {
 			return "Invalid shortcut"
 		}
+	case "font":
+		if len(args) < 2 {
+			return "No font provided"
+		}
+		path := args[1]
+		_, err := util.GetFont(path)
+		if err != nil {
+			return fmt.Sprintf("Cannot load provided font: %s", err)
+		}
+		config.FontPath = path
+	case "info-bg-color", "info-text-color":
+		if len(args) < 2 {
+			return "No color provided"
+		}
+		color, err := hex2int(args[1])
+		if err != nil {
+			return "Invalid color"
+		}
+		if args[0] == "info-bg-color" {
+			config.InfoBoxBgColor = uint32(color)
+		} else {
+			config.InfoBoxTextColor = uint32(color)
+		}
 	default:
 		return "Unsupported config argument"
+	}
+	return ""
+}
+
+func groupCommand(args []string) string {
+	if len(args) == 0 {
+		return "No arguments for group command"
+	}
+	switch args[0] {
+	case "mode":
+		if len(args) < 2 {
+			return "No group mode specified"
+		}
+		switch args[1] {
+		case "sticky":
+			groupmanager.GroupMode = groupmanager.ModeSticky
+		case "auto":
+			groupmanager.GroupMode = groupmanager.ModeAuto
+		default:
+			return "Unsupported group mode"
+		}
+	case "toggle", "show", "hide", "only":
+		if len(args) < 2 {
+			return "No group id to work with"
+		}
+		if id, err := strconv.Atoi(args[1]); err != nil {
+			return "Invalid group id"
+		} else {
+			switch args[0] {
+			case "toggle":
+				windowmanager.ToggleGroupVisibility(id)
+			case "show":
+				windowmanager.ShowGroup(id)
+			case "hide":
+				windowmanager.HideGroup(id)
+			case "only":
+				windowmanager.ShowGroupOnly(id)
+			default:
+				panic("Unreachable")
+			}
+		}
+	case "set", "add", "remove":
+		f := flag.NewFlagSet("wingroup", flag.ContinueOnError)
+		id := f.Int("id", 0, "")
+		group := f.Int("g", -2, "")
+		if err := f.Parse(args[1:]); err != nil {
+			return fmt.Sprintf("Error parsing arguments: %s", err)
+		}
+		if *group == -2 {
+			*group = groupmanager.GetCurrentGroup()
+		}
+		var fun func(int, int) error
+		switch args[0] {
+		case "set":
+			fun = windowmanager.SetGroupForWindow
+		case "add":
+			fun = windowmanager.AddWindowToGroup
+		case "remove":
+			fun = windowmanager.RemoveWindowFromGroup
+		default:
+			panic("Unreachable")
+		}
+		if err := fun(*id, *group); err != nil {
+			return err.Error()
+		}
+	case "names":
+		if len(args) < 2 {
+			return "No names provided"
+		}
+		groupmanager.SetGroupNames(args[1:])
+	case "get-visible":
+		var r strings.Builder
+		for i, id := range groupmanager.GetVisibleGroups() {
+			if i > 0 {
+				r.WriteByte('\n')
+			}
+			r.WriteString(fmt.Sprintf("%d", id))
+		}
+		return r.String()
+	case "get":
+		f := flag.NewFlagSet("wingroups", flag.ContinueOnError)
+		id := f.Int("id", 0, "")
+		if err := f.Parse(args[1:]); err != nil {
+			return fmt.Sprintf("Error parsing arguments: %s", err)
+		}
+		g, err := windowmanager.GetWindowGroups(*id)
+		if err != nil {
+			return err.Error()
+		}
+		var r strings.Builder
+		for i, id := range g {
+			if i > 0 {
+				r.WriteByte('\n')
+			}
+			r.WriteString(fmt.Sprintf("%d", id))
+		}
+		return r.String()
+	default:
+		return "Unsupported group argument"
 	}
 	return ""
 }

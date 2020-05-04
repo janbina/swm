@@ -70,7 +70,13 @@ func focus(w FocusableWindow, tmp bool) {
 }
 
 func FocusLast() {
-	if w := LastFocused(); w != nil {
+	FocusLastWithPreference(func(window xproto.Window) bool {
+		return true
+	})
+}
+
+func FocusLastWithPreference(isPreferred func(window xproto.Window) bool) {
+	if w := lastFocused(isPreferred); w != nil {
 		Focus(w)
 	} else {
 		xwindow.New(x, x.Dummy()).Focus()
@@ -82,14 +88,19 @@ func SetFocus(w FocusableWindow) {
 	add(w)
 }
 
-func LastFocused() FocusableWindow {
+func lastFocused(isPreferred func(window xproto.Window) bool) FocusableWindow {
+	var firstNonPreferred FocusableWindow
 	last := len(windows) - 1
 	for i := range windows {
-		if w := windows[last - i]; w.IsFocusable() {
-			return w
+		if w := windows[last-i]; w.IsFocusable() {
+			if isPreferred(w.Id()) {
+				return w
+			} else if firstNonPreferred == nil {
+				firstNonPreferred = w
+			}
 		}
 	}
-	return nil
+	return firstNonPreferred
 }
 
 func add(w FocusableWindow) {
