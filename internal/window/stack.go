@@ -2,7 +2,7 @@ package window
 
 import (
 	"github.com/BurntSushi/xgbutil/icccm"
-	"github.com/janbina/swm/stack"
+	"github.com/janbina/swm/internal/stack"
 )
 
 func (w *Window) Raise() {

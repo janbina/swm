@@ -8,7 +8,7 @@ import (
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xprop"
 	"github.com/BurntSushi/xgbutil/xwindow"
-	"github.com/janbina/swm/util"
+	"github.com/janbina/swm/internal/util"
 	"log"
 	"time"
 )

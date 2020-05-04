@@ -6,8 +6,8 @@ import (
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/mousebind"
 	"github.com/BurntSushi/xgbutil/xevent"
-	"github.com/janbina/swm/config"
-	"github.com/janbina/swm/cursors"
+	"github.com/janbina/swm/internal/config"
+	"github.com/janbina/swm/internal/cursors"
 	"log"
 )
 
