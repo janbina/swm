@@ -1,6 +1,6 @@
 package config
 
-import "github.com/janbina/swm/decoration"
+import "github.com/janbina/swm/internal/decoration"
 
 const (
 	borderColorActive    = 0x00BCD4

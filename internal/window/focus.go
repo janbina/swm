@@ -6,9 +6,9 @@ import (
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/icccm"
 	"github.com/BurntSushi/xgbutil/xevent"
-	"github.com/janbina/swm/focus"
-	"github.com/janbina/swm/stack"
-	"github.com/janbina/swm/util"
+	"github.com/janbina/swm/internal/focus"
+	"github.com/janbina/swm/internal/stack"
+	"github.com/janbina/swm/internal/util"
 )
 
 func (w *Window) IsFocusable() bool {

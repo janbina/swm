@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/xgraphics"
-	"github.com/janbina/swm/config"
+	"github.com/janbina/swm/internal/config"
 	"image"
 )
 

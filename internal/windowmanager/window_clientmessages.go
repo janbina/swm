@@ -7,7 +7,7 @@ import (
 	"github.com/BurntSushi/xgbutil/icccm"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xprop"
-	"github.com/janbina/swm/window"
+	"github.com/janbina/swm/internal/window"
 	"log"
 )
 

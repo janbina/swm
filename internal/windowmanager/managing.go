@@ -5,9 +5,9 @@ import (
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/xevent"
-	"github.com/janbina/swm/groupmanager"
-	"github.com/janbina/swm/focus"
-	"github.com/janbina/swm/window"
+	"github.com/janbina/swm/internal/focus"
+	"github.com/janbina/swm/internal/groupmanager"
+	"github.com/janbina/swm/internal/window"
 	"log"
 )
 

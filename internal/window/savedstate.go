@@ -29,9 +29,9 @@ func (w *Window) LoadWindowState(s state) {
 	g := ws.geom
 	f := ConfigAll
 	if s == StatePriorMaxVert {
-		f = ConfigY|ConfigHeight
+		f = ConfigY | ConfigHeight
 	} else if s == StatePriorMaxHorz {
-		f = ConfigX|ConfigWidth
+		f = ConfigX | ConfigWidth
 	}
 
 	w.moveResizeInternal(false, g.X(), g.Y(), g.Width(), g.Height(), f)

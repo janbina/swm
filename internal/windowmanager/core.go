@@ -9,12 +9,12 @@ import (
 	"github.com/BurntSushi/xgbutil/xinerama"
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
-	"github.com/janbina/swm/cursors"
-	"github.com/janbina/swm/groupmanager"
-	"github.com/janbina/swm/focus"
-	"github.com/janbina/swm/heads"
-	"github.com/janbina/swm/stack"
-	"github.com/janbina/swm/window"
+	"github.com/janbina/swm/internal/cursors"
+	"github.com/janbina/swm/internal/focus"
+	"github.com/janbina/swm/internal/groupmanager"
+	"github.com/janbina/swm/internal/heads"
+	"github.com/janbina/swm/internal/stack"
+	"github.com/janbina/swm/internal/window"
 	"log"
 )
 

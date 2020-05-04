@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgbutil"
-	"github.com/janbina/swm/communication"
+	"github.com/janbina/swm/internal/communication"
 	"io/ioutil"
 	"log"
 	"net"

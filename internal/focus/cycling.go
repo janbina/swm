@@ -1,6 +1,6 @@
 package focus
 
-import "github.com/janbina/swm/groupmanager"
+import "github.com/janbina/swm/internal/groupmanager"
 
 var cyclingState []FocusableWindow
 var cyclableWindows []FocusableWindow
