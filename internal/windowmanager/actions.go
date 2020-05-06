@@ -192,6 +192,7 @@ func GetWindowGroups(id int) ([]uint, error) {
 	if err != nil {
 		return nil, err
 	}
+	ShowGroupInfo(win)
 	return groupmanager.GetWinGroups(win.Id()), nil
 }
 
