@@ -16,7 +16,7 @@ func testDesktopNames() int {
 
 	before, _ := ewmh.DesktopNamesGet(X)
 	names := []string{"adfg", "qrtqr", "xbnxn", "ghjgj"}
-	swmctl(append([]string{"set-desktop-names"}, names...)...)
+	swmctl(append([]string{"group", "names"}, names...)...)
 	sleepMillis(10)
 	after, _ := ewmh.DesktopNamesGet(X)
 
@@ -33,7 +33,7 @@ func testDesktopNames() int {
 	_ = ewmh.NumberOfDesktopsReq(X, 1)
 	sleepMillis(10)
 	names = []string{"a", "b", "c", "d"}
-	swmctl(append([]string{"set-desktop-names"}, names...)...)
+	swmctl(append([]string{"group", "names"}, names...)...)
 	sleepMillis(10)
 	_ = ewmh.NumberOfDesktopsReq(X, len(names))
 	sleepMillis(10)
