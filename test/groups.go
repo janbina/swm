@@ -237,6 +237,53 @@ func testGroupVisibility() int {
 	return errorCnt
 }
 
+func testGroupMembership() int {
+	errorCnt := 0
+
+	maxDesks := 10
+	_ = ewmh.NumberOfDesktopsReq(X, maxDesks)
+	swmctl("group", "mode", "sticky")
+
+	win := createWindow()
+	winId := fmt.Sprintf("%d", win.Id)
+
+	// Set group
+	for i := 0; i < maxDesks; i++ {
+		swmctl("group", "set", "-g", fmt.Sprintf("%d", i), "-id", winId)
+		sleepMillis(30)
+		assertSliceEquals([]int{i}, getIntsFromSwm("group", "get", "-id", winId), "Incorrect window groups", &errorCnt)
+	}
+
+	// Add group
+	swmctl("group", "set", "-g", "0", "-id", winId)
+	var groups []int
+	for i := 0; i < maxDesks; i++ {
+		swmctl("group", "add", "-g", fmt.Sprintf("%d", i), "-id", winId)
+		groups = append(groups, i)
+		sleepMillis(30)
+		assertSliceEquals(groups, getIntsFromSwm("group", "get", "-id", winId), "Incorrect window groups", &errorCnt)
+	}
+
+	// Remove group
+	swmctl("group", "set", "0")
+	for i := 0; i < maxDesks - 1; i++ {
+		swmctl("group", "remove", "-g", fmt.Sprintf("%d", i), "-id", winId)
+		groups = groups[1:]
+		sleepMillis(30)
+		assertSliceEquals(groups, getIntsFromSwm("group", "get", "-id", winId), "Incorrect window groups", &errorCnt)
+	}
+
+	// Removing the last group will add the window to sticky group
+	assertSliceEquals([]int{maxDesks-1}, getIntsFromSwm("group", "get", "-id", winId), "Incorrect window groups", &errorCnt)
+	swmctl("group", "remove", "-g", fmt.Sprintf("%d", maxDesks - 1), "-id", winId)
+	sleepMillis(30)
+	assertSliceEquals([]int{0xFFFFFFFF}, getIntsFromSwm("group", "get", "-id", winId), "Incorrect window groups", &errorCnt)
+	
+	win.Destroy()
+
+	return errorCnt
+}
+
 func activeDesktop() int {
 	d, _ := ewmh.CurrentDesktopGet(X)
 	return int(d)
