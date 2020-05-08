@@ -5,6 +5,8 @@ import (
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/icccm"
 	"github.com/BurntSushi/xgbutil/xwindow"
+	"strconv"
+	"strings"
 )
 
 func testDesktopNames() int {
@@ -12,12 +14,12 @@ func testDesktopNames() int {
 	numDesks := 10
 
 	_ = ewmh.NumberOfDesktopsReq(X, numDesks)
-	sleepMillis(10)
+	sleepMillis(30)
 
 	before, _ := ewmh.DesktopNamesGet(X)
 	names := []string{"adfg", "qrtqr", "xbnxn", "ghjgj"}
 	swmctl(append([]string{"group", "names"}, names...)...)
-	sleepMillis(10)
+	sleepMillis(30)
 	after, _ := ewmh.DesktopNamesGet(X)
 
 	// new names has been set
@@ -31,12 +33,12 @@ func testDesktopNames() int {
 
 	// we can set names for desktops which are not present at the moment
 	_ = ewmh.NumberOfDesktopsReq(X, 1)
-	sleepMillis(10)
+	sleepMillis(30)
 	names = []string{"a", "b", "c", "d"}
 	swmctl(append([]string{"group", "names"}, names...)...)
-	sleepMillis(10)
+	sleepMillis(30)
 	_ = ewmh.NumberOfDesktopsReq(X, len(names))
-	sleepMillis(10)
+	sleepMillis(30)
 	after, _ = ewmh.DesktopNamesGet(X)
 	for i := range names {
 		assert(names[i] == after[i], "Invalid desktop name", &errorCnt)
@@ -53,31 +55,31 @@ func testGroupBasics() int {
 	// valid number of desktops
 	for i := 1; i <= maxDesks; i++ {
 		_ = ewmh.NumberOfDesktopsReq(X, i)
-		sleepMillis(10)
+		sleepMillis(30)
 		assertEquals(i, numDesktops(), "Incorrect number of desktop", &errorCnt)
 	}
 	// zero is invalid, will be set to 1
 	_ = ewmh.NumberOfDesktopsReq(X, 0)
-	sleepMillis(10)
+	sleepMillis(30)
 	assertEquals(1, numDesktops(), "Incorrect number of desktop", &errorCnt)
 	_ = ewmh.NumberOfDesktopsReq(X, maxDesks)
-	sleepMillis(10)
+	sleepMillis(30)
 	assertEquals(maxDesks, numDesktops(), "Incorrect number of desktop", &errorCnt)
 
 	// current desktop valid numbers
 	for i := 0; i < maxDesks; i++ {
 		_ = ewmh.CurrentDesktopReq(X, i)
-		sleepMillis(10)
+		sleepMillis(30)
 		assertEquals(i, activeDesktop(), "Incorrect active desktop", &errorCnt)
 	}
 
 	// shrinking is ok and updates current desktop
 	_ = ewmh.NumberOfDesktopsReq(X, maxDesks)
 	_ = ewmh.CurrentDesktopReq(X, maxDesks - 1)
-	sleepMillis(10)
+	sleepMillis(30)
 	for i := maxDesks; i > 0; i-- {
 		_ = ewmh.NumberOfDesktopsReq(X, i)
-		sleepMillis(10)
+		sleepMillis(30)
 		assertEquals(i, numDesktops(), "Incorrect number of desktop", &errorCnt)
 		assertEquals(i - 1, activeDesktop(), "Incorrect active desktop", &errorCnt)
 	}
@@ -97,10 +99,10 @@ func testGroupWindowCreation() int {
 	swmctl("group", "mode", "auto")
 	for i := 0; i < maxDesks; i++ {
 		_ = ewmh.CurrentDesktopReq(X, i)
-		sleepMillis(10)
+		sleepMillis(30)
 		w := createWindow()
 		wins = append(wins, w)
-		sleepMillis(10)
+		sleepMillis(30)
 		d, _ := ewmh.WmDesktopGet(X, w.Id)
 		assertEquals(i, int(d), "Incorrect desktop for window", &errorCnt)
 	}
@@ -109,10 +111,10 @@ func testGroupWindowCreation() int {
 	swmctl("group", "mode", "sticky")
 	for i := 0; i < maxDesks; i++ {
 		_ = ewmh.CurrentDesktopReq(X, i)
-		sleepMillis(10)
+		sleepMillis(30)
 		w := createWindow()
 		wins = append(wins, w)
-		sleepMillis(10)
+		sleepMillis(30)
 		d, _ := ewmh.WmDesktopGet(X, w.Id)
 		assertEquals(0xFFFFFFFF, int(d), "Incorrect desktop for window", &errorCnt)
 	}
@@ -131,7 +133,7 @@ func testGroupWindowMovement() int {
 
 	for i, win := range wins {
 		_ = ewmh.ClientEvent(X, win.Id, "_NET_WM_DESKTOP", i, 2)
-		sleepMillis(10)
+		sleepMillis(30)
 		d, _ := ewmh.WmDesktopGet(X, win.Id)
 		assertEquals(i, int(d), "Incorrect desktop for window", &errorCnt)
 	}
@@ -139,7 +141,7 @@ func testGroupWindowMovement() int {
 	// removing desktops moves windows from removed desktops to last desktop, others are left
 	newDesks := maxDesks / 2
 	_ = ewmh.NumberOfDesktopsReq(X, newDesks)
-	sleepMillis(10)
+	sleepMillis(30)
 	for i, win := range wins {
 		d, _ := ewmh.WmDesktopGet(X, win.Id)
 		expected := i
@@ -166,22 +168,23 @@ func testGroupVisibility() int {
 	// create one window on each desktop and one sticky
 	for i := 0; i < maxDesks; i++ {
 		_ = ewmh.CurrentDesktopReq(X, i)
-		sleepMillis(10)
+		sleepMillis(30)
 		w := createWindow()
 		wins = append(wins, w)
-		sleepMillis(10)
+		sleepMillis(30)
 		d, _ := ewmh.WmDesktopGet(X, w.Id)
 		assertEquals(i, int(d), "Incorrect desktop for window", &errorCnt)
 	}
 	sticky := createWindow()
 	_ = ewmh.WmDesktopSet(X, sticky.Id, 0xFFFFFFFF)
-	sleepMillis(10)
+	sleepMillis(30)
 	d, _ := ewmh.WmDesktopGet(X, sticky.Id)
 	assertEquals(0xFFFFFFFF, int(d), "Incorrect desktop for window", &errorCnt)
 
 	// set the only group to be the sticky one - no window should be mapped but the sticky one
 	swmctl("group", "only", "-1")
-	sleepMillis(10)
+	sleepMillis(30)
+	assertSliceEquals([]int{}, getIntsFromSwm("group", "get-visible"), "Incorrect visible groups", &errorCnt)
 	for _, win := range wins {
 		assert(isWinIconified(win), "Window should be iconified", &errorCnt)
 	}
@@ -190,7 +193,8 @@ func testGroupVisibility() int {
 	// set the only visible group and check that only windows from that group and sticky window is mapped
 	for i := 0; i < maxDesks; i++ {
 		swmctl("group", "only", fmt.Sprintf("%d", i))
-		sleepMillis(10)
+		sleepMillis(30)
+		assertSliceEquals([]int{i}, getIntsFromSwm("group", "get-visible"), "Incorrect visible groups", &errorCnt)
 		assert(isWinMapped(sticky), "Window should be mapped", &errorCnt)
 		for j, win := range wins {
 			if i == j {
@@ -206,7 +210,8 @@ func testGroupVisibility() int {
 	swmctl("group", "show", "1")
 	swmctl("group", "show", "3")
 	swmctl("group", "toggle", "5")
-	sleepMillis(10)
+	sleepMillis(30)
+	assertSliceEquals([]int{1, 3, 5}, getIntsFromSwm("group", "get-visible"), "Incorrect visible groups", &errorCnt)
 	assert(isWinMapped(wins[1]), "Window should be mapped", &errorCnt)
 	assert(isWinIconified(wins[2]), "Window should be iconified", &errorCnt)
 	assert(isWinMapped(wins[3]), "Window should be mapped", &errorCnt)
@@ -217,13 +222,14 @@ func testGroupVisibility() int {
 	swmctl("group", "show", "4")
 	swmctl("group", "toggle", "5")
 	swmctl("group", "toggle", "6")
-	sleepMillis(10)
+	sleepMillis(30)
+	assertSliceEquals([]int{1, 4, 6}, getIntsFromSwm("group", "get-visible"), "Incorrect visible groups", &errorCnt)
 	assert(isWinMapped(wins[1]), "Window should be mapped", &errorCnt)
 	assert(isWinIconified(wins[2]), "Window should be iconified", &errorCnt)
-	assert(isWinIconified(wins[3]), "Window should be mapped", &errorCnt)
-	assert(isWinMapped(wins[4]), "Window should be iconified", &errorCnt)
-	assert(isWinIconified(wins[5]), "Window should be mapped", &errorCnt)
-	assert(isWinMapped(wins[6]), "Window should be iconified", &errorCnt)
+	assert(isWinIconified(wins[3]), "Window should be iconified", &errorCnt)
+	assert(isWinMapped(wins[4]), "Window should be mapped", &errorCnt)
+	assert(isWinIconified(wins[5]), "Window should be iconified", &errorCnt)
+	assert(isWinMapped(wins[6]), "Window should be mapped", &errorCnt)
 
 	destroyWindows(wins)
 	sticky.Destroy()
@@ -249,4 +255,23 @@ func isWinIconified(win *xwindow.Window) bool {
 func isWinMapped(win *xwindow.Window) bool {
 	state, _ := icccm.WmStateGet(X, win.Id)
 	return state.State == icccm.StateNormal
+}
+
+func getIntsFromSwm(args ...string) []int {
+	o, err := swmctlOut(args...)
+	if err != nil {
+		return nil
+	}
+	var ints []int
+	for _, line := range strings.Split(o, "\n") {
+		if len(line) == 0 {
+			continue
+		}
+		i, err := strconv.Atoi(line)
+		if err != nil {
+			return nil
+		}
+		ints = append(ints, i)
+	}
+	return ints
 }

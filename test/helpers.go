@@ -86,3 +86,22 @@ func assertEquals(expected, actual int, msg string, errorCnt *int) {
 		*errorCnt++
 	}
 }
+
+func assertSliceEquals(expected, actual []int, msg string, errorCnt *int) {
+	if !sliceEquals(expected, actual) {
+		_ = errorLogger.Output(2, fmt.Sprintf("%s - expected %d, got %d", msg, expected, actual))
+		*errorCnt++
+	}
+}
+
+func sliceEquals(a, b []int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
