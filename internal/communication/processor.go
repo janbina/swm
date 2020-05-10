@@ -130,7 +130,7 @@ func resizeCommand(args []string) string {
 func moveResizeCommand(args []string) string {
 	f := flag.NewFlagSet("moveresize", flag.ContinueOnError)
 	id := f.Int("id", 0, "")
-	gravity := f.String("g", "nw", "")
+	origin := f.String("o", "nw", "")
 	x := f.Int("x", 0, "")
 	y := f.Int("y", 0, "")
 	w := f.Int("w", 0, "")
@@ -177,18 +177,18 @@ func moveResizeCommand(args []string) string {
 	}
 
 	var realY int
-	if strings.Contains(*gravity, "n") {
+	if strings.Contains(*origin, "n") {
 		realY = screenGeom.Y() + *y
-	} else if strings.Contains(*gravity, "s") {
+	} else if strings.Contains(*origin, "s") {
 		realY = screenGeom.Y() + screenGeom.Height() - *y - *h
 	} else { //center
 		realY = screenGeom.Y() + screenGeom.Height()/2 - *h/2 + *y
 	}
 
 	var realX int
-	if strings.Contains(*gravity, "w") {
+	if strings.Contains(*origin, "w") {
 		realX = screenGeom.X() + *x
-	} else if strings.Contains(*gravity, "e") {
+	} else if strings.Contains(*origin, "e") {
 		realX = screenGeom.X() + screenGeom.Width() - *x - *w
 	} else { //center
 		realX = screenGeom.X() + screenGeom.Width()/2 - *w/2 + *x
