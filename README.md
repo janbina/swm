@@ -12,7 +12,7 @@ go build github.com/janbina/swm/cmd/swmctl
 
 ## How to use
 
-For now, there is one `built-in` keyboard shotrcut, `ctrl + alt + Return`, which runs `xterm`.
+For now, there is one built-in keyboard shotrcut, `ctrl + alt + Return`, which runs `xterm`.
 
 SWM is meant to be controlled using X events and `swmctl`, its custom command sending tool.
 
