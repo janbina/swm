@@ -8,7 +8,7 @@ func testCycling() int {
 	sleepMillis(50)
 
 	// few cycles of window cycling, ending at the same window we started
-	for i := 0; i < winNum * 3; i++ {
+	for i := 0; i < winNum*3; i++ {
 		index := (last - i) % winNum
 		if index < 0 {
 			index += winNum
@@ -19,7 +19,7 @@ func testCycling() int {
 	assertActive(wins[last], &errorCnt)
 
 	// few cycles of backwards window cycling, ending at the same window we started
-	for i := 0; i < winNum * 3; i++ {
+	for i := 0; i < winNum*3; i++ {
 		index := (last + i) % winNum
 		assertActive(wins[index], &errorCnt)
 		reverseCycle(1, false)

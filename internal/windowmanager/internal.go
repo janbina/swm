@@ -37,7 +37,7 @@ func mapRequestFun(_ *xgbutil.XUtil, e xevent.MapRequestEvent) {
 
 func applyStruts() {
 	rootG := xwindow.RootGeometry(X)
-	wh := make(xinerama.Heads, len(heads.Heads) + 1)
+	wh := make(xinerama.Heads, len(heads.Heads)+1)
 	wh[0] = xrect.New(rootG.Pieces())
 	for i, head := range heads.Heads {
 		wh[i+1] = xrect.New(head.Pieces())

@@ -15,17 +15,17 @@ import (
 )
 
 var commands = map[string]func([]string) string{
-	"shutdown":             shutdownCommand,
-	"move":                 moveCommand,
-	"resize":               resizeCommand,
-	"moveresize":           moveResizeCommand,
-	"cycle-win":            cycleWinCommand,
-	"cycle-win-rev":        cycleWinRevCommand,
-	"cycle-win-end":        cycleWinEndCommand,
-	"begin-mouse-move":     mouseMoveCommand,
-	"begin-mouse-resize":   mouseResizeCommand,
-	"config":               configCommand,
-	"group":                groupCommand,
+	"shutdown":           shutdownCommand,
+	"move":               moveCommand,
+	"resize":             resizeCommand,
+	"moveresize":         moveResizeCommand,
+	"cycle-win":          cycleWinCommand,
+	"cycle-win-rev":      cycleWinRevCommand,
+	"cycle-win-end":      cycleWinEndCommand,
+	"begin-mouse-move":   mouseMoveCommand,
+	"begin-mouse-resize": mouseResizeCommand,
+	"config":             configCommand,
+	"group":              groupCommand,
 }
 
 func processCommand(msg string) string {

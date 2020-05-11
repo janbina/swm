@@ -93,11 +93,11 @@ func (b *Border) ApplyRect(config *WinConfig, rect xrect.Rect, f int) xrect.Rect
 	return newRect
 }
 
-func (b *Border) WidthNeeded(config *WinConfig, ) int {
+func (b *Border) WidthNeeded(config *WinConfig) int {
 	return b.sizeIfPos(config, Left, Right)
 }
 
-func (b *Border) HeightNeeded(config *WinConfig, ) int {
+func (b *Border) HeightNeeded(config *WinConfig) int {
 	return b.sizeIfPos(config, Top, Bottom)
 }
 

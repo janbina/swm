@@ -14,7 +14,7 @@ func (m StringSet) UnSetAll(vals []string) {
 	}
 }
 
-func (m StringSet) Any (vals ...string) bool {
+func (m StringSet) Any(vals ...string) bool {
 	for _, val := range vals {
 		if m[val] {
 			return true
@@ -23,7 +23,7 @@ func (m StringSet) Any (vals ...string) bool {
 	return false
 }
 
-func (m StringSet) All (vals ...string) bool {
+func (m StringSet) All(vals ...string) bool {
 	for _, val := range vals {
 		if !m[val] {
 			return false

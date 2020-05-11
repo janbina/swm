@@ -23,7 +23,7 @@ func MinMovement(rect xrect.Rect, rects []xrect.Rect, minOverlap int) (x, y int)
 		if x == 0 && y == 0 {
 			return 0, 0
 		}
-		if abs(x) + abs(y) < minMovement {
+		if abs(x)+abs(y) < minMovement {
 			minMovement = abs(x) + abs(y)
 			minX, minY = x, y
 		}
@@ -35,10 +35,10 @@ func MinMovement(rect xrect.Rect, rects []xrect.Rect, minOverlap int) (x, y int)
 func neededMovement(a1, aS, b1, bS, minOverlap int) int {
 	a2 := a1 + aS
 	b2 := b1 + bS
-	if b2 - minOverlap < a1 {
+	if b2-minOverlap < a1 {
 		// a is too far right
 		return b2 - minOverlap - a1
-	} else if a2 < b1 + minOverlap {
+	} else if a2 < b1+minOverlap {
 		// a is too far left
 		return b1 + minOverlap - a2
 	}

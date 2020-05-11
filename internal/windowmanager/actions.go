@@ -245,7 +245,7 @@ func HideGroup(group int) {
 func ShowGroupInfo(win *window.Window) {
 	groupNames := groupmanager.GetWinGroupNames(win.Id())
 	text := strings.Join(groupNames, ",")
-	win.ShowInfoBox(text, time.Second * 3)
+	win.ShowInfoBox(text, 3*time.Second)
 }
 
 func applyChanges(changes *groupmanager.Changes) {

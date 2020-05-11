@@ -8,8 +8,8 @@ import (
 )
 
 type QueryPointerResponse struct {
-	X, Y int
-	Win xproto.Window
+	X, Y       int
+	Win        xproto.Window
 	WinX, WinY int
 }
 

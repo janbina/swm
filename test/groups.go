@@ -75,13 +75,13 @@ func testGroupBasics() int {
 
 	// shrinking is ok and updates current desktop
 	_ = ewmh.NumberOfDesktopsReq(X, maxDesks)
-	_ = ewmh.CurrentDesktopReq(X, maxDesks - 1)
+	_ = ewmh.CurrentDesktopReq(X, maxDesks-1)
 	sleepMillis(30)
 	for i := maxDesks; i > 0; i-- {
 		_ = ewmh.NumberOfDesktopsReq(X, i)
 		sleepMillis(30)
 		assertEquals(i, numDesktops(), "Incorrect number of desktop", &errorCnt)
-		assertEquals(i - 1, activeDesktop(), "Incorrect active desktop", &errorCnt)
+		assertEquals(i-1, activeDesktop(), "Incorrect active desktop", &errorCnt)
 	}
 
 	return errorCnt
@@ -145,7 +145,7 @@ func testGroupWindowMovement() int {
 	for i, win := range wins {
 		d, _ := ewmh.WmDesktopGet(X, win.Id)
 		expected := i
-		if expected > newDesks - 1  {
+		if expected > newDesks-1 {
 			expected = newDesks - 1
 		}
 		assertEquals(expected, int(d), "Incorrect desktop for window", &errorCnt)
@@ -266,7 +266,7 @@ func testGroupMembership() int {
 
 	// Remove group
 	swmctl("group", "set", "0")
-	for i := 0; i < maxDesks - 1; i++ {
+	for i := 0; i < maxDesks-1; i++ {
 		swmctl("group", "remove", "-g", fmt.Sprintf("%d", i), "-id", winId)
 		groups = groups[1:]
 		sleepMillis(30)
@@ -274,11 +274,11 @@ func testGroupMembership() int {
 	}
 
 	// Removing the last group will add the window to sticky group
-	assertSliceEquals([]int{maxDesks-1}, getIntsFromSwm("group", "get", "-id", winId), "Incorrect window groups", &errorCnt)
-	swmctl("group", "remove", "-g", fmt.Sprintf("%d", maxDesks - 1), "-id", winId)
+	assertSliceEquals([]int{maxDesks - 1}, getIntsFromSwm("group", "get", "-id", winId), "Incorrect window groups", &errorCnt)
+	swmctl("group", "remove", "-g", fmt.Sprintf("%d", maxDesks-1), "-id", winId)
 	sleepMillis(30)
 	assertSliceEquals([]int{0xFFFFFFFF}, getIntsFromSwm("group", "get", "-id", winId), "Incorrect window groups", &errorCnt)
-	
+
 	win.Destroy()
 
 	return errorCnt
