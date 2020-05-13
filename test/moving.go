@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/BurntSushi/xgbutil/xrect"
 )
 
@@ -15,7 +14,7 @@ func testMovingCommand() int {
 
 	win := createWindow()
 	sleepMillis(100)
-	winId := fmt.Sprintf("%d", win.Id)
+	winId := intStr(int(win.Id))
 
 	initGeom := geom(win)
 	prevGeom := initGeom

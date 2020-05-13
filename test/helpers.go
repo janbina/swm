@@ -58,6 +58,14 @@ func geom(win *xwindow.Window) xrect.Rect {
 	return r
 }
 
+func intStr(i int) string {
+	return fmt.Sprintf("%d", i)
+}
+
+func floatStr(f float64) string {
+	return fmt.Sprintf("%f", f)
+}
+
 func swmctl(args ...string) {
 	_, e := swmctlOut(args...)
 	if e != nil {

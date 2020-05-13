@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/icccm"
 	"github.com/BurntSushi/xgbutil/xwindow"
@@ -192,7 +191,7 @@ func testGroupVisibility() int {
 
 	// set the only visible group and check that only windows from that group and sticky window is mapped
 	for i := 0; i < maxDesks; i++ {
-		swmctl("group", "only", fmt.Sprintf("%d", i))
+		swmctl("group", "only", intStr(i))
 		sleepMillis(30)
 		assertSliceEquals([]int{i}, getIntsFromSwm("group", "get-visible"), "Incorrect visible groups", &errorCnt)
 		assert(isWinMapped(sticky), "Window should be mapped", &errorCnt)
@@ -245,11 +244,11 @@ func testGroupMembership() int {
 	swmctl("group", "mode", "sticky")
 
 	win := createWindow()
-	winId := fmt.Sprintf("%d", win.Id)
+	winId := intStr(int(win.Id))
 
 	// Set group
 	for i := 0; i < maxDesks; i++ {
-		swmctl("group", "set", "-g", fmt.Sprintf("%d", i), "-id", winId)
+		swmctl("group", "set", "-g", intStr(i), "-id", winId)
 		sleepMillis(30)
 		assertSliceEquals([]int{i}, getIntsFromSwm("group", "get", "-id", winId), "Incorrect window groups", &errorCnt)
 	}
@@ -258,7 +257,7 @@ func testGroupMembership() int {
 	swmctl("group", "set", "-g", "0", "-id", winId)
 	var groups []int
 	for i := 0; i < maxDesks; i++ {
-		swmctl("group", "add", "-g", fmt.Sprintf("%d", i), "-id", winId)
+		swmctl("group", "add", "-g", intStr(i), "-id", winId)
 		groups = append(groups, i)
 		sleepMillis(30)
 		assertSliceEquals(groups, getIntsFromSwm("group", "get", "-id", winId), "Incorrect window groups", &errorCnt)
@@ -267,7 +266,7 @@ func testGroupMembership() int {
 	// Remove group
 	swmctl("group", "set", "0")
 	for i := 0; i < maxDesks-1; i++ {
-		swmctl("group", "remove", "-g", fmt.Sprintf("%d", i), "-id", winId)
+		swmctl("group", "remove", "-g", intStr(i), "-id", winId)
 		groups = groups[1:]
 		sleepMillis(30)
 		assertSliceEquals(groups, getIntsFromSwm("group", "get", "-id", winId), "Incorrect window groups", &errorCnt)
@@ -275,7 +274,7 @@ func testGroupMembership() int {
 
 	// Removing the last group will add the window to sticky group
 	assertSliceEquals([]int{maxDesks - 1}, getIntsFromSwm("group", "get", "-id", winId), "Incorrect window groups", &errorCnt)
-	swmctl("group", "remove", "-g", fmt.Sprintf("%d", maxDesks-1), "-id", winId)
+	swmctl("group", "remove", "-g", intStr(maxDesks-1), "-id", winId)
 	sleepMillis(30)
 	assertSliceEquals([]int{0xFFFFFFFF}, getIntsFromSwm("group", "get", "-id", winId), "Incorrect window groups", &errorCnt)
 
