@@ -5,6 +5,7 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/xevent"
+	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"log"
 	"os/exec"
@@ -47,6 +48,14 @@ func destroyWindows(wins []*xwindow.Window) {
 func getActiveWindow() xproto.Window {
 	w, _ := ewmh.ActiveWindowGet(X)
 	return w
+}
+
+func geom(win *xwindow.Window) xrect.Rect {
+	r, e := win.DecorGeometry()
+	if e != nil {
+		return xrect.New(0, 0, 1, 1)
+	}
+	return r
 }
 
 func swmctl(args ...string) {
@@ -92,6 +101,20 @@ func assertSliceEquals(expected, actual []int, msg string, errorCnt *int) {
 		_ = errorLogger.Output(2, fmt.Sprintf("%s - expected %d, got %d", msg, expected, actual))
 		*errorCnt++
 	}
+}
+
+func assertGeomEquals(expected, actual xrect.Rect, msg string, errorCnt *int) {
+	if expected.X() != actual.X() ||
+		expected.Y() != actual.Y() ||
+		expected.Width() != actual.Width() ||
+		expected.Height() != actual.Height() {
+		_ = errorLogger.Output(2, fmt.Sprintf("%s - expected %s, got %s", msg, expected, actual))
+		*errorCnt++
+	}
+}
+
+func addToRect(rect xrect.Rect, xD, yD, wD, hD int) xrect.Rect {
+	return xrect.New(rect.X()+xD, rect.Y()+yD, rect.Width()+wD, rect.Height()+hD)
 }
 
 func sliceEquals(a, b []int) bool {
