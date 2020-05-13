@@ -24,6 +24,7 @@ var tests = []test{
 	{"group window movement", testGroupWindowMovement},
 	{"group visibility", testGroupVisibility},
 	{"group membership", testGroupMembership},
+	{"moving command", testMovingCommand},
 }
 
 var errorLogger = log.New(os.Stdout, "    error: ", log.Lshortfile)
