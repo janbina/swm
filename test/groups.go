@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/BurntSushi/xgbutil/ewmh"
-	"github.com/BurntSushi/xgbutil/icccm"
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"strconv"
 	"strings"
@@ -296,16 +295,6 @@ func activeDesktop() int {
 func numDesktops() int {
 	n, _ := ewmh.NumberOfDesktopsGet(X)
 	return int(n)
-}
-
-func isWinIconified(win *xwindow.Window) bool {
-	state, _ := icccm.WmStateGet(X, win.Id)
-	return state.State == icccm.StateIconic
-}
-
-func isWinMapped(win *xwindow.Window) bool {
-	state, _ := icccm.WmStateGet(X, win.Id)
-	return state.State == icccm.StateNormal
 }
 
 func getIntsFromSwm(args ...string) []int {

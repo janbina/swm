@@ -5,6 +5,7 @@ import (
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/ewmh"
+	"github.com/BurntSushi/xgbutil/icccm"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xprop"
 	"github.com/BurntSushi/xgbutil/xrect"
@@ -214,6 +215,20 @@ func waitForConfigureNotify() {
 	})
 }
 
+func waitForMapNotify() {
+	waitForEvent(func(event xgb.Event) bool {
+		_, ok := event.(xproto.MapNotifyEvent)
+		return ok
+	})
+}
+
+func waitForUnmapNotify() {
+	waitForEvent(func(event xgb.Event) bool {
+		_, ok := event.(xproto.UnmapNotifyEvent)
+		return ok
+	})
+}
+
 func waitForActive(id xproto.Window) {
 	waitForEvent(func(event xgb.Event) bool {
 		e, ok := event.(xproto.PropertyNotifyEvent)
@@ -223,4 +238,20 @@ func waitForActive(id xproto.Window) {
 		}
 		return false
 	})
+}
+
+func repeat(times int, action func()) {
+	for i := 0; i < times; i++ {
+		action()
+	}
+}
+
+func isWinIconified(win *xwindow.Window) bool {
+	state, _ := icccm.WmStateGet(X, win.Id)
+	return state.State == icccm.StateIconic
+}
+
+func isWinMapped(win *xwindow.Window) bool {
+	state, _ := icccm.WmStateGet(X, win.Id)
+	return state.State == icccm.StateNormal
 }

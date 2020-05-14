@@ -30,6 +30,7 @@ var tests = []test{
 	{"moving command", testMovingCommand},
 	{"resizing command", testResizingCommand},
 	{"moveresize command", testMoveResizeCommand},
+	{"window states", testWindowStates},
 }
 
 var errorLogger = log.New(os.Stdout, "    error: ", log.Lshortfile)
