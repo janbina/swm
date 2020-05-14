@@ -5,7 +5,6 @@ func testCycling() int {
 	winNum := 5
 	last := winNum - 1
 	wins := createWindows(winNum)
-	sleepMillis(50)
 
 	// few cycles of window cycling, ending at the same window we started
 	for i := 0; i < winNum*3; i++ {
@@ -74,7 +73,6 @@ func cycle(times int, end bool) {
 	if end {
 		swmctl("cycle-win-end")
 	}
-	sleepMillis(50)
 }
 
 func reverseCycle(times int, end bool) {
@@ -84,5 +82,4 @@ func reverseCycle(times int, end bool) {
 	if end {
 		swmctl("cycle-win-end")
 	}
-	sleepMillis(50)
 }

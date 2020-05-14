@@ -8,7 +8,6 @@ func testResizingCommand() int {
 	errorCnt := 0
 
 	win := createWindow()
-	sleepMillis(100)
 	winId := intStr(int(win.Id))
 
 	initWinGeom, _ := win.Geometry()
@@ -51,7 +50,7 @@ func testResizingCommand() int {
 	for _, move := range movements {
 		for i := 0; i < 10; i++ {
 			swmctl(append([]string{"resize", "-id", winId}, move.command...)...)
-			sleepMillis(50)
+			waitForConfigureNotify()
 			newGeom = geom(win)
 			assertGeomEquals(
 				addToRect(prevGeom, move.xD, move.yD, move.wD, move.hD),

@@ -13,7 +13,6 @@ func testMovingCommand() int {
 	errorCnt := 0
 
 	win := createWindow()
-	sleepMillis(100)
 	winId := intStr(int(win.Id))
 
 	initGeom := geom(win)
@@ -53,7 +52,7 @@ func testMovingCommand() int {
 	for _, move := range movements {
 		for i := 0; i < 10; i++ {
 			swmctl(append([]string{"move", "-id", winId}, move.command...)...)
-			sleepMillis(50)
+			waitForConfigureNotify()
 			newGeom = geom(win)
 			assertGeomEquals(
 				addToRect(prevGeom, move.xD, move.yD, move.wD, move.hD),

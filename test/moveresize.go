@@ -11,7 +11,6 @@ func testMoveResizeCommand() int {
 	errorCnt := 0
 
 	win := createWindow()
-	sleepMillis(100)
 	winId := intStr(int(win.Id))
 
 	g, _ := xwindow.New(X, X.RootWin()).Geometry()
@@ -131,7 +130,7 @@ func testMoveResizeCommand() int {
 
 	for i, move := range movements {
 		swmctl(append([]string{"moveresize", "-id", winId}, move.command...)...)
-		sleepMillis(50)
+		waitForConfigureNotify()
 		newGeom = geom(win)
 		assertGeomEquals(
 			xrect.New(move.xD, move.yD, move.wD, move.hD),

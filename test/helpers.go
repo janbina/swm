@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/xevent"
+	"github.com/BurntSushi/xgbutil/xprop"
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"log"
@@ -25,7 +27,34 @@ func createWindow() *xwindow.Window {
 		w.Destroy()
 	})
 
+	_ = win.Listen(
+		xproto.EventMaskFocusChange,
+		xproto.EventMaskStructureNotify,
+		xproto.EventMaskPropertyChange,
+		xproto.EventMaskFocusChange,
+	)
+
 	win.Map()
+
+	active, reparented, mapped := false, false, false
+	waitForEvent(func(event xgb.Event) bool {
+		switch e := event.(type) {
+		case xproto.ReparentNotifyEvent:
+			if e.Event == win.Id {
+				reparented = true
+			}
+		case xproto.MapNotifyEvent:
+			if e.Event == win.Id {
+				mapped = true
+			}
+		case xproto.PropertyNotifyEvent:
+			atom, _ := xprop.Atm(X, "_NET_ACTIVE_WINDOW")
+			if e.Window == X.RootWin() && atom == e.Atom && getActiveWindow() == win.Id {
+				active = true
+			}
+		}
+		return reparented && mapped && active
+	})
 
 	return win
 }
@@ -34,7 +63,6 @@ func createWindows(count int) []*xwindow.Window {
 	wins := make([]*xwindow.Window, count)
 	for i := range wins {
 		wins[i] = createWindow()
-		sleepMillis(100)
 	}
 	return wins
 }
@@ -79,10 +107,6 @@ func swmctlOut(args ...string) (string, error) {
 	return string(out), err
 }
 
-func sleepMillis(millis time.Duration) {
-	time.Sleep(time.Millisecond * millis)
-}
-
 func assert(val bool, msg string, errorCnt *int) {
 	if !val {
 		_ = errorLogger.Output(2, msg)
@@ -91,6 +115,10 @@ func assert(val bool, msg string, errorCnt *int) {
 }
 
 func assertActive(win *xwindow.Window, errorCnt *int) {
+	if win.Id == getActiveWindow() {
+		return
+	}
+	waitForActive(win.Id)
 	if win.Id != getActiveWindow() {
 		_ = errorLogger.Output(2, "Incorrect active window")
 		*errorCnt++
@@ -135,4 +163,64 @@ func sliceEquals(a, b []int) bool {
 		}
 	}
 	return true
+}
+
+// waits for event satisfying et function
+func waitForEvent(et func(event xgb.Event) bool) {
+	// if no matching event comes in this time, just returns
+	timeout := time.After(1 * time.Second)
+	for {
+		select {
+		case <-timeout:
+			return
+		default:
+			for {
+				event, err := X.Conn().PollForEvent()
+				if et(event) {
+					return
+				}
+				if event == nil && err == nil {
+					break
+				}
+			}
+		}
+	}
+}
+
+func flushEvents() {
+	for {
+		ev, err := X.Conn().PollForEvent()
+		if ev == nil && err == nil {
+			break
+		}
+	}
+}
+
+func waitForPropertyChange(id xproto.Window, atomName string) {
+	waitForEvent(func(event xgb.Event) bool {
+		e, ok := event.(xproto.PropertyNotifyEvent)
+		if ok {
+			atom, _ := xprop.Atm(X, atomName)
+			return (id == 0 || e.Window == id) && (atomName == "" || atom == e.Atom)
+		}
+		return false
+	})
+}
+
+func waitForConfigureNotify() {
+	waitForEvent(func(event xgb.Event) bool {
+		_, ok := event.(xproto.ConfigureNotifyEvent)
+		return ok
+	})
+}
+
+func waitForActive(id xproto.Window) {
+	waitForEvent(func(event xgb.Event) bool {
+		e, ok := event.(xproto.PropertyNotifyEvent)
+		if ok {
+			atom, _ := xprop.Atm(X, "_NET_ACTIVE_WINDOW")
+			return e.Window == X.RootWin() && atom == e.Atom && (id == 0 || getActiveWindow() == id)
+		}
+		return false
+	})
 }

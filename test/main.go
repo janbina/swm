@@ -3,10 +3,13 @@ package main
 import (
 	"fmt"
 	"github.com/BurntSushi/xgb"
+	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
+	"github.com/BurntSushi/xgbutil/xwindow"
 	"io/ioutil"
 	"log"
 	"os"
+	"time"
 )
 
 var X *xgbutil.XUtil
@@ -21,7 +24,7 @@ var tests = []test{
 	{"desktop names", testDesktopNames},
 	{"group basics", testGroupBasics},
 	{"group window creation", testGroupWindowCreation},
-	{"group window moveresize", testGroupWindowMovement},
+	{"group window movement", testGroupWindowMovement},
 	{"group visibility", testGroupVisibility},
 	{"group membership", testGroupMembership},
 	{"moving command", testMovingCommand},
@@ -40,14 +43,21 @@ func main() {
 	}
 	defer X.Conn().Close()
 
+	_ = xwindow.New(X, X.RootWin()).Listen(
+		xproto.EventMaskPropertyChange,
+		xproto.EventMaskSubstructureNotify,
+	)
+
 	errorCnt := 0
 	for _, t := range tests {
 		fmt.Printf("Testing %s ... ", t.name)
+		start := time.Now()
 		errs := t.fun()
+		duration := time.Since(start)
 		if errs == 0 {
-			fmt.Printf("OK\n")
+			fmt.Printf("OK, took %s\n", duration)
 		} else {
-			fmt.Printf("Errors in %s: %d\n", t.name, errs)
+			fmt.Printf("Errors in %s: %d, took %s\n", t.name, errs, duration)
 		}
 		errorCnt += errs
 	}
