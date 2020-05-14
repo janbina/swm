@@ -175,7 +175,7 @@ func testGroupVisibility() int {
 		assertEquals(i, int(d), "Incorrect desktop for window", &errorCnt)
 	}
 	sticky := createWindow()
-	_ = ewmh.WmDesktopSet(X, sticky.Id, 0xFFFFFFFF)
+	_ = ewmh.ClientEvent(X, sticky.Id, "_NET_WM_DESKTOP", 0xFFFFFFFF, 2)
 	sleepMillis(30)
 	d, _ := ewmh.WmDesktopGet(X, sticky.Id)
 	assertEquals(0xFFFFFFFF, int(d), "Incorrect desktop for window", &errorCnt)
