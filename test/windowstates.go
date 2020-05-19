@@ -4,7 +4,6 @@ import (
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
-	"time"
 )
 
 func testWindowStates() int {
@@ -67,7 +66,6 @@ func testWindowStates() int {
 	flushEvents()
 	_ = ewmh.WmStateReqExtra(X, win.Id, ewmh.StateAdd, "_NET_WM_STATE_MAXIMIZED_VERT", "_NET_WM_STATE_MAXIMIZED_HORZ", 2)
 	repeat(4, waitForConfigureNotify)
-	time.Sleep(100*time.Millisecond)
 	newGeom = geom(win)
 	assertGeomEquals(
 		xrect.New(screenGeom.X(), screenGeom.Y(), screenGeom.Width(), screenGeom.Height()),
@@ -79,7 +77,6 @@ func testWindowStates() int {
 	flushEvents()
 	_ = ewmh.WmStateReqExtra(X, win.Id, ewmh.StateRemove, "_NET_WM_STATE_MAXIMIZED_VERT", "_NET_WM_STATE_MAXIMIZED_HORZ", 2)
 	repeat(4, waitForConfigureNotify)
-	time.Sleep(100*time.Millisecond)
 	newGeom = geom(win)
 	assertGeomEquals(
 		initGeom,
