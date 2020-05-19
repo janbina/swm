@@ -26,7 +26,7 @@ func setDesktopGeometry() {
 }
 
 func setDesktopViewport() {
-	_ = ewmh.DesktopViewportSet(X, []ewmh.DesktopViewport{{0, 0}})
+	_ = ewmh.DesktopViewportSet(X, []ewmh.DesktopViewport{{X: 0, Y: 0}})
 }
 
 func setWorkArea(numDesktops int) {
