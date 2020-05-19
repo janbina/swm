@@ -124,7 +124,7 @@ func testMoveResizeCommand() int {
 		},
 		{
 			command: []string{"-o", "nw", "-x", "0", "-y", "0", "-wr", ".5", "-hr", ".5"},
-			xD:      screenGeom.X(), yD: screenGeom.Y(), wD: screenGeom.Width()/2, hD: screenGeom.Height()/2,
+			xD:      screenGeom.X(), yD: screenGeom.Y(), wD: screenGeom.Width() / 2, hD: screenGeom.Height() / 2,
 		},
 	}...)
 
