@@ -24,7 +24,7 @@ alt + ctrl + Tab
 
 # tile active window left/right
 super + alt + {Left,Right}
-    swmctl moveresize -g {w,e} -wr .5 -hr 1
+    swmctl moveresize -o {w,e} -wr .5 -hr 1
 
 # move active window by 20 px west/south/north/east
 ctrl + super + alt + {h, j, k, l}
