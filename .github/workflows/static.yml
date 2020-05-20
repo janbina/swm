@@ -1,0 +1,25 @@
+name: Static check
+on: pull_request
+
+jobs:
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: check
+        uses: grandcolline/golang-github-actions@d1fab26
+        with:
+          run: imports
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  vet:
+    name: Vet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: check
+        uses: grandcolline/golang-github-actions@d1fab26
+        with:
+          run: vet
+          token: ${{ secrets.GITHUB_TOKEN }}
