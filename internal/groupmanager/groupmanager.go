@@ -2,10 +2,11 @@ package groupmanager
 
 import (
 	"fmt"
+	"sort"
+
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
-	"sort"
 )
 
 type Changes struct {

@@ -2,11 +2,12 @@ package main
 
 import (
 	"flag"
+	"log"
+
 	"github.com/BurntSushi/xgbutil"
 	"github.com/janbina/swm/internal/communication"
 	"github.com/janbina/swm/internal/config"
 	"github.com/janbina/swm/internal/windowmanager"
-	"log"
 )
 
 func main() {

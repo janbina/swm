@@ -2,6 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os/exec"
+	"time"
+
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/ewmh"
@@ -10,9 +14,6 @@ import (
 	"github.com/BurntSushi/xgbutil/xprop"
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
-	"log"
-	"os/exec"
-	"time"
 )
 
 func createWindow() *xwindow.Window {

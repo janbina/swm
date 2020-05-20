@@ -1,10 +1,11 @@
 package windowmanager
 
 import (
+	"log"
+
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
-	"log"
 )
 
 func updateClientList() {

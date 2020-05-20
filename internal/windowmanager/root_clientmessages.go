@@ -1,10 +1,11 @@
 package windowmanager
 
 import (
+	"log"
+
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xprop"
-	"log"
 )
 
 var rootCmHandlers = map[string]func(data []uint32){

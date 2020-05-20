@@ -2,6 +2,7 @@ package util
 
 import (
 	"fmt"
+
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/icccm"

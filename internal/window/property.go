@@ -1,10 +1,11 @@
 package window
 
 import (
+	"log"
+
 	"github.com/BurntSushi/xgbutil/icccm"
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xprop"
-	"log"
 )
 
 var propertyHandlers = map[string]func(win *Window){

@@ -1,9 +1,10 @@
 package util
 
 import (
+	"os"
+
 	"github.com/BurntSushi/freetype-go/freetype/truetype"
 	"github.com/BurntSushi/xgbutil/xgraphics"
-	"os"
 )
 
 var cachedFonts = map[string]*truetype.Font{}

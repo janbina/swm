@@ -2,6 +2,9 @@ package windowmanager
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/mousebind"
 	"github.com/BurntSushi/xgbutil/xrect"
@@ -12,8 +15,6 @@ import (
 	"github.com/janbina/swm/internal/stack"
 	"github.com/janbina/swm/internal/util"
 	"github.com/janbina/swm/internal/window"
-	"strings"
-	"time"
 )
 
 func getActiveWindow() focus.FocusableWindow {

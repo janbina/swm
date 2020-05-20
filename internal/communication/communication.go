@@ -3,11 +3,12 @@ package communication
 import (
 	"bufio"
 	"fmt"
-	"github.com/BurntSushi/xgb"
 	"log"
 	"net"
 	"os"
 	"path"
+
+	"github.com/BurntSushi/xgb"
 )
 
 func GetSocketFilePath(x *xgb.Conn) string {

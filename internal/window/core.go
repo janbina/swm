@@ -1,6 +1,9 @@
 package window
 
 import (
+	"log"
+	"time"
+
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
@@ -15,8 +18,6 @@ import (
 	"github.com/janbina/swm/internal/heads"
 	"github.com/janbina/swm/internal/stack"
 	"github.com/janbina/swm/internal/util"
-	"log"
-	"time"
 )
 
 type Window struct {

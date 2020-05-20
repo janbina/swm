@@ -3,15 +3,16 @@ package communication
 import (
 	"flag"
 	"fmt"
+	"log"
+	"sort"
+	"strconv"
+	"strings"
+
 	"github.com/janbina/swm/internal/config"
 	"github.com/janbina/swm/internal/groupmanager"
 	"github.com/janbina/swm/internal/util"
 	"github.com/janbina/swm/internal/windowmanager"
 	"github.com/mattn/go-shellwords"
-	"log"
-	"sort"
-	"strconv"
-	"strings"
 )
 
 var commands = map[string]func([]string) string{

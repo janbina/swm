@@ -1,6 +1,8 @@
 package window
 
 import (
+	"log"
+
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
@@ -8,7 +10,6 @@ import (
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/janbina/swm/internal/config"
 	"github.com/janbina/swm/internal/cursors"
-	"log"
 )
 
 func (w *Window) SetupMouseEvents() {

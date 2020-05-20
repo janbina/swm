@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
+	"math"
+
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
-	"math"
 )
 
 func testMoveResizeCommand() int {

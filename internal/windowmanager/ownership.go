@@ -2,6 +2,9 @@ package windowmanager
 
 import (
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
@@ -9,8 +12,6 @@ import (
 	"github.com/BurntSushi/xgbutil/xprop"
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"github.com/janbina/swm/internal/util"
-	"log"
-	"time"
 )
 
 func takeWmOwnership(X *xgbutil.XUtil, replace bool) error {

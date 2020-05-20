@@ -1,6 +1,8 @@
 package windowmanager
 
 import (
+	"log"
+
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
@@ -8,7 +10,6 @@ import (
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xprop"
 	"github.com/janbina/swm/internal/window"
-	"log"
 )
 
 type win = window.Window

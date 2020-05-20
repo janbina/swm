@@ -2,6 +2,7 @@ package groupmanager
 
 import (
 	"fmt"
+
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/xprop"

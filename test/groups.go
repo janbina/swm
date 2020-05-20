@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/BurntSushi/xgbutil/ewmh"
-	"github.com/BurntSushi/xgbutil/xwindow"
 	"strconv"
 	"strings"
+
+	"github.com/BurntSushi/xgbutil/ewmh"
+	"github.com/BurntSushi/xgbutil/xwindow"
 )
 
 func testDesktopNames() int {

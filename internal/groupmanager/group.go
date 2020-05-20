@@ -1,8 +1,9 @@
 package groupmanager
 
 import (
-	"github.com/BurntSushi/xgb/xproto"
 	"time"
+
+	"github.com/BurntSushi/xgb/xproto"
 )
 
 type group struct {

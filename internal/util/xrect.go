@@ -1,8 +1,9 @@
 package util
 
 import (
-	"github.com/BurntSushi/xgbutil/xrect"
 	"math"
+
+	"github.com/BurntSushi/xgbutil/xrect"
 )
 
 // MinMovement returns how much we need to move rect on x and y axis so it overlaps

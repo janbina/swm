@@ -1,6 +1,8 @@
 package windowmanager
 
 import (
+	"log"
+
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/keybind"
@@ -15,7 +17,6 @@ import (
 	"github.com/janbina/swm/internal/heads"
 	"github.com/janbina/swm/internal/stack"
 	"github.com/janbina/swm/internal/window"
-	"log"
 )
 
 var (

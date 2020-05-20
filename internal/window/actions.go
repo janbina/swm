@@ -1,6 +1,10 @@
 package window
 
 import (
+	"log"
+	"math"
+	"time"
+
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/icccm"
@@ -11,9 +15,6 @@ import (
 	"github.com/janbina/swm/internal/heads"
 	"github.com/janbina/swm/internal/stack"
 	"github.com/janbina/swm/internal/util"
-	"log"
-	"math"
-	"time"
 )
 
 const (

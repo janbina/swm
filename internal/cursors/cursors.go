@@ -1,10 +1,11 @@
 package cursors
 
 import (
+	"log"
+
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/xcursor"
-	"log"
 )
 
 var (

@@ -1,6 +1,8 @@
 package windowmanager
 
 import (
+	"log"
+
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/xevent"
@@ -9,7 +11,6 @@ import (
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"github.com/janbina/swm/internal/groupmanager"
 	"github.com/janbina/swm/internal/heads"
-	"log"
 )
 
 // Root window configure request

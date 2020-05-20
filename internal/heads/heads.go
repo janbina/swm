@@ -2,6 +2,7 @@ package heads
 
 import (
 	"fmt"
+
 	"github.com/BurntSushi/xgbutil/xinerama"
 	"github.com/BurntSushi/xgbutil/xrect"
 )
