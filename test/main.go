@@ -70,4 +70,5 @@ func main() {
 	} else {
 		fmt.Printf("All is good\n")
 	}
+	os.Exit(1)
 }
