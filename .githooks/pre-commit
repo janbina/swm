@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# formats staged files using goimports and checks whole projects using go vet
+# formatted files has to be added to commit manually, this is because
+# one might not want to commit all changes in the file at once
+
+echo "Running pre-commit checks..."
+
+STAGED=$(git diff --staged --name-only | grep ".go$")
+
+if [[ "$STAGED" == "" ]]; then
+    exit 0
+fi
+
+# shellcheck disable=SC2086
+OUT="$(goimports -l -w ${STAGED})"
+
+if [[ "$OUT" != "" ]]; then
+    echo "===> following files were not correctly formatted:"
+    echo "$OUT"
+    echo "===> we fixed that, approve the changes and try again"
+    exit 1
+fi
+
+# shellcheck disable=SC2046
+if ! go vet $(go list ./...); then
+    echo "===> go vet found errors, fix them and try again"
+    exit 1
+fi
