@@ -1,5 +1,7 @@
 # SWM
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/janbina/swm)](https://goreportcard.com/report/github.com/janbina/swm)
+
 SWM is simple stacking window manager for X.
 
 ## Installation
