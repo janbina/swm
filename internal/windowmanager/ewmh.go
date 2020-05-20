@@ -10,24 +10,24 @@ import (
 
 func updateClientList() {
 	ids := make([]xproto.Window, 0, len(managedWindows))
-	for     window :=     range managedWindows {
-				ids = append(ids, window)
+	for window := range managedWindows {
+		ids = append(ids, window)
 	}
-	_    =    ewmh.ClientListSet(X, ids)
+	_ = ewmh.ClientListSet(X, ids)
 }
 
 func setDesktopGeometry() {
 	_ = ewmh.DesktopGeometrySet(
 		X,
 		&ewmh.DesktopGeometry{
-			Width:RootGeometry.Width(),
+			Width:  RootGeometry.Width(),
 			Height: RootGeometry.Height(),
 		},
 	)
 }
 
 func setDesktopViewport() {
-	_ = ewmh.DesktopViewportSet(X, []ewmh.DesktopViewport{{0, 0}})
+	_ = ewmh.DesktopViewportSet(X, []ewmh.DesktopViewport{{X: 0, Y: 0}})
 }
 
 func setWorkArea(numDesktops int) {
