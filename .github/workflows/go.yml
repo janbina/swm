@@ -37,3 +37,5 @@ jobs:
     - name: Test
       working-directory: test
       run: ./run.sh
+      env:
+        DISPLAY: :111
