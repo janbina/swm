@@ -1,6 +1,6 @@
 # SWM
 [![Build and test](https://github.com/janbina/swm/workflows/Build%20and%20test/badge.svg)](https://github.com/janbina/swm/actions?query=workflow%3A%22Build+and+test%22)
-![Go Report Card](https://goreportcard.com/badge/github.com/janbina/swm)
+[![Go Report Card](https://goreportcard.com/badge/github.com/janbina/swm)](https://goreportcard.com/report/github.com/janbina/swm)
 [![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/janbina/swm)](https://golang.org/doc/devel/release.html)
 
 SWM is simple stacking window manager for X.
