@@ -198,12 +198,8 @@ func (w *Window) DeIconify() {
 
 func (w *Window) Destroy() {
 	if w.protocols["WM_DELETE_WINDOW"] {
-		atoms, err := util.Atoms(w.win.X, "WM_PROTOCOLS", "WM_DELETE_WINDOW")
-
-		cm, err := xevent.NewClientMessage(32, w.win.Id, atoms[0], int(atoms[1]))
-		if err != nil {
-			return
-		}
+		atoms, _ := util.Atoms(w.win.X, "WM_PROTOCOLS", "WM_DELETE_WINDOW")
+		cm, _ := xevent.NewClientMessage(32, w.win.Id, atoms[0], int(atoms[1]))
 
 		xproto.SendEvent(w.win.X.Conn(), false, w.win.Id, 0, string(cm.Bytes()))
 	} else {
