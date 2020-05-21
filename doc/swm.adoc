@@ -1,0 +1,170 @@
+// source for man page
+// asciidoctor can be used to generate man page:
+//     `asciidoctor -b manpage swm.adoc`
+= swm(1)
+:doctype: manpage
+:man manual: Swm Manual
+
+== Name
+
+swm - Simple Window Manager
+
+== Synopsis
+
+*swm* [*--replace*] [*-c* configFile]
+
+*swmctl* COMMAND [OPTIONS] [ARGUMENTS]
+
+== Description
+
+*swm* is a stacking window manager.
+
+It is controlled and configured via *swmctl*.
+
+== Options
+
+*--replace*::
+Try to replace currently running window manager.
+
+*-c* configFile::
+Use the given configuration file.
+
+== Swmctl commands
+
+=== Config
+
+config border <width> <colorNormal> <colorActive> <colorUrgent>::
+Window border width and color for each of three states.
+
+config (border-top|border-bottom|border-left|border-right) <...>::
+Same as border but sets each side separately.
+
+config info-bg-color <color>::
+Background color of the info box.
+
+config info-text-color <color>::
+Text color of the info box.
+
+config font <fontpath>::
+Font used by smw  (for now, only usage is in info box).
+
+=== Cycling windows
+
+cycle-win::
+Cycle to second last active window, then third last and so on.
+
+cycle-win-rev::
+Goes in opposite direction then *cycle-win*.
+
+cycle-win-end::
+Ends current cycling.
+
+=== Groups
+
+group mode (sticky|auto)::
+Set default group mode - when sticky, new windows are always assigned to sticky group,
+when auto, window preference is used with fallback of current group.
+
+group (toggle|show|hide|only) <groupId>::
+Change visibility of group - toggle it, show/hide it, or show only specified group (hide all others).
+
+group (set|add|remove) [-id windowId] [-g groupId]::
+Set group for window (its only group will be the one specified),
+add it to group, or remove it from group.
+WindowId is optional and defaults to active (focused) window.
+GroupId is optional and defaults to current group (group which is visible and was made visible most recently).
+
+group names <name> [name...]::
+Set group names.
+
+group get-visible::
+Get list of visible groups.
+Returns group IDs separated by new-line and in ascending order.
+
+group get [-id windowId]::
+Get list of groups the window is member of.
+Returns group IDs separated by new-line and in ascending order.
+WindowId is optional and defaults to active (focused) window.
+
+=== Moving and Resizing
+
+move [-id windowID] [-n num] [-s num] [-w num] [-e num]::
+Move window by amount of pixels in specified direction (north/south/west/east).
+WindowId is optional and defaults to active (focused) window.
+
+resize [-id windowID] [-n num] [-s num] [-w num] [-e num]::
+Enlarge/shrink window by amount of pixels in specified direction (north/south/west/east).
+WindowId is optional and defaults to active (focused) window.
+
+moveresize [-id windowID] [-o origin] [-x num] [-y num] [-xr num] [-yr num] [-w num] [-h num] [-wr num] [-hr num]::
+Move and/or resize window to specified location and to specified size.
+WindowId is optional and defaults to active (focused) window.
+X/Y coordinates as well is width/height could be specified relative to the screen size.
+X/Y coordinates defaults to 0.
+If width/height is not specified, it won't be changed.
+Origin specifies point on the screen to which x/y coordinates are related,
+possible values are *n, s, w, e, c* (north, south, west, east, center),
+defaults to nw - top left corner.
+
+begin-mouse-move::
+Initiate mouse move on window that is under the pointer.
+
+begin-mouse-resize::
+Initiate mouse resize on window that is under the pointer.
+
+=== Shutdown
+
+shutdown::
+Shut down swm
+
+== Swmrc
+
+Swmrc is a shell script that is executed by swm upon startup.
+It is a good place to configure swm (border color etc.)
+You can either specify its location using *-c* argument of *swm*,
+or put it to one of these locations:
+
+* $XDG_CONFIG_HOME/swm/swmrc
+* $HOME/.config/swm/swmrc
+* $HOME/.swm/swmrc
+
+== Examples
+
+swmctl config border 1 000000 0000FF FF0000::
+Set all borders to 1 pixel width, black in normal state, blue when focused and red when urgent.
+
+swmctl config info-bg-color 0000FF::
+Set info box background color to blue.
+
+swmctl config font "/usr/share/fonts/TTF/DejaVuSansMono.ttf"::
+Set info box font to be _DejaVuSansMono_.
+
+swmctl config move-drag-shortcut Mod1-1::
+Set move drag shortcut to be alt + left mouse click.
+
+swmctl move -n 20 -w 10::
+Move active window 20 pixels north and 10 pixels west.
+
+swmctl resize -n 20::
+Enlarge active window by 20 pixels on top.
+
+swmctl resize -n -20::
+Shrink active window by 20 pixels on top.
+
+swmctl moveresize -o c::
+Center window on the screen.
+
+swmctl moveresize -o ne -wr .5 -hr 1::
+Tile window to the right - make it half the screen width, full screen height,
+and place it to north east.
+
+swmctl moveresize -o ne -xr .05 -yr .05 -wr .4 -hr .9::
+Tile window to the right - make it half the screen width, full screen height,
+and place it to north east.
+
+swmctl moveresize -o ne -xr .05 -yr .05 -wr .425 -hr .9::
+Tile window to the right but make some space around it.
+
+== Author
+
+Jan Bina <binajohny at gmail.com>
