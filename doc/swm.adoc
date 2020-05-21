@@ -46,7 +46,7 @@ config info-text-color <color>::
 Text color of the info box.
 
 config font <fontpath>::
-Font used by smw  (for now, only usage is in info box).
+Font used by swm  (for now, only usage is in info box).
 
 === Cycling windows
 
