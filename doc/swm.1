@@ -1,0 +1,274 @@
+'\" t
+.\"     Title: swm
+.\"    Author: [see the "AUTHOR(S)" section]
+.\" Generator: Asciidoctor 2.0.10
+.\"      Date: 2020-05-21
+.\"    Manual: Swm Manual
+.\"    Source: \ \&
+.\"  Language: English
+.\"
+.TH "SWM" "1" "2020-05-21" "\ \&" "Swm Manual"
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.ss \n[.ss] 0
+.nh
+.ad l
+.de URL
+\fI\\$2\fP <\\$1>\\$3
+..
+.als MTO URL
+.if \n[.g] \{\
+.  mso www.tmac
+.  am URL
+.    ad l
+.  .
+.  am MTO
+.    ad l
+.  .
+.  LINKSTYLE blue R < >
+.\}
+.SH "NAME"
+swm \- Simple Window Manager
+.SH "SYNOPSIS"
+.sp
+\fBswm\fP [\fB\-\-replace\fP] [\fB\-c\fP configFile]
+.sp
+\fBswmctl\fP COMMAND [OPTIONS] [ARGUMENTS]
+.SH "DESCRIPTION"
+.sp
+\fBswm\fP is a stacking window manager.
+.sp
+It is controlled and configured via \fBswmctl\fP.
+.SH "OPTIONS"
+.sp
+\fB\-\-replace\fP
+.RS 4
+Try to replace currently running window manager.
+.RE
+.sp
+\fB\-c\fP configFile
+.RS 4
+Use the given configuration file.
+.RE
+.SH "SWMCTL COMMANDS"
+.SS "Config"
+.sp
+config border <width> <colorNormal> <colorActive> <colorUrgent>
+.RS 4
+Window border width and color for each of three states.
+.RE
+.sp
+config (border\-top|border\-bottom|border\-left|border\-right) <...>
+.RS 4
+Same as border but sets each side separately.
+.RE
+.sp
+config info\-bg\-color <color>
+.RS 4
+Background color of the info box.
+.RE
+.sp
+config info\-text\-color <color>
+.RS 4
+Text color of the info box.
+.RE
+.sp
+config font <fontpath>
+.RS 4
+Font used by smw  (for now, only usage is in info box).
+.RE
+.SS "Cycling windows"
+.sp
+cycle\-win
+.RS 4
+Cycle to second last active window, then third last and so on.
+.RE
+.sp
+cycle\-win\-rev
+.RS 4
+Goes in opposite direction then \fBcycle\-win\fP.
+.RE
+.sp
+cycle\-win\-end
+.RS 4
+Ends current cycling.
+.RE
+.SS "Groups"
+.sp
+group mode (sticky|auto)
+.RS 4
+Set default group mode \- when sticky, new windows are always assigned to sticky group,
+when auto, window preference is used with fallback of current group.
+.RE
+.sp
+group (toggle|show|hide|only) <groupId>
+.RS 4
+Change visibility of group \- toggle it, show/hide it, or show only specified group (hide all others).
+.RE
+.sp
+group (set|add|remove) [\-id windowId] [\-g groupId]
+.RS 4
+Set group for window (its only group will be the one specified),
+add it to group, or remove it from group.
+WindowId is optional and defaults to active (focused) window.
+GroupId is optional and defaults to current group (group which is visible and was made visible most recently).
+.RE
+.sp
+group names <name> [name...]
+.RS 4
+Set group names.
+.RE
+.sp
+group get\-visible
+.RS 4
+Get list of visible groups.
+Returns group IDs separated by new\-line and in ascending order.
+.RE
+.sp
+group get [\-id windowId]
+.RS 4
+Get list of groups the window is member of.
+Returns group IDs separated by new\-line and in ascending order.
+WindowId is optional and defaults to active (focused) window.
+.RE
+.SS "Moving and Resizing"
+.sp
+move [\-id windowID] [\-n num] [\-s num] [\-w num] [\-e num]
+.RS 4
+Move window by amount of pixels in specified direction (north/south/west/east).
+WindowId is optional and defaults to active (focused) window.
+.RE
+.sp
+resize [\-id windowID] [\-n num] [\-s num] [\-w num] [\-e num]
+.RS 4
+Enlarge/shrink window by amount of pixels in specified direction (north/south/west/east).
+WindowId is optional and defaults to active (focused) window.
+.RE
+.sp
+moveresize [\-id windowID] [\-o origin] [\-x num] [\-y num] [\-xr num] [\-yr num] [\-w num] [\-h num] [\-wr num] [\-hr num]
+.RS 4
+Move and/or resize window to specified location and to specified size.
+WindowId is optional and defaults to active (focused) window.
+X/Y coordinates as well is width/height could be specified relative to the screen size.
+X/Y coordinates defaults to 0.
+If width/height is not specified, it won\(cqt be changed.
+Origin specifies point on the screen to which x/y coordinates are related,
+possible values are \fBn, s, w, e, c\fP (north, south, west, east, center),
+defaults to nw \- top left corner.
+.RE
+.sp
+begin\-mouse\-move
+.RS 4
+Initiate mouse move on window that is under the pointer.
+.RE
+.sp
+begin\-mouse\-resize
+.RS 4
+Initiate mouse resize on window that is under the pointer.
+.RE
+.SS "Shutdown"
+.sp
+shutdown
+.RS 4
+Shut down swm
+.RE
+.SH "SWMRC"
+.sp
+Swmrc is a shell script that is executed by swm upon startup.
+It is a good place to configure swm (border color etc.)
+You can either specify its location using \fB\-c\fP argument of \fBswm\fP,
+or put it to one of these locations:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+$XDG_CONFIG_HOME/swm/swmrc
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+$HOME/.config/swm/swmrc
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.  sp -1
+.  IP \(bu 2.3
+.\}
+$HOME/.swm/swmrc
+.RE
+.SH "EXAMPLES"
+.sp
+swmctl config border 1 000000 0000FF FF0000
+.RS 4
+Set all borders to 1 pixel width, black in normal state, blue when focused and red when urgent.
+.RE
+.sp
+swmctl config info\-bg\-color 0000FF
+.RS 4
+Set info box background color to blue.
+.RE
+.sp
+swmctl config font "/usr/share/fonts/TTF/DejaVuSansMono.ttf"
+.RS 4
+Set info box font to be \fIDejaVuSansMono\fP.
+.RE
+.sp
+swmctl config move\-drag\-shortcut Mod1\-1
+.RS 4
+Set move drag shortcut to be alt + left mouse click.
+.RE
+.sp
+swmctl move \-n 20 \-w 10
+.RS 4
+Move active window 20 pixels north and 10 pixels west.
+.RE
+.sp
+swmctl resize \-n 20
+.RS 4
+Enlarge active window by 20 pixels on top.
+.RE
+.sp
+swmctl resize \-n \-20
+.RS 4
+Shrink active window by 20 pixels on top.
+.RE
+.sp
+swmctl moveresize \-o c
+.RS 4
+Center window on the screen.
+.RE
+.sp
+swmctl moveresize \-o ne \-wr .5 \-hr 1
+.RS 4
+Tile window to the right \- make it half the screen width, full screen height,
+and place it to north east.
+.RE
+.sp
+swmctl moveresize \-o ne \-xr .05 \-yr .05 \-wr .4 \-hr .9
+.RS 4
+Tile window to the right \- make it half the screen width, full screen height,
+and place it to north east.
+.RE
+.sp
+swmctl moveresize \-o ne \-xr .05 \-yr .05 \-wr .425 \-hr .9
+.RS 4
+Tile window to the right but make some space around it.
+.RE
+.SH "AUTHOR"
+.sp
+Jan Bina <binajohny at gmail.com>
