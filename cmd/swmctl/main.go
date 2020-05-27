@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -11,10 +12,20 @@ import (
 
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgbutil"
+	"github.com/janbina/swm/internal/buildconfig"
 	"github.com/janbina/swm/internal/communication"
 )
 
 func main() {
+
+	version := flag.Bool("v", false, "print swmctl version")
+	flag.Parse()
+
+	if *version {
+		fmt.Println(buildconfig.Version)
+		os.Exit(0)
+	}
+
 	xgb.Logger = log.New(ioutil.Discard, "", 0)
 	x, err := xgbutil.NewConn()
 	if err != nil {
