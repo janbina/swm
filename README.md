@@ -7,11 +7,7 @@ SWM is a simple stacking window manager for X.
 
 ## Installation
 
-Clone this repository and run:
-```
-go build github.com/janbina/swm/cmd/swm
-go build github.com/janbina/swm/cmd/swmctl
-```
+Clone this repository and run `make build`
 
 ## How to use
 
