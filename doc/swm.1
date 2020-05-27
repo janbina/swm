@@ -2,12 +2,12 @@
 .\"     Title: swm
 .\"    Author: [see the "AUTHOR(S)" section]
 .\" Generator: Asciidoctor 2.0.10
-.\"      Date: 2020-05-21
+.\"      Date: 2020-05-27
 .\"    Manual: Swm Manual
-.\"    Source: \ \&
+.\"    Source: Swm
 .\"  Language: English
 .\"
-.TH "SWM" "1" "2020-05-21" "\ \&" "Swm Manual"
+.TH "SWM" "1" "2020-05-27" "Swm" "Swm Manual"
 .ie \n(.g .ds Aq \(aq
 .el       .ds Aq '
 .ss \n[.ss] 0
@@ -31,7 +31,7 @@
 swm \- Simple Window Manager
 .SH "SYNOPSIS"
 .sp
-\fBswm\fP [\fB\-\-replace\fP] [\fB\-c\fP configFile]
+\fBswm\fP [\fB\-v\fP] [\fB\-replace\fP] [\fB\-c\fP configFile]
 .sp
 \fBswmctl\fP COMMAND [OPTIONS] [ARGUMENTS]
 .SH "DESCRIPTION"
@@ -41,7 +41,12 @@ swm \- Simple Window Manager
 It is controlled and configured via \fBswmctl\fP.
 .SH "OPTIONS"
 .sp
-\fB\-\-replace\fP
+\fB\-v\fP
+.RS 4
+Print the version and exit.
+.RE
+.sp
+\fB\-replace\fP
 .RS 4
 Try to replace currently running window manager.
 .RE
@@ -75,7 +80,7 @@ Text color of the info box.
 .sp
 config font <fontpath>
 .RS 4
-Font used by smw  (for now, only usage is in info box).
+Font used by swm  (for now, only usage is in info box).
 .RE
 .SS "Cycling windows"
 .sp

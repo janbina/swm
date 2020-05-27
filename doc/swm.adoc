@@ -3,6 +3,7 @@
 //     `asciidoctor -b manpage swm.adoc`
 = swm(1)
 :doctype: manpage
+:man source: Swm
 :man manual: Swm Manual
 
 == Name
@@ -11,7 +12,7 @@ swm - Simple Window Manager
 
 == Synopsis
 
-*swm* [*--replace*] [*-c* configFile]
+*swm* [*-v*] [*-replace*] [*-c* configFile]
 
 *swmctl* COMMAND [OPTIONS] [ARGUMENTS]
 
@@ -23,7 +24,10 @@ It is controlled and configured via *swmctl*.
 
 == Options
 
-*--replace*::
+*-v*::
+Print the version and exit.
+
+*-replace*::
 Try to replace currently running window manager.
 
 *-c* configFile::
