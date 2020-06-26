@@ -98,6 +98,14 @@ func setupListeners(w xproto.Window, win *window.Window) {
 		unmanageWindow(e.Window)
 	}).Connect(X, w)
 
+	xevent.UnmapNotifyFun(func(x *xgbutil.XUtil, e xevent.UnmapNotifyEvent) {
+		if win.UnmapNotifyShouldUnmanage() {
+			unmanageWindow(e.Window)
+		} else {
+			win.UnmapNotify()
+		}
+	}).Connect(X, w)
+
 	xevent.PropertyNotifyFun(func(x *xgbutil.XUtil, e xevent.PropertyNotifyEvent) {
 		win.HandlePropertyNotify(e)
 	}).Connect(X, w)
