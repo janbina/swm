@@ -8,5 +8,10 @@ endif
 GOFLAGS = -ldflags "$(GOLDFLAGS)"
 
 build:
-	go build -o swm $(GOFLAGS) $(PKG)/cmd/swm
-	go build -o swmctl $(GOFLAGS) $(PKG)/cmd/swmctl
+	go build -o bin/swm $(GOFLAGS) $(PKG)/cmd/swm
+	go build -o bin/swmctl $(GOFLAGS) $(PKG)/cmd/swmctl
+
+clean:
+	rm -rf bin
+
+.PHONY = build clean
