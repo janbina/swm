@@ -29,6 +29,7 @@ type Window struct {
 	moveState   *MoveState
 	resizeState *ResizeState
 	savedStates map[state]windowState
+	unmapIgnore int
 
 	maxedVert        bool
 	maxedHorz        bool
@@ -78,6 +79,7 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 		return nil
 	}
 
+	window.unmapIgnore++
 	window.parent, _ = reparent(x, xWin)
 
 	if window.normalHints.Flags&icccm.SizeHintUSPosition == 0 &&
@@ -177,11 +179,20 @@ func (w *Window) Map() {
 }
 
 func (w *Window) Unmap() {
+	w.unmapIgnore++
 	w.parent.Unmap()
 	w.win.Unmap()
 	w.mapped = false
 	w.iconified = true
 	_ = w.SetIcccmState(icccm.StateIconic)
+}
+
+func (w *Window) UnmapNotify() {
+	w.unmapIgnore--
+}
+
+func (w *Window) UnmapNotifyShouldUnmanage() bool {
+	return w.unmapIgnore == 0
 }
 
 func (w *Window) Iconify() {
@@ -213,8 +224,8 @@ func (w *Window) Destroyed() {
 	focus.Remove(w)
 	stack.Remove(w)
 	xproto.ReparentWindow(w.win.X.Conn(), w.win.Id, w.win.X.RootWin(), 0, 0)
-	w.win.Destroy()
-	w.parent.Destroy()
+	w.win.Detach()
+	w.parent.Unmap()
 }
 
 func (w *Window) IsHidden() bool {
