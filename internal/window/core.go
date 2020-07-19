@@ -124,20 +124,17 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 }
 
 func reparent(X *xgbutil.XUtil, xWin xproto.Window) (*xwindow.Window, error) {
-	parent, err := xwindow.Generate(X)
+	parent, err := util.CreateTransparentWindow(X, X.RootWin())
 	if err != nil {
 		return nil, err
 	}
 
-	err = parent.CreateChecked(X.RootWin(), 0, 0, 1, 1, xproto.CwEventMask,
-		xproto.EventMaskSubstructureRedirect|
-			xproto.EventMaskButtonPress|
-			xproto.EventMaskButtonRelease|
-			xproto.EventMaskFocusChange,
-	)
-	if err != nil {
-		return nil, err
-	}
+	var events uint32 = xproto.EventMaskSubstructureRedirect |
+		xproto.EventMaskButtonPress |
+		xproto.EventMaskButtonRelease |
+		xproto.EventMaskFocusChange
+
+	parent.Change(xproto.CwEventMask, events)
 
 	err = xproto.ReparentWindowChecked(X.Conn(), xWin, parent.Id, 0, 0).Check()
 	if err != nil {
