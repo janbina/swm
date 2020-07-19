@@ -439,5 +439,9 @@ func hex2int(hexStr string) (uint64, error) {
 	hexStr = strings.Replace(hexStr, "0x", "", 1)
 	hexStr = strings.Replace(hexStr, "#", "", 1)
 
+	if len(hexStr) == 6 {
+		hexStr = "FF" + hexStr
+	}
+
 	return strconv.ParseUint(hexStr, 16, 64)
 }
