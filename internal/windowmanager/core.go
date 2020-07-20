@@ -58,6 +58,8 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 		return err
 	}
 
+	heads.InitScreen(X)
+
 	setEwmhSupported(X)
 
 	return nil

@@ -4,6 +4,8 @@ import (
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil/xrect"
 	"github.com/BurntSushi/xgbutil/xwindow"
+	"github.com/janbina/swm/internal/config"
+	"github.com/janbina/swm/internal/util"
 )
 
 type Position int
@@ -18,20 +20,13 @@ const (
 type Border struct {
 	position Position
 	win      *xwindow.Window
-	config   *BorderConfig
+	config   *config.BorderConfig
 }
 
-type BorderConfig struct {
-	Size           int
-	ColorNormal    uint32
-	ColorActive    uint32
-	ColorAttention uint32
-}
-
-func CreateBorder(parent *xwindow.Window, position Position, config *BorderConfig) Decoration {
+func CreateBorder(parent *xwindow.Window, position Position, config *config.BorderConfig) Decoration {
 	X := parent.X
 
-	win, _ := xwindow.Create(X, parent.Id)
+	win, _ := util.CreateTransparentWindow(X, parent.Id)
 	win.Change(xproto.CwBackPixel, config.ColorNormal)
 
 	return &Border{
