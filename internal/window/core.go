@@ -118,7 +118,7 @@ func New(x *xgbutil.XUtil, xWin xproto.Window) *Window {
 
 	window.updateFrameExtents()
 
-	window.infoWin, _ = xwindow.Create(x, window.parent.Id)
+	window.infoWin, _ = util.CreateTransparentWindow(x, window.parent.Id)
 
 	return window
 }
