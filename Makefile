@@ -31,7 +31,7 @@ install: build
 	mkdir -p "$(DESTDIR)$(DOCPREFIX)"/examples
 	cp -pr examples/* "$(DESTDIR)$(DOCPREFIX)"/examples
 	mkdir -p "$(DESTDIR)$(XSESSIONS)"
-	cp -p swm.desktop "$(DESTDIR)$(XSESSIONS)"
+	cp -p contrib/swm.desktop "$(DESTDIR)$(XSESSIONS)"
 
 uninstall:
 	rm -f "$(DESTDIR)$(BINPREFIX)"/swm
