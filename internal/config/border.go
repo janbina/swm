@@ -1,35 +1,40 @@
 package config
 
-import "github.com/janbina/swm/internal/decoration"
+type BorderConfig struct {
+	Size           int
+	ColorNormal    uint32
+	ColorActive    uint32
+	ColorAttention uint32
+}
 
 const (
-	borderColorActive    = 0x00BCD4
-	borderColorInactive  = 0xB0BEC5
-	borderColorAttention = 0xF44336
+	borderColorActive    = 0xFF00BCD4
+	borderColorInactive  = 0xFFB0BEC5
+	borderColorAttention = 0xFFF44336
 )
 
-var BorderTop = &decoration.BorderConfig{
+var BorderTop = &BorderConfig{
 	Size:           1,
 	ColorNormal:    borderColorInactive,
 	ColorActive:    borderColorActive,
 	ColorAttention: borderColorAttention,
 }
 
-var BorderBottom = &decoration.BorderConfig{
+var BorderBottom = &BorderConfig{
 	Size:           1,
 	ColorNormal:    borderColorInactive,
 	ColorActive:    borderColorActive,
 	ColorAttention: borderColorAttention,
 }
 
-var BorderLeft = &decoration.BorderConfig{
+var BorderLeft = &BorderConfig{
 	Size:           1,
 	ColorNormal:    borderColorInactive,
 	ColorActive:    borderColorActive,
 	ColorAttention: borderColorAttention,
 }
 
-var BorderRight = &decoration.BorderConfig{
+var BorderRight = &BorderConfig{
 	Size:           1,
 	ColorNormal:    borderColorInactive,
 	ColorActive:    borderColorActive,
@@ -59,7 +64,7 @@ func SetAllBorders(size int, colorNormal, colorActive, colorAttention uint32) {
 	SetRightBorder(size, colorNormal, colorActive, colorAttention)
 }
 
-func setBorder(border *decoration.BorderConfig, size int, colorNormal, colorActive, colorAttention uint32) {
+func setBorder(border *BorderConfig, size int, colorNormal, colorActive, colorAttention uint32) {
 	border.Size = size
 	border.ColorNormal = colorNormal
 	border.ColorActive = colorActive
