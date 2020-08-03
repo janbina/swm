@@ -397,34 +397,34 @@ func (w *Window) GetFrameExtents() *ewmh.FrameExtents {
 }
 
 func (w *Window) ValidateHeight(height uint) uint {
-	h := w.normalHints
+	h := w.info.NormalHints
 	return w.validateSize(height, h.MinHeight, h.MaxHeight, h.BaseHeight, h.HeightInc)
 }
 
 func (w *Window) ValidateWidth(width uint) uint {
-	h := w.normalHints
+	h := w.info.NormalHints
 	return w.validateSize(width, h.MinWidth, h.MaxWidth, h.BaseWidth, h.WidthInc)
 }
 
 func (w *Window) validateSize(size, min, max, base, inc uint) uint {
-	hints := w.normalHints
+	h := w.info.NormalHints
 
-	if !hasFlag(hints, icccm.SizeHintPMinSize) && hasFlag(hints, icccm.SizeHintPBaseSize) {
+	if !hasFlag(h, icccm.SizeHintPMinSize) && hasFlag(h, icccm.SizeHintPBaseSize) {
 		min = base
 	}
-	if !hasFlag(hints, icccm.SizeHintPBaseSize) && hasFlag(hints, icccm.SizeHintPMinSize) {
+	if !hasFlag(h, icccm.SizeHintPBaseSize) && hasFlag(h, icccm.SizeHintPMinSize) {
 		base = min
 	}
-	hasMin := hasFlag(hints, icccm.SizeHintPMinSize) || hasFlag(hints, icccm.SizeHintPBaseSize)
+	hasMin := hasFlag(h, icccm.SizeHintPMinSize) || hasFlag(h, icccm.SizeHintPBaseSize)
 	hasBase := hasMin
 
 	if size < min && hasMin {
 		return min
 	}
-	if size > max && hasFlag(hints, icccm.SizeHintPMaxSize) {
+	if size > max && hasFlag(h, icccm.SizeHintPMaxSize) {
 		return max
 	}
-	if inc > 1 && hasFlag(hints, icccm.SizeHintPResizeInc) && hasBase {
+	if inc > 1 && hasFlag(h, icccm.SizeHintPResizeInc) && hasBase {
 		// size = base + (i * inc)
 		rem := size - base
 		i := uint(math.Round(float64(rem) / float64(inc)))

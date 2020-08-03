@@ -6,7 +6,6 @@ import (
 
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
-	"github.com/BurntSushi/xgbutil/ewmh"
 )
 
 type Changes struct {
@@ -20,7 +19,7 @@ type Mode int
 const (
 	// Id of group which is always visible
 	// Taken from ewmh desktop specification: "0xFFFFFFFF indicates that the window should appear on all groups"
-	stickyGroupID = 0xFFFFFFFF
+	StickyGroupID = 0xFFFFFFFF
 
 	// Mode for initial window group:
 	// * sticky - all windows are initially in group id 0xFFFFFFFF, which is always visible
@@ -50,17 +49,20 @@ func Initialize(x *xgbutil.XUtil) {
 
 	stickyGroup = createGroup("sticky")
 	winToGroups = map[xproto.Window]map[int]bool{}
-	currentGroup = stickyGroupID
+	currentGroup = StickyGroupID
 	GroupMode = ModeAuto
 	setDesktops()
 	setCurrentDesktop()
 	setVisibleGroups()
 }
 
-func AddWindow(win xproto.Window) {
-	g := getInitialGroupForWindow(win)
-	winToGroups[win] = map[int]bool{g: true}
-	getGroup(g).windows[win] = true
+func AddWindow(win xproto.Window, groups []int) {
+	winToGroups[win] = make(map[int]bool)
+	for _, g := range groups {
+		winToGroups[win][g] = true
+		ensureEnoughGroups(g)
+		getGroup(g).windows[win] = true
+	}
 	setWinDesktop(win)
 }
 
@@ -80,7 +82,7 @@ func GetCurrentGroup() int {
 }
 
 func IsGroupVisible(group int) bool {
-	if group == stickyGroupID {
+	if group == StickyGroupID {
 		return true
 	}
 	return group >= 0 && group < len(groups) && getGroup(group).isVisible()
@@ -110,7 +112,7 @@ func GetWinGroupNames(win xproto.Window) []string {
 	groups := GetWinGroups(win)
 	names := make([]string, len(groups))
 	for i, g := range groups {
-		if g == stickyGroupID {
+		if g == StickyGroupID {
 			names[i] = "S"
 		} else {
 			names[i] = getGroup(int(g)).name
@@ -181,7 +183,7 @@ func ToggleGroupVisibility(group int) *Changes {
 
 func ShowGroupOnly(group int) *Changes {
 	if group < 0 {
-		group = stickyGroupID
+		group = StickyGroupID
 	}
 
 	ensureEnoughGroups(group)
@@ -200,7 +202,7 @@ func ShowGroupOnly(group int) *Changes {
 }
 
 func ShowGroup(group int) *Changes {
-	if group < 0 || group == stickyGroupID {
+	if group < 0 || group == StickyGroupID {
 		return nil
 	}
 	ensureEnoughGroups(group)
@@ -214,7 +216,7 @@ func ShowGroup(group int) *Changes {
 }
 
 func HideGroup(group int) *Changes {
-	if group < 0 || group == stickyGroupID {
+	if group < 0 || group == StickyGroupID {
 		return nil
 	}
 	ensureEnoughGroups(group)
@@ -228,7 +230,7 @@ func HideGroup(group int) *Changes {
 
 func SetGroupForWindow(win xproto.Window, group int) *Changes {
 	if group < 0 {
-		group = stickyGroupID
+		group = StickyGroupID
 	}
 
 	ensureEnoughGroups(group)
@@ -245,7 +247,7 @@ func SetGroupForWindow(win xproto.Window, group int) *Changes {
 
 func AddWindowToGroup(win xproto.Window, group int) *Changes {
 	if group < 0 {
-		group = stickyGroupID
+		group = StickyGroupID
 	}
 
 	ensureEnoughGroups(group)
@@ -258,9 +260,9 @@ func AddWindowToGroup(win xproto.Window, group int) *Changes {
 
 func RemoveWindowFromGroup(win xproto.Window, group int) *Changes {
 	if group < 0 {
-		group = stickyGroupID
+		group = StickyGroupID
 	}
-	if group != stickyGroupID && group >= len(groups) {
+	if group != StickyGroupID && group >= len(groups) {
 		return nil
 	}
 
@@ -269,7 +271,7 @@ func RemoveWindowFromGroup(win xproto.Window, group int) *Changes {
 
 	if len(winToGroups[win]) == 0 {
 		// window has to be in some group...
-		g := getInitialGroupForWindow(win)
+		g := StickyGroupID
 		winToGroups[win] = map[int]bool{g: true}
 		getGroup(g).windows[win] = true
 	}
@@ -289,19 +291,6 @@ func GetVisibleGroups() []uint {
 	return ids
 }
 
-func getInitialGroupForWindow(win xproto.Window) int {
-	if GroupMode == ModeSticky {
-		return stickyGroupID
-	}
-	g, err := ewmh.WmDesktopGet(X, win)
-	if err != nil {
-		// not specified
-		return currentGroup
-	}
-	ensureEnoughGroups(int(g))
-	return int(g)
-}
-
 func moveWinsToGroup(from, to int) {
 	// only if from is windows only group
 	for w := range getGroup(from).windows {
@@ -315,7 +304,7 @@ func moveWinsToGroup(from, to int) {
 }
 
 func ensureEnoughGroups(group int) {
-	if group == stickyGroupID || group < len(groups) {
+	if group == StickyGroupID || group < len(groups) {
 		return
 	}
 	// we can safely ignore changes, cause we are adding new groups, so there are none
@@ -323,7 +312,7 @@ func ensureEnoughGroups(group int) {
 }
 
 func updateCurrentGroup() {
-	group := stickyGroupID
+	group := StickyGroupID
 	max := int64(0)
 	for i, g := range groups {
 		if g.shownTimestamp > max {
@@ -336,7 +325,7 @@ func updateCurrentGroup() {
 }
 
 func getGroup(id int) *group {
-	if id == stickyGroupID {
+	if id == StickyGroupID {
 		return stickyGroup
 	}
 	return groups[id]

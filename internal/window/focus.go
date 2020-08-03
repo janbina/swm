@@ -20,14 +20,14 @@ func (w *Window) IsFocused() bool {
 }
 
 func (w *Window) CanFocus() bool {
-	if w.hints.Flags&icccm.HintInput > 0 {
-		return w.hints.Input == 1
+	if w.info.Hints.Flags&icccm.HintInput > 0 {
+		return w.info.Hints.Input == 1
 	}
 	return true
 }
 
 func (w *Window) ShouldSendFocusNotify() bool {
-	return w.protocols["WM_TAKE_FOCUS"]
+	return w.info.Protocols["WM_TAKE_FOCUS"]
 }
 
 func (w *Window) PrepareForFocus(tmp bool) {

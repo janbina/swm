@@ -34,9 +34,9 @@ func (w *Window) TransientFor(_other stack.StackingWindow) bool {
 		return false
 	}
 
-	if w.hints.Flags&icccm.HintWindowGroup > 0 &&
-		other.hints.Flags&icccm.HintWindowGroup > 0 &&
-		w.hints.WindowGroup == other.hints.WindowGroup {
+	if w.info.Hints.Flags&icccm.HintWindowGroup > 0 &&
+		other.info.Hints.Flags&icccm.HintWindowGroup > 0 &&
+		w.info.Hints.WindowGroup == other.info.Hints.WindowGroup {
 
 		return w.hasTransientType() && !other.hasTransientType()
 	}
@@ -50,7 +50,7 @@ func (w *Window) StackSibling(sibling stack.StackingWindow, mode byte) {
 }
 
 func (w *Window) hasTransientType() bool {
-	return w.types.Any(
+	return w.info.Types.Any(
 		"_NET_WM_WINDOW_TYPE_TOOLBAR",
 		"_NET_WM_WINDOW_TYPE_MENU",
 		"_NET_WM_WINDOW_TYPE_UTILITY",

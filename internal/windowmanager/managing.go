@@ -3,6 +3,9 @@ package windowmanager
 import (
 	"log"
 
+	"github.com/BurntSushi/xgbutil/xwindow"
+	"github.com/davecgh/go-spew/spew"
+
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
@@ -20,21 +23,31 @@ func manageWindow(w xproto.Window) {
 		return
 	}
 
-	attrs, err := xproto.GetWindowAttributes(X.Conn(), w).Reply()
-	if err == nil && attrs.OverrideRedirect {
-		log.Printf("Ignoring window with override redirect")
+	xWin := xwindow.New(X, w)
+
+	winInfo := window.GetWindowInfo(xWin)
+	winActions := window.GetWinActions(X, winInfo)
+
+	log.Printf("Win INFO: %s", spew.Sdump(winInfo))
+	log.Printf("Win Actions: %s", spew.Sdump(winActions))
+
+	if !winActions.ShouldManage {
 		return
 	}
 
-	win := window.New(X, w)
+	win := window.New(xWin, winInfo, winActions)
 
 	if win == nil {
 		log.Printf("Cannot manage window id %d", w)
 		return
 	}
 
+	if winActions.IsFocusable {
+		focus.InitialAdd(win)
+	}
+
 	managedWindows[w] = win
-	groupmanager.AddWindow(w)
+	groupmanager.AddWindow(w, winActions.Groups)
 
 	xproto.ChangeSaveSet(X.Conn(), xproto.SetModeInsert, w)
 

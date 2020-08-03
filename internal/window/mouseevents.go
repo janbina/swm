@@ -259,12 +259,12 @@ func dragResizeStep(win *Window) xgbutil.MouseDragFun {
 		}
 
 		flags := ConfigAll
-		if w < int(win.normalHints.MinWidth) {
-			w = int(win.normalHints.MinWidth)
+		if w < int(win.info.NormalHints.MinWidth) {
+			w = int(win.info.NormalHints.MinWidth)
 			flags &= ^ConfigX
 		}
-		if h < int(win.normalHints.MinHeight) {
-			h = int(win.normalHints.MinHeight)
+		if h < int(win.info.NormalHints.MinHeight) {
+			h = int(win.info.NormalHints.MinHeight)
 			flags &= ^ConfigY
 		}
 		win.MoveResize(true, x, y, w, h, flags)

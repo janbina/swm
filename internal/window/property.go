@@ -28,6 +28,6 @@ func (w *Window) HandlePropertyNotify(e xevent.PropertyNotifyEvent) {
 
 func handleNormalHints(w *Window) {
 	if h, err := icccm.WmNormalHintsGet(w.win.X, w.win.Id); err == nil {
-		w.normalHints = h
+		w.info.NormalHints = h
 	}
 }
