@@ -9,4 +9,6 @@ require (
 	github.com/BurntSushi/xgbutil v0.0.0-20190907113008-ad855c713046
 	github.com/davecgh/go-spew v1.1.1
 	github.com/mattn/go-shellwords v1.0.10
+	go.uber.org/zap v1.15.0
+	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )

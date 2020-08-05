@@ -1,8 +1,6 @@
 package window
 
 import (
-	"log"
-
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
@@ -10,6 +8,7 @@ import (
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/janbina/swm/internal/config"
 	"github.com/janbina/swm/internal/cursors"
+	"github.com/janbina/swm/internal/log"
 )
 
 func (w *Window) SetupMouseEvents() {
@@ -94,7 +93,7 @@ func dragMoveBegin(w *Window) xgbutil.MouseDragBeginFun {
 		if !w.IsMouseMoveable() {
 			return false, 0
 		}
-		log.Printf("Drag move begin: %d, %d, %d, %d", rx, ry, ex, ey)
+		log.Infof("Drag move begin: %d, %d, %d, %d", rx, ry, ex, ey)
 
 		g, _ := w.Geometry()
 		w.moveState = &MoveState{
@@ -112,7 +111,7 @@ func dragMoveBegin(w *Window) xgbutil.MouseDragBeginFun {
 
 func dragMoveStep(w *Window) xgbutil.MouseDragFun {
 	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
-		log.Printf("Drag move step: %d, %d, %d, %d", rx, ry, ex, ey)
+		log.Infof("Drag move step: %d, %d, %d, %d", rx, ry, ex, ey)
 
 		g := w.moveState.startGeom
 		x := g.X() + rx - w.moveState.rx
@@ -124,7 +123,7 @@ func dragMoveStep(w *Window) xgbutil.MouseDragFun {
 
 func dragMoveEnd(w *Window) xgbutil.MouseDragFun {
 	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
-		log.Printf("Drag move end: %d, %d, %d, %d", rx, ry, ex, ey)
+		log.Infof("Drag move end: %d, %d, %d, %d", rx, ry, ex, ey)
 		w.moveState = nil
 	}
 }
@@ -198,7 +197,7 @@ func dragResizeBegin(w *Window, direction int) xgbutil.MouseDragBeginFun {
 		if !w.IsMouseResizable() {
 			return false, 0
 		}
-		log.Printf("Drag resize begin: %d, %d, %d, %d", rx, ry, ex, ey)
+		log.Infof("Drag resize begin: %d, %d, %d, %d", rx, ry, ex, ey)
 
 		dir := direction
 		if dir == ewmh.Infer {
@@ -224,7 +223,7 @@ func dragResizeBegin(w *Window, direction int) xgbutil.MouseDragBeginFun {
 
 func dragResizeStep(win *Window) xgbutil.MouseDragFun {
 	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
-		log.Printf("Drag resize step: %d, %d, %d, %d", rx, ry, ex, ey)
+		log.Infof("Drag resize step: %d, %d, %d, %d", rx, ry, ex, ey)
 
 		d := win.resizeState.direction
 		changeX := d == ewmh.SizeLeft || d == ewmh.SizeTopLeft || d == ewmh.SizeBottomLeft
@@ -273,7 +272,7 @@ func dragResizeStep(win *Window) xgbutil.MouseDragFun {
 
 func dragResizeEnd(w *Window) xgbutil.MouseDragFun {
 	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
-		log.Printf("Drag resize end: %d, %d, %d, %d", rx, ry, ex, ey)
+		log.Infof("Drag resize end: %d, %d, %d, %d", rx, ry, ex, ey)
 		w.resizeState = nil
 	}
 }

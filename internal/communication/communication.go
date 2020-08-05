@@ -3,12 +3,12 @@ package communication
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"path"
 
 	"github.com/BurntSushi/xgb"
+	"github.com/janbina/swm/internal/log"
 )
 
 func GetSocketFilePath(x *xgb.Conn) string {
@@ -59,7 +59,7 @@ func handleClient(conn net.Conn) {
 		out := processCommand(msg)
 
 		if _, err := fmt.Fprintf(conn, "%s%c", out, 0); err != nil {
-			log.Printf("Error sending response to swmctl: %s", err)
+			log.Infof("Error sending response to swmctl: %s", err)
 		}
 	}
 	_ = conn.Close()

@@ -1,8 +1,6 @@
 package windowmanager
 
 import (
-	"log"
-
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"github.com/davecgh/go-spew/spew"
 
@@ -12,6 +10,7 @@ import (
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/janbina/swm/internal/focus"
 	"github.com/janbina/swm/internal/groupmanager"
+	"github.com/janbina/swm/internal/log"
 	"github.com/janbina/swm/internal/window"
 )
 
@@ -28,8 +27,8 @@ func manageWindow(w xproto.Window) {
 	winInfo := window.GetWindowInfo(xWin)
 	winActions := window.GetWinActions(X, winInfo)
 
-	log.Printf("Win INFO: %s", spew.Sdump(winInfo))
-	log.Printf("Win Actions: %s", spew.Sdump(winActions))
+	log.Infof("Win INFO: %s", spew.Sdump(winInfo))
+	log.Infof("Win Actions: %s", spew.Sdump(winActions))
 
 	if !winActions.ShouldManage {
 		return
@@ -38,7 +37,7 @@ func manageWindow(w xproto.Window) {
 	win := window.New(xWin, winInfo, winActions)
 
 	if win == nil {
-		log.Printf("Cannot manage window id %d", w)
+		log.Infof("Cannot manage window id %d", w)
 		return
 	}
 
@@ -107,7 +106,7 @@ func setupListeners(w xproto.Window, win *window.Window) {
 	xevent.ClientMessageFun(handleWindowClientMessage).Connect(X, w)
 
 	xevent.DestroyNotifyFun(func(x *xgbutil.XUtil, e xevent.DestroyNotifyEvent) {
-		log.Printf("Destroy notify: %s", e)
+		log.Infof("Destroy notify: %s", e)
 		unmanageWindow(e.Window)
 	}).Connect(X, w)
 

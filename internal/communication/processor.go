@@ -3,13 +3,13 @@ package communication
 import (
 	"flag"
 	"fmt"
-	"log"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/janbina/swm/internal/config"
 	"github.com/janbina/swm/internal/groupmanager"
+	"github.com/janbina/swm/internal/log"
 	"github.com/janbina/swm/internal/util"
 	"github.com/janbina/swm/internal/windowmanager"
 	"github.com/mattn/go-shellwords"
@@ -30,7 +30,7 @@ var commands = map[string]func([]string) string{
 }
 
 func processCommand(msg string) string {
-	log.Printf("Got command from swmctl: %s", msg)
+	log.Infof("Got command from swmctl: %s", msg)
 
 	args, _ := shellwords.Parse(msg)
 

@@ -1,7 +1,6 @@
 package window
 
 import (
-	"log"
 	"math"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/janbina/swm/internal/config"
 	"github.com/janbina/swm/internal/decoration"
 	"github.com/janbina/swm/internal/heads"
+	"github.com/janbina/swm/internal/log"
 	"github.com/janbina/swm/internal/stack"
 	"github.com/janbina/swm/internal/util"
 )
@@ -81,7 +81,7 @@ func (w *Window) moveResizeInternal(validate bool, x, y, width, height int, flag
 		newRect := w.decorations.ApplyRect(&decoration.WinConfig{Fullscreen: w.fullscreen}, rect, f)
 
 		if newRect.Width() != innerWidth || newRect.Height() != innerHeight {
-			log.Printf("Bad window size")
+			log.Infof("Bad window size")
 		}
 
 		w.win.MROpt(f, newRect.X(), newRect.Y(), newRect.Width(), newRect.Height())
@@ -99,11 +99,11 @@ func (w *Window) MaximizeVert() {
 	w.SaveWindowState(StatePriorMaxVert)
 	winG, err := w.Geometry()
 	if err != nil {
-		log.Printf("Cannot get window geometry: %s", err)
+		log.Infof("Cannot get window geometry: %s", err)
 	}
 	g, err := heads.GetHeadForRectStruts(winG)
 	if err != nil {
-		log.Printf("Cannot get screen geometry: %s", err)
+		log.Infof("Cannot get screen geometry: %s", err)
 	}
 	w.moveResizeInternal(false, 0, g.Y(), 0, g.Height(), ConfigY, ConfigHeight)
 }
@@ -136,11 +136,11 @@ func (w *Window) MaximizeHorz() {
 	w.SaveWindowState(StatePriorMaxHorz)
 	winG, err := w.Geometry()
 	if err != nil {
-		log.Printf("Cannot get window geometry: %s", err)
+		log.Infof("Cannot get window geometry: %s", err)
 	}
 	g, err := heads.GetHeadForRectStruts(winG)
 	if err != nil {
-		log.Printf("Cannot get screen geometry: %s", err)
+		log.Infof("Cannot get screen geometry: %s", err)
 	}
 	w.moveResizeInternal(false, g.X(), 0, g.Width(), 0, ConfigX, ConfigWidth)
 }
@@ -255,11 +255,11 @@ func (w *Window) Fullscreen() {
 	w.SaveWindowState(StatePriorFullscreen)
 	winG, err := w.Geometry()
 	if err != nil {
-		log.Printf("Cannot get window geometry: %s", err)
+		log.Infof("Cannot get window geometry: %s", err)
 	}
 	g, err := heads.GetHeadForRect(winG)
 	if err != nil {
-		log.Printf("Cannot get screen geometry: %s", err)
+		log.Infof("Cannot get screen geometry: %s", err)
 	}
 	w.moveResizeInternal(false, g.X(), g.Y(), g.Width(), g.Height())
 	w.updateFrameExtents()
@@ -313,7 +313,7 @@ func (w *Window) ToggleSkipPager() {
 }
 
 func (w *Window) ConfigureRequest(e xevent.ConfigureRequestEvent) {
-	log.Printf("Window configure request: %s", e)
+	log.Infof("Window configure request: %s", e)
 	flags := int(e.ValueMask)
 	x, y, width, height := int(e.X), int(e.Y), int(e.Width), int(e.Height)
 
@@ -453,7 +453,7 @@ func (w *Window) ShowInfoBox(text string, duration time.Duration) {
 	)
 
 	if err != nil {
-		log.Printf("Cannot show info box: %s", err)
+		log.Infof("Cannot show info box: %s", err)
 		return
 	}
 
@@ -461,7 +461,7 @@ func (w *Window) ShowInfoBox(text string, duration time.Duration) {
 
 	err = textBox.XSurfaceSet(w.infoWin.Id)
 	if err != nil {
-		log.Printf("Cannot set surface: %s", err)
+		log.Infof("Cannot set surface: %s", err)
 		return
 	}
 	textBox.XDraw()
