@@ -21,19 +21,19 @@ var (
 //     2) {HOME}/.config/{swmDir}/{swmrcFile}
 //     3) {HOME}/.{swmDir}/{swmrcFile}
 func FindAndRunSwmrc(customPath string) {
-	log.Infof("Trying to execute config")
+	log.Info("Trying to execute config")
 
 	if customPath != "" {
 		path := customPath
 		if path[0] != '/' {
 			currentDir, err := os.Getwd()
 			if err != nil {
-				log.Infof("Cannot get current working directory: %s", err)
+				log.Info("Cannot get current working directory: %s", err)
 			}
 			path = filepath.Join(currentDir, customPath)
 		}
 		if _, err := os.Stat(path); err != nil {
-			log.Infof("Provided config file does not seem to exist: %s", err)
+			log.Info("Provided config file does not seem to exist: %s", err)
 		} else {
 			executeConfig(path)
 		}
@@ -65,18 +65,18 @@ func FindAndRunSwmrc(customPath string) {
 		}
 	}
 
-	log.Infof("No config file found, searched locations:")
+	log.Info("No config file found, searched locations:")
 	for _, file := range files {
-		log.Infof("\t%s", file)
+		log.Info("\t%s", file)
 	}
 }
 
 func executeConfig(file string) {
-	log.Infof("Executing config file \"%s\"", file)
+	log.Info("Executing config file \"%s\"", file)
 
 	err := exec.Command(file).Run()
 
 	if err != nil {
-		log.Infof("Error executing config file: %s", err)
+		log.Info("Error executing config file: %s", err)
 	}
 }

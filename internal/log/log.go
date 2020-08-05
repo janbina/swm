@@ -69,14 +69,35 @@ func Sync() {
 	_ = _consoleLog.Sync()
 }
 
-func Infof(template string, args ...interface{}) {
+func Debug(template string, args ...interface{}) {
+	if fileLog != nil {
+		fileLog.Debugf(template, args)
+	}
+	consoleLog.Debugf(template, args)
+}
+
+func Info(template string, args ...interface{}) {
 	if fileLog != nil {
 		fileLog.Infof(template, args)
 	}
 	consoleLog.Infof(template, args)
 }
 
-func Fatalf(template string, args ...interface{}) {
+func Warn(template string, args ...interface{}) {
+	if fileLog != nil {
+		fileLog.Infof(template, args)
+	}
+	consoleLog.Infof(template, args)
+}
+
+func Error(template string, args ...interface{}) {
+	if fileLog != nil {
+		fileLog.Infof(template, args)
+	}
+	consoleLog.Infof(template, args)
+}
+
+func Fatal(template string, args ...interface{}) {
 	if fileLog != nil {
 		fileLog.Fatalf(template, args)
 	}

@@ -40,12 +40,12 @@ var windowStateHandlers = map[string][3]func(window *win){
 func handleWindowClientMessage(X *xgbutil.XUtil, e xevent.ClientMessageEvent) {
 	name, err := xprop.AtomName(X, e.Type)
 	if err != nil {
-		log.Infof("Cannot get property atom name for clientMessage event: %s", err)
+		log.Info("Cannot get property atom name for clientMessage event: %s", err)
 		return
 	}
-	log.Infof("Client message %s: %s", name, e)
+	log.Info("Client message %s: %s", name, e)
 	if f, ok := windowCmHandlers[name]; !ok {
-		log.Infof("Unsupported client message: %s", name)
+		log.Info("Unsupported client message: %s", name)
 	} else {
 		if w, ok := managedWindows[e.Window]; ok {
 			f(w, e.Data.Data32)
@@ -57,13 +57,13 @@ func handleMoveResizeMessage(win *win, data []uint32) {
 	xr := data[0]
 	yr := data[1]
 	dir := data[2]
-	log.Infof("Move resize client message: %d, %d, %d", xr, yr, dir)
+	log.Info("Move resize client message: %d, %d, %d", xr, yr, dir)
 	if dir <= ewmh.SizeLeft {
 		win.DragResizeBegin(int16(xr), int16(yr), int(dir))
 	} else if dir == ewmh.Move {
 		win.DragMoveBegin(int16(xr), int16(yr))
 	} else {
-		log.Infof("Unsupported direction: %d", dir)
+		log.Info("Unsupported direction: %d", dir)
 	}
 }
 
@@ -83,7 +83,7 @@ func handleWmStateMessage(win *win, data []uint32) {
 	action := data[0]
 	p1, _ := xprop.AtomName(X, xproto.Atom(data[1]))
 	p2, _ := xprop.AtomName(X, xproto.Atom(data[2]))
-	log.Infof("Wm state client message: %d, %s, %s", action, p1, p2)
+	log.Info("Wm state client message: %d, %s, %s", action, p1, p2)
 
 	updateWinStates(win, int(action), p1, p2)
 }
@@ -97,7 +97,7 @@ func updateWinStates(win *win, action int, s1 string, s2 string) {
 
 func updateWinState(win *win, action int, state string) {
 	if fs, ok := windowStateHandlers[state]; !ok {
-		log.Infof("Unsupported window state: %s", state)
+		log.Info("Unsupported window state: %s", state)
 	} else {
 		fs[action](win)
 	}

@@ -14,7 +14,7 @@ import (
 
 // Root window configure request
 func configureRequestFun(x *xgbutil.XUtil, e xevent.ConfigureRequestEvent) {
-	log.Infof("Configure request: %s", e)
+	log.Info("Configure request: %s", e)
 	if _, ok := managedWindows[e.Window]; ok {
 		return
 	}
@@ -31,7 +31,7 @@ func configureRequestFun(x *xgbutil.XUtil, e xevent.ConfigureRequestEvent) {
 }
 
 func mapRequestFun(_ *xgbutil.XUtil, e xevent.MapRequestEvent) {
-	log.Infof("Map request: %s", e)
+	log.Info("Map request: %s", e)
 	manageWindow(e.Window)
 }
 

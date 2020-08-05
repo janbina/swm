@@ -36,7 +36,7 @@ func Initialize(X *xgbutil.XUtil) {
 func initCursor(X *xgbutil.XUtil, cursor uint16) xproto.Cursor {
 	cid, err := xcursor.CreateCursor(X, cursor)
 	if err != nil {
-		log.Infof("Cannot load cursor %d", cursor)
+		log.Info("Cannot load cursor %d", cursor)
 		return 0
 	}
 	return cid

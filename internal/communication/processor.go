@@ -35,7 +35,7 @@ func RegisterCommands(new map[string]Action) error {
 }
 
 func processCommand(msg string) string {
-	log.Infof("Got command from swmctl: %s", msg)
+	log.Info("Got command from swmctl: %s", msg)
 
 	args, _ := shellwords.Parse(msg)
 

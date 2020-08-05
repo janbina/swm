@@ -31,16 +31,16 @@ func main() {
 
 	X, err := xgbutil.NewConn()
 	if err != nil {
-		log.Fatalf("Cannot initialize x connection: %s", err)
+		log.Fatal("Cannot initialize x connection: %s", err)
 	}
 	defer X.Conn().Close()
 
 	if err := windowmanager.Initialize(X, *replace); err != nil {
-		log.Fatalf("Cannot initialize window manager: %s", err)
+		log.Fatal("Cannot initialize window manager: %s", err)
 	}
 
 	if err := windowmanager.SetupRoot(); err != nil {
-		log.Fatalf("Cannot setup root window: %s", err)
+		log.Fatal("Cannot setup root window: %s", err)
 	}
 
 	go communication.Listen(X.Conn())

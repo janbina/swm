@@ -48,7 +48,7 @@ func GetWindowInfo(win *xwindow.Window) *WinInfo {
 func getAttributes(x *xgbutil.XUtil, id xproto.Window) *xproto.GetWindowAttributesReply {
 	attrs, err := xproto.GetWindowAttributes(x.Conn(), id).Reply()
 	if err != nil {
-		log.Infof("Error getting window attributes: %s", err)
+		log.Info("Error getting window attributes: %s", err)
 	}
 	return attrs
 }
@@ -56,7 +56,7 @@ func getAttributes(x *xgbutil.XUtil, id xproto.Window) *xproto.GetWindowAttribut
 func getHints(x *xgbutil.XUtil, id xproto.Window) *icccm.Hints {
 	hints, err := icccm.WmHintsGet(x, id)
 	if err != nil {
-		log.Infof("Error getting wm hints: %s", err)
+		log.Info("Error getting wm hints: %s", err)
 		hints = &icccm.Hints{
 			Flags:        icccm.HintInput | icccm.HintState,
 			Input:        1,
@@ -70,7 +70,7 @@ func getProtocols(x *xgbutil.XUtil, id xproto.Window) util.StringSet {
 	protocols := make(util.StringSet)
 	p, err := icccm.WmProtocolsGet(x, id)
 	if err != nil {
-		log.Infof("Error getting wm protocols: %s", err)
+		log.Info("Error getting wm protocols: %s", err)
 	} else {
 		protocols.SetAll(p)
 	}
@@ -80,7 +80,7 @@ func getProtocols(x *xgbutil.XUtil, id xproto.Window) util.StringSet {
 func getNormalHints(x *xgbutil.XUtil, id xproto.Window) *icccm.NormalHints {
 	normalHints, err := icccm.WmNormalHintsGet(x, id)
 	if err != nil {
-		log.Infof("Error getting wm normal hints: %s", err)
+		log.Info("Error getting wm normal hints: %s", err)
 		normalHints = &icccm.NormalHints{}
 	}
 	return normalHints
@@ -89,7 +89,7 @@ func getNormalHints(x *xgbutil.XUtil, id xproto.Window) *icccm.NormalHints {
 func getMotifHints(x *xgbutil.XUtil, id xproto.Window) *motif.Hints {
 	motifHints, err := motif.WmHintsGet(x, id)
 	if err != nil {
-		log.Infof("Error getting motif hints: %s", err)
+		log.Info("Error getting motif hints: %s", err)
 		motifHints = &motif.Hints{}
 	}
 	return motifHints
@@ -99,7 +99,7 @@ func getStates(x *xgbutil.XUtil, id xproto.Window) util.StringSet {
 	states := make(util.StringSet)
 	s, err := ewmh.WmStateGet(x, id)
 	if err != nil {
-		log.Infof("Error getting wm state: %s", err)
+		log.Info("Error getting wm state: %s", err)
 	}
 	states.SetAll(s)
 	return states
@@ -108,7 +108,7 @@ func getStates(x *xgbutil.XUtil, id xproto.Window) util.StringSet {
 func getClass(x *xgbutil.XUtil, id xproto.Window) *icccm.WmClass {
 	class, err := icccm.WmClassGet(x, id)
 	if err != nil {
-		log.Infof("Error getting wm class: %s", err)
+		log.Info("Error getting wm class: %s", err)
 		class = &icccm.WmClass{
 			Instance: "",
 			Class:    "",
@@ -121,7 +121,7 @@ func getTypes(x *xgbutil.XUtil, id xproto.Window) util.StringSet {
 	typesSet := make(util.StringSet)
 	types, err := ewmh.WmWindowTypeGet(x, id)
 	if err != nil {
-		log.Infof("Error getting window types: %s", err)
+		log.Info("Error getting window types: %s", err)
 		typesSet["_NET_WM_WINDOW_TYPE_NORMAL"] = true
 	} else {
 		typesSet.SetAll(types)
