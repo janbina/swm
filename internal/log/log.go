@@ -16,11 +16,11 @@ var _consoleLog *zap.Logger
 var consoleLog *zap.SugaredLogger
 
 func Init(debugLog string) {
-	initFileLog(debugLog)
+	InitFileLog(debugLog)
 	initConsoleLog()
 }
 
-func initFileLog(filePath string) {
+func InitFileLog(filePath string) {
 	if len(filePath) == 0 {
 		return
 	}

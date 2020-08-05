@@ -26,6 +26,7 @@ func registerCommands() {
 		"begin-mouse-resize": mouseResizeCommand,
 		"config":             configCommand,
 		"group":              groupCommand,
+		"debug":              debugCommand,
 	})
 
 	if err != nil {
@@ -373,6 +374,14 @@ func groupCommand(args []string) string {
 	default:
 		return "Unsupported group argument"
 	}
+	return ""
+}
+
+func debugCommand(args []string) string {
+	if len(args) == 0 || len(args[0]) == 0 {
+		return "No output file specified"
+	}
+	log.InitFileLog(args[0])
 	return ""
 }
 
