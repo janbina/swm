@@ -71,35 +71,35 @@ func Sync() {
 
 func Debug(template string, args ...interface{}) {
 	if fileLog != nil {
-		fileLog.Debugf(template, args)
+		fileLog.Debugf(template, args...)
 	}
-	consoleLog.Debugf(template, args)
+	consoleLog.Debugf(template, args...)
 }
 
 func Info(template string, args ...interface{}) {
 	if fileLog != nil {
-		fileLog.Infof(template, args)
+		fileLog.Infof(template, args...)
 	}
-	consoleLog.Infof(template, args)
+	consoleLog.Infof(template, args...)
 }
 
 func Warn(template string, args ...interface{}) {
 	if fileLog != nil {
-		fileLog.Infof(template, args)
+		fileLog.Infof(template, args...)
 	}
-	consoleLog.Infof(template, args)
+	consoleLog.Infof(template, args...)
 }
 
 func Error(template string, args ...interface{}) {
 	if fileLog != nil {
-		fileLog.Infof(template, args)
+		fileLog.Infof(template, args...)
 	}
-	consoleLog.Infof(template, args)
+	consoleLog.Infof(template, args...)
 }
 
 func Fatal(template string, args ...interface{}) {
 	if fileLog != nil {
-		fileLog.Fatalf(template, args)
+		fileLog.Fatalf(template, args...)
 	}
-	consoleLog.Fatalf(template, args)
+	consoleLog.Fatalf(template, args...)
 }
