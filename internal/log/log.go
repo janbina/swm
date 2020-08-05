@@ -76,13 +76,6 @@ func Infof(template string, args ...interface{}) {
 	consoleLog.Infof(template, args)
 }
 
-func Fatal(args ...interface{}) {
-	if fileLog != nil {
-		fileLog.Fatal(args)
-	}
-	consoleLog.Fatal(args)
-}
-
 func Fatalf(template string, args ...interface{}) {
 	if fileLog != nil {
 		fileLog.Fatalf(template, args)
