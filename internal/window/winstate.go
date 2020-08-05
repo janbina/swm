@@ -6,17 +6,17 @@ import (
 )
 
 func (w *Window) GetActiveStates() []string {
-	return w.states.GetActive()
+	return w.info.States.GetActive()
 }
 
 func (w *Window) AddStates(states ...string) {
-	w.states.SetAll(states)
-	ewmh.WmStateSet(w.win.X, w.win.Id, w.states.GetActive())
+	w.info.States.SetAll(states)
+	ewmh.WmStateSet(w.win.X, w.win.Id, w.info.States.GetActive())
 }
 
 func (w *Window) RemoveStates(states ...string) {
-	w.states.UnSetAll(states)
-	ewmh.WmStateSet(w.win.X, w.win.Id, w.states.GetActive())
+	w.info.States.UnSetAll(states)
+	ewmh.WmStateSet(w.win.X, w.win.Id, w.info.States.GetActive())
 }
 
 func (w *Window) SetIcccmState(state uint) error {

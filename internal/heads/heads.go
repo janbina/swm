@@ -2,12 +2,12 @@ package heads
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/xinerama"
 	"github.com/BurntSushi/xgbutil/xrect"
+	"github.com/janbina/swm/internal/log"
 )
 
 type ScreenInfo struct {
@@ -46,7 +46,7 @@ func InitScreen(X *xgbutil.XUtil) {
 		).Check()
 
 		if err != nil {
-			log.Printf("Error creating colormap for visual %d: %s", visual, err)
+			log.Warn("Error creating colormap for visual %d: %s", visual, err)
 
 			screen = &ScreenInfo{
 				Depth:    X.Screen().RootDepth,

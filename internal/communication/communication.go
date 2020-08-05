@@ -3,12 +3,12 @@ package communication
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"path"
 
 	"github.com/BurntSushi/xgb"
+	"github.com/janbina/swm/internal/log"
 )
 
 func GetSocketFilePath(x *xgb.Conn) string {
@@ -23,7 +23,7 @@ func GetSocketFilePath(x *xgb.Conn) string {
 	}
 
 	if err := os.MkdirAll(runtimeDir, 0777); err != nil {
-		log.Fatalf("Cannot create dir: %s", err)
+		log.Fatal("Cannot create dir: %s", err)
 	}
 
 	return path.Join(runtimeDir, name)
@@ -36,7 +36,7 @@ func Listen(x *xgb.Conn) {
 
 	listener, err := net.Listen("unix", addr)
 	if err != nil {
-		log.Fatalf("Cannot start listener")
+		log.Fatal("Cannot start listener")
 	}
 	defer func() { _ = listener.Close() }()
 
@@ -59,7 +59,7 @@ func handleClient(conn net.Conn) {
 		out := processCommand(msg)
 
 		if _, err := fmt.Fprintf(conn, "%s%c", out, 0); err != nil {
-			log.Printf("Error sending response to swmctl: %s", err)
+			log.Warn("Error sending response to swmctl: %s", err)
 		}
 	}
 	_ = conn.Close()

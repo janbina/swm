@@ -1,8 +1,6 @@
 package windowmanager
 
 import (
-	"log"
-
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/keybind"
@@ -15,6 +13,7 @@ import (
 	"github.com/janbina/swm/internal/focus"
 	"github.com/janbina/swm/internal/groupmanager"
 	"github.com/janbina/swm/internal/heads"
+	"github.com/janbina/swm/internal/log"
 	"github.com/janbina/swm/internal/stack"
 	"github.com/janbina/swm/internal/window"
 )
@@ -42,6 +41,8 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 	focus.Initialize(X)
 	stack.Initialize(X)
 	groupmanager.Initialize(X)
+
+	registerCommands()
 
 	if err = takeWmOwnership(X, replace); err != nil {
 		return err
@@ -79,7 +80,7 @@ func SetupRoot() error {
 	xevent.MapRequestFun(mapRequestFun).Connect(X, Root.Id)
 	xevent.ClientMessageFun(handleRootClientMessage).Connect(X, Root.Id)
 	xevent.ConfigureNotifyFun(func(X *xgbutil.XUtil, e xevent.ConfigureNotifyEvent) {
-		log.Printf("Root geometry changed: %s", e)
+		log.Debug("Root geometry changed: %s", e)
 		_ = loadGeometriesAndHeads()
 	}).Connect(X, Root.Id)
 

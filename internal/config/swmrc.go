@@ -2,10 +2,11 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/janbina/swm/internal/log"
 )
 
 var (
@@ -20,19 +21,19 @@ var (
 //     2) {HOME}/.config/{swmDir}/{swmrcFile}
 //     3) {HOME}/.{swmDir}/{swmrcFile}
 func FindAndRunSwmrc(customPath string) {
-	log.Printf("Trying to execute config")
+	log.Info("Trying to execute config")
 
 	if customPath != "" {
 		path := customPath
 		if path[0] != '/' {
 			currentDir, err := os.Getwd()
 			if err != nil {
-				log.Printf("Cannot get current working directory: %s", err)
+				log.Warn("Cannot get current working directory: %s", err)
 			}
 			path = filepath.Join(currentDir, customPath)
 		}
 		if _, err := os.Stat(path); err != nil {
-			log.Printf("Provided config file does not seem to exist: %s", err)
+			log.Warn("Provided config file does not seem to exist: %s", err)
 		} else {
 			executeConfig(path)
 		}
@@ -64,18 +65,18 @@ func FindAndRunSwmrc(customPath string) {
 		}
 	}
 
-	log.Printf("No config file found, searched locations:")
+	log.Info("No config file found, searched locations:")
 	for _, file := range files {
-		log.Printf("\t%s", file)
+		log.Info("\t%s", file)
 	}
 }
 
 func executeConfig(file string) {
-	log.Printf("Executing config file \"%s\"", file)
+	log.Info("Executing config file \"%s\"", file)
 
 	err := exec.Command(file).Run()
 
 	if err != nil {
-		log.Printf("Error executing config file: %s", err)
+		log.Warn("Error executing config file: %s", err)
 	}
 }

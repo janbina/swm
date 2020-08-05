@@ -1,7 +1,6 @@
 package window
 
 import (
-	"log"
 	"math"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/janbina/swm/internal/config"
 	"github.com/janbina/swm/internal/decoration"
 	"github.com/janbina/swm/internal/heads"
+	"github.com/janbina/swm/internal/log"
 	"github.com/janbina/swm/internal/stack"
 	"github.com/janbina/swm/internal/util"
 )
@@ -81,7 +81,7 @@ func (w *Window) moveResizeInternal(validate bool, x, y, width, height int, flag
 		newRect := w.decorations.ApplyRect(&decoration.WinConfig{Fullscreen: w.fullscreen}, rect, f)
 
 		if newRect.Width() != innerWidth || newRect.Height() != innerHeight {
-			log.Printf("Bad window size")
+			log.Info("Bad window size")
 		}
 
 		w.win.MROpt(f, newRect.X(), newRect.Y(), newRect.Width(), newRect.Height())
@@ -99,11 +99,11 @@ func (w *Window) MaximizeVert() {
 	w.SaveWindowState(StatePriorMaxVert)
 	winG, err := w.Geometry()
 	if err != nil {
-		log.Printf("Cannot get window geometry: %s", err)
+		log.Warn("Cannot get window geometry: %s", err)
 	}
 	g, err := heads.GetHeadForRectStruts(winG)
 	if err != nil {
-		log.Printf("Cannot get screen geometry: %s", err)
+		log.Warn("Cannot get screen geometry: %s", err)
 	}
 	w.moveResizeInternal(false, 0, g.Y(), 0, g.Height(), ConfigY, ConfigHeight)
 }
@@ -136,11 +136,11 @@ func (w *Window) MaximizeHorz() {
 	w.SaveWindowState(StatePriorMaxHorz)
 	winG, err := w.Geometry()
 	if err != nil {
-		log.Printf("Cannot get window geometry: %s", err)
+		log.Warn("Cannot get window geometry: %s", err)
 	}
 	g, err := heads.GetHeadForRectStruts(winG)
 	if err != nil {
-		log.Printf("Cannot get screen geometry: %s", err)
+		log.Warn("Cannot get screen geometry: %s", err)
 	}
 	w.moveResizeInternal(false, g.X(), 0, g.Width(), 0, ConfigX, ConfigWidth)
 }
@@ -255,11 +255,11 @@ func (w *Window) Fullscreen() {
 	w.SaveWindowState(StatePriorFullscreen)
 	winG, err := w.Geometry()
 	if err != nil {
-		log.Printf("Cannot get window geometry: %s", err)
+		log.Warn("Cannot get window geometry: %s", err)
 	}
 	g, err := heads.GetHeadForRect(winG)
 	if err != nil {
-		log.Printf("Cannot get screen geometry: %s", err)
+		log.Warn("Cannot get screen geometry: %s", err)
 	}
 	w.moveResizeInternal(false, g.X(), g.Y(), g.Width(), g.Height())
 	w.updateFrameExtents()
@@ -313,7 +313,7 @@ func (w *Window) ToggleSkipPager() {
 }
 
 func (w *Window) ConfigureRequest(e xevent.ConfigureRequestEvent) {
-	log.Printf("Window configure request: %s", e)
+	log.Debug("Window configure request: %s", e)
 	flags := int(e.ValueMask)
 	x, y, width, height := int(e.X), int(e.Y), int(e.Width), int(e.Height)
 
@@ -397,34 +397,34 @@ func (w *Window) GetFrameExtents() *ewmh.FrameExtents {
 }
 
 func (w *Window) ValidateHeight(height uint) uint {
-	h := w.normalHints
+	h := w.info.NormalHints
 	return w.validateSize(height, h.MinHeight, h.MaxHeight, h.BaseHeight, h.HeightInc)
 }
 
 func (w *Window) ValidateWidth(width uint) uint {
-	h := w.normalHints
+	h := w.info.NormalHints
 	return w.validateSize(width, h.MinWidth, h.MaxWidth, h.BaseWidth, h.WidthInc)
 }
 
 func (w *Window) validateSize(size, min, max, base, inc uint) uint {
-	hints := w.normalHints
+	h := w.info.NormalHints
 
-	if !hasFlag(hints, icccm.SizeHintPMinSize) && hasFlag(hints, icccm.SizeHintPBaseSize) {
+	if !hasFlag(h, icccm.SizeHintPMinSize) && hasFlag(h, icccm.SizeHintPBaseSize) {
 		min = base
 	}
-	if !hasFlag(hints, icccm.SizeHintPBaseSize) && hasFlag(hints, icccm.SizeHintPMinSize) {
+	if !hasFlag(h, icccm.SizeHintPBaseSize) && hasFlag(h, icccm.SizeHintPMinSize) {
 		base = min
 	}
-	hasMin := hasFlag(hints, icccm.SizeHintPMinSize) || hasFlag(hints, icccm.SizeHintPBaseSize)
+	hasMin := hasFlag(h, icccm.SizeHintPMinSize) || hasFlag(h, icccm.SizeHintPBaseSize)
 	hasBase := hasMin
 
 	if size < min && hasMin {
 		return min
 	}
-	if size > max && hasFlag(hints, icccm.SizeHintPMaxSize) {
+	if size > max && hasFlag(h, icccm.SizeHintPMaxSize) {
 		return max
 	}
-	if inc > 1 && hasFlag(hints, icccm.SizeHintPResizeInc) && hasBase {
+	if inc > 1 && hasFlag(h, icccm.SizeHintPResizeInc) && hasBase {
 		// size = base + (i * inc)
 		rem := size - base
 		i := uint(math.Round(float64(rem) / float64(inc)))
@@ -453,7 +453,7 @@ func (w *Window) ShowInfoBox(text string, duration time.Duration) {
 	)
 
 	if err != nil {
-		log.Printf("Cannot show info box: %s", err)
+		log.Warn("Cannot show info box: %s", err)
 		return
 	}
 
@@ -461,7 +461,7 @@ func (w *Window) ShowInfoBox(text string, duration time.Duration) {
 
 	err = textBox.XSurfaceSet(w.infoWin.Id)
 	if err != nil {
-		log.Printf("Cannot set surface: %s", err)
+		log.Warn("Cannot set surface: %s", err)
 		return
 	}
 	textBox.XDraw()

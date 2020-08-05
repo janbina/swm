@@ -1,11 +1,10 @@
 package cursors
 
 import (
-	"log"
-
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/xcursor"
+	"github.com/janbina/swm/internal/log"
 )
 
 var (
@@ -37,7 +36,7 @@ func Initialize(X *xgbutil.XUtil) {
 func initCursor(X *xgbutil.XUtil, cursor uint16) xproto.Cursor {
 	cid, err := xcursor.CreateCursor(X, cursor)
 	if err != nil {
-		log.Printf("Cannot load cursor %d", cursor)
+		log.Info("Cannot load cursor %d", cursor)
 		return 0
 	}
 	return cid

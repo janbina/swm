@@ -2,7 +2,6 @@ package windowmanager
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/BurntSushi/xgb/xproto"
@@ -11,6 +10,7 @@ import (
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/BurntSushi/xgbutil/xprop"
 	"github.com/BurntSushi/xgbutil/xwindow"
+	"github.com/janbina/swm/internal/log"
 	"github.com/janbina/swm/internal/util"
 )
 
@@ -42,7 +42,7 @@ func takeWmOwnership(X *xgbutil.XUtil, replace bool) error {
 			return err
 		}
 
-		log.Println("Waiting for other wm to shutdown and transfer ownership to us.")
+		log.Info("Waiting for other wm to shutdown and transfer ownership to us.")
 	} else {
 		if err2 := xwindow.New(X, X.RootWin()).Listen(xproto.EventMaskSubstructureRedirect); err2 != nil {
 			// cannot listen to substructure redirect - there must be another wm, but it doesnt support icccm selection
@@ -61,13 +61,13 @@ func takeWmOwnership(X *xgbutil.XUtil, replace bool) error {
 		}
 	}
 
-	log.Println("Setting selection owner.")
+	log.Info("Setting selection owner.")
 	if err := xproto.SetSelectionOwnerChecked(X.Conn(), X.Dummy(), selectionAtom, xTime).Check(); err != nil {
 		return err
 	}
 
 	// check we actually got ownership
-	log.Println("Getting selection owner.")
+	log.Info("Getting selection owner.")
 	if reply, err := xproto.GetSelectionOwner(X.Conn(), selectionAtom).Reply(); err != nil {
 		return err
 	} else if reply.Owner != X.Dummy() {
@@ -77,7 +77,7 @@ func takeWmOwnership(X *xgbutil.XUtil, replace bool) error {
 	// wait for other wm to shut down - ICCCM 2.8
 	if otherWm != xproto.Window(xproto.WindowNone) {
 		if err := waitForWmShutdown(X, otherWm); err != nil {
-			log.Printf("Other wm didnt destroy its window in reasonable time, will kill it.")
+			log.Info("Other wm didnt destroy its window in reasonable time, will kill it.")
 			xwindow.New(X, otherWm).Kill()
 		}
 	}
@@ -89,7 +89,7 @@ func takeWmOwnership(X *xgbutil.XUtil, replace bool) error {
 	// listen for SelectionClear events - another wm wants to take control
 	xevent.SelectionClearFun(disown).Connect(X, X.Dummy())
 
-	log.Println("Swm is now your wm.")
+	log.Info("Swm is now your wm.")
 
 	return nil
 }
@@ -99,16 +99,16 @@ func waitForWmShutdown(X *xgbutil.XUtil, otherWm xproto.Window) error {
 	delay := 100 * time.Millisecond
 
 	for t := time.Duration(0); t <= timeout; t += delay {
-		log.Println("Polling for event...")
+		log.Info("Polling for event...")
 		if ev, err := X.Conn().PollForEvent(); ev != nil && err == nil {
-			log.Printf("Got event: %s", ev)
+			log.Info("Got event: %s", ev)
 			if destNotify, ok := ev.(xproto.DestroyNotifyEvent); ok {
 				if destNotify.Window == otherWm {
 					return nil
 				}
 			}
 		} else if err != nil {
-			log.Printf("Got error: %s", err)
+			log.Info("Got error: %s", err)
 		}
 		time.Sleep(delay)
 	}
@@ -137,7 +137,7 @@ func announce(X *xgbutil.XUtil) error {
 }
 
 func disown(X *xgbutil.XUtil, _ xevent.SelectionClearEvent) {
-	log.Println("Exiting, will be replaced by another wm.")
+	log.Warn("Exiting, will be replaced by another wm.")
 	xevent.Quit(X)
 }
 

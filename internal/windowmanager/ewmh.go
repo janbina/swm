@@ -1,11 +1,10 @@
 package windowmanager
 
 import (
-	"log"
-
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
+	"github.com/janbina/swm/internal/log"
 )
 
 func updateClientList() {
@@ -50,18 +49,18 @@ func setWmAllowedActions(win xproto.Window) {
 func setEwmhSupported(X *xgbutil.XUtil) {
 	// Set supported atoms
 	if err := ewmh.SupportedSet(X, ewmhSupported); err != nil {
-		log.Println(err)
+		log.Warn("Error setting supported atoms: %s", err)
 	}
 
 	// While we're at it, set the supporting wm hint too.
 	if err := ewmh.SupportingWmCheckSet(X, X.RootWin(), X.Dummy()); err != nil {
-		log.Println(err)
+		log.Warn("Error setting supported wm check: %s", err)
 	}
 	if err := ewmh.SupportingWmCheckSet(X, X.Dummy(), X.Dummy()); err != nil {
-		log.Println(err)
+		log.Warn("Error setting supported wm check: %s", err)
 	}
 	if err := ewmh.WmNameSet(X, X.Dummy(), "Swm"); err != nil {
-		log.Println(err)
+		log.Warn("Error setting wm name: %s", err)
 	}
 }
 

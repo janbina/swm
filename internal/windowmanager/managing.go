@@ -1,7 +1,8 @@
 package windowmanager
 
 import (
-	"log"
+	"github.com/BurntSushi/xgbutil/xwindow"
+	"github.com/davecgh/go-spew/spew"
 
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgbutil"
@@ -9,6 +10,7 @@ import (
 	"github.com/BurntSushi/xgbutil/xevent"
 	"github.com/janbina/swm/internal/focus"
 	"github.com/janbina/swm/internal/groupmanager"
+	"github.com/janbina/swm/internal/log"
 	"github.com/janbina/swm/internal/window"
 )
 
@@ -20,21 +22,26 @@ func manageWindow(w xproto.Window) {
 		return
 	}
 
-	attrs, err := xproto.GetWindowAttributes(X.Conn(), w).Reply()
-	if err == nil && attrs.OverrideRedirect {
-		log.Printf("Ignoring window with override redirect")
+	xWin := xwindow.New(X, w)
+
+	winInfo := window.GetWindowInfo(xWin)
+	winActions := window.GetWinActions(X, winInfo)
+
+	log.Debug("Win INFO: %s", spew.Sdump(winInfo))
+	log.Debug("Win Actions: %s", spew.Sdump(winActions))
+
+	if !winActions.ShouldManage {
 		return
 	}
 
-	win := window.New(X, w)
+	win := window.New(xWin, winInfo, winActions)
 
-	if win == nil {
-		log.Printf("Cannot manage window id %d", w)
-		return
+	if winActions.IsFocusable {
+		focus.InitialAdd(win)
 	}
 
 	managedWindows[w] = win
-	groupmanager.AddWindow(w)
+	groupmanager.AddWindow(w, winActions.Groups)
 
 	xproto.ChangeSaveSet(X.Conn(), xproto.SetModeInsert, w)
 
@@ -94,7 +101,7 @@ func setupListeners(w xproto.Window, win *window.Window) {
 	xevent.ClientMessageFun(handleWindowClientMessage).Connect(X, w)
 
 	xevent.DestroyNotifyFun(func(x *xgbutil.XUtil, e xevent.DestroyNotifyEvent) {
-		log.Printf("Destroy notify: %s", e)
+		log.Debug("Destroy notify: %s", e)
 		unmanageWindow(e.Window)
 	}).Connect(X, w)
 

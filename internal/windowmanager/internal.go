@@ -1,8 +1,6 @@
 package windowmanager
 
 import (
-	"log"
-
 	"github.com/BurntSushi/xgbutil"
 	"github.com/BurntSushi/xgbutil/ewmh"
 	"github.com/BurntSushi/xgbutil/xevent"
@@ -11,11 +9,12 @@ import (
 	"github.com/BurntSushi/xgbutil/xwindow"
 	"github.com/janbina/swm/internal/groupmanager"
 	"github.com/janbina/swm/internal/heads"
+	"github.com/janbina/swm/internal/log"
 )
 
 // Root window configure request
 func configureRequestFun(x *xgbutil.XUtil, e xevent.ConfigureRequestEvent) {
-	log.Printf("Configure request: %s", e)
+	log.Debug("Configure request: %s", e)
 	if _, ok := managedWindows[e.Window]; ok {
 		return
 	}
@@ -32,7 +31,7 @@ func configureRequestFun(x *xgbutil.XUtil, e xevent.ConfigureRequestEvent) {
 }
 
 func mapRequestFun(_ *xgbutil.XUtil, e xevent.MapRequestEvent) {
-	log.Printf("Map request: %s", e)
+	log.Debug("Map request: %s", e)
 	manageWindow(e.Window)
 }
 
