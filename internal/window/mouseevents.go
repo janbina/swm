@@ -93,7 +93,7 @@ func dragMoveBegin(w *Window) xgbutil.MouseDragBeginFun {
 		if !w.IsMouseMoveable() {
 			return false, 0
 		}
-		log.Info("Drag move begin: %d, %d, %d, %d", rx, ry, ex, ey)
+		log.Debug("Drag move begin: %d, %d, %d, %d", rx, ry, ex, ey)
 
 		g, _ := w.Geometry()
 		w.moveState = &MoveState{
@@ -111,8 +111,6 @@ func dragMoveBegin(w *Window) xgbutil.MouseDragBeginFun {
 
 func dragMoveStep(w *Window) xgbutil.MouseDragFun {
 	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
-		log.Info("Drag move step: %d, %d, %d, %d", rx, ry, ex, ey)
-
 		g := w.moveState.startGeom
 		x := g.X() + rx - w.moveState.rx
 		y := g.Y() + ry - w.moveState.ry
@@ -123,7 +121,7 @@ func dragMoveStep(w *Window) xgbutil.MouseDragFun {
 
 func dragMoveEnd(w *Window) xgbutil.MouseDragFun {
 	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
-		log.Info("Drag move end: %d, %d, %d, %d", rx, ry, ex, ey)
+		log.Debug("Drag move end: %d, %d, %d, %d", rx, ry, ex, ey)
 		w.moveState = nil
 	}
 }
@@ -197,7 +195,7 @@ func dragResizeBegin(w *Window, direction int) xgbutil.MouseDragBeginFun {
 		if !w.IsMouseResizable() {
 			return false, 0
 		}
-		log.Info("Drag resize begin: %d, %d, %d, %d", rx, ry, ex, ey)
+		log.Debug("Drag resize begin: %d", rx, ry, ex, ey)
 
 		dir := direction
 		if dir == ewmh.Infer {
@@ -223,8 +221,6 @@ func dragResizeBegin(w *Window, direction int) xgbutil.MouseDragBeginFun {
 
 func dragResizeStep(win *Window) xgbutil.MouseDragFun {
 	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
-		log.Info("Drag resize step: %d, %d, %d, %d", rx, ry, ex, ey)
-
 		d := win.resizeState.direction
 		changeX := d == ewmh.SizeLeft || d == ewmh.SizeTopLeft || d == ewmh.SizeBottomLeft
 		changeY := d == ewmh.SizeTop || d == ewmh.SizeTopLeft || d == ewmh.SizeTopRight
@@ -272,7 +268,7 @@ func dragResizeStep(win *Window) xgbutil.MouseDragFun {
 
 func dragResizeEnd(w *Window) xgbutil.MouseDragFun {
 	return func(X *xgbutil.XUtil, rx, ry, ex, ey int) {
-		log.Info("Drag resize end: %d, %d, %d, %d", rx, ry, ex, ey)
+		log.Debug("Drag resize end: %d", rx, ry, ex, ey)
 		w.resizeState = nil
 	}
 }

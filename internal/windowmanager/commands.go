@@ -30,7 +30,7 @@ func registerCommands() {
 	})
 
 	if err != nil {
-		log.Info("Cannot register some commands: %s", err)
+		log.Warn("Cannot register some commands: %s", err)
 	}
 }
 

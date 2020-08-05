@@ -80,7 +80,7 @@ func SetupRoot() error {
 	xevent.MapRequestFun(mapRequestFun).Connect(X, Root.Id)
 	xevent.ClientMessageFun(handleRootClientMessage).Connect(X, Root.Id)
 	xevent.ConfigureNotifyFun(func(X *xgbutil.XUtil, e xevent.ConfigureNotifyEvent) {
-		log.Info("Root geometry changed: %s", e)
+		log.Debug("Root geometry changed: %s", e)
 		_ = loadGeometriesAndHeads()
 	}).Connect(X, Root.Id)
 

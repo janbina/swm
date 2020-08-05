@@ -99,11 +99,11 @@ func (w *Window) MaximizeVert() {
 	w.SaveWindowState(StatePriorMaxVert)
 	winG, err := w.Geometry()
 	if err != nil {
-		log.Info("Cannot get window geometry: %s", err)
+		log.Warn("Cannot get window geometry: %s", err)
 	}
 	g, err := heads.GetHeadForRectStruts(winG)
 	if err != nil {
-		log.Info("Cannot get screen geometry: %s", err)
+		log.Warn("Cannot get screen geometry: %s", err)
 	}
 	w.moveResizeInternal(false, 0, g.Y(), 0, g.Height(), ConfigY, ConfigHeight)
 }
@@ -136,11 +136,11 @@ func (w *Window) MaximizeHorz() {
 	w.SaveWindowState(StatePriorMaxHorz)
 	winG, err := w.Geometry()
 	if err != nil {
-		log.Info("Cannot get window geometry: %s", err)
+		log.Warn("Cannot get window geometry: %s", err)
 	}
 	g, err := heads.GetHeadForRectStruts(winG)
 	if err != nil {
-		log.Info("Cannot get screen geometry: %s", err)
+		log.Warn("Cannot get screen geometry: %s", err)
 	}
 	w.moveResizeInternal(false, g.X(), 0, g.Width(), 0, ConfigX, ConfigWidth)
 }
@@ -255,11 +255,11 @@ func (w *Window) Fullscreen() {
 	w.SaveWindowState(StatePriorFullscreen)
 	winG, err := w.Geometry()
 	if err != nil {
-		log.Info("Cannot get window geometry: %s", err)
+		log.Warn("Cannot get window geometry: %s", err)
 	}
 	g, err := heads.GetHeadForRect(winG)
 	if err != nil {
-		log.Info("Cannot get screen geometry: %s", err)
+		log.Warn("Cannot get screen geometry: %s", err)
 	}
 	w.moveResizeInternal(false, g.X(), g.Y(), g.Width(), g.Height())
 	w.updateFrameExtents()
@@ -313,7 +313,7 @@ func (w *Window) ToggleSkipPager() {
 }
 
 func (w *Window) ConfigureRequest(e xevent.ConfigureRequestEvent) {
-	log.Info("Window configure request: %s", e)
+	log.Debug("Window configure request: %s", e)
 	flags := int(e.ValueMask)
 	x, y, width, height := int(e.X), int(e.Y), int(e.Width), int(e.Height)
 
@@ -453,7 +453,7 @@ func (w *Window) ShowInfoBox(text string, duration time.Duration) {
 	)
 
 	if err != nil {
-		log.Info("Cannot show info box: %s", err)
+		log.Warn("Cannot show info box: %s", err)
 		return
 	}
 
@@ -461,7 +461,7 @@ func (w *Window) ShowInfoBox(text string, duration time.Duration) {
 
 	err = textBox.XSurfaceSet(w.infoWin.Id)
 	if err != nil {
-		log.Info("Cannot set surface: %s", err)
+		log.Warn("Cannot set surface: %s", err)
 		return
 	}
 	textBox.XDraw()

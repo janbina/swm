@@ -137,7 +137,7 @@ func announce(X *xgbutil.XUtil) error {
 }
 
 func disown(X *xgbutil.XUtil, _ xevent.SelectionClearEvent) {
-	log.Info("Exiting, will be replaced by another wm.")
+	log.Warn("Exiting, will be replaced by another wm.")
 	xevent.Quit(X)
 }
 

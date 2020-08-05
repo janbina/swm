@@ -27,8 +27,8 @@ func manageWindow(w xproto.Window) {
 	winInfo := window.GetWindowInfo(xWin)
 	winActions := window.GetWinActions(X, winInfo)
 
-	log.Info("Win INFO: %s", spew.Sdump(winInfo))
-	log.Info("Win Actions: %s", spew.Sdump(winActions))
+	log.Debug("Win INFO: %s", spew.Sdump(winInfo))
+	log.Debug("Win Actions: %s", spew.Sdump(winActions))
 
 	if !winActions.ShouldManage {
 		return
@@ -101,7 +101,7 @@ func setupListeners(w xproto.Window, win *window.Window) {
 	xevent.ClientMessageFun(handleWindowClientMessage).Connect(X, w)
 
 	xevent.DestroyNotifyFun(func(x *xgbutil.XUtil, e xevent.DestroyNotifyEvent) {
-		log.Info("Destroy notify: %s", e)
+		log.Debug("Destroy notify: %s", e)
 		unmanageWindow(e.Window)
 	}).Connect(X, w)
 

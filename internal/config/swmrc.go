@@ -28,12 +28,12 @@ func FindAndRunSwmrc(customPath string) {
 		if path[0] != '/' {
 			currentDir, err := os.Getwd()
 			if err != nil {
-				log.Info("Cannot get current working directory: %s", err)
+				log.Warn("Cannot get current working directory: %s", err)
 			}
 			path = filepath.Join(currentDir, customPath)
 		}
 		if _, err := os.Stat(path); err != nil {
-			log.Info("Provided config file does not seem to exist: %s", err)
+			log.Warn("Provided config file does not seem to exist: %s", err)
 		} else {
 			executeConfig(path)
 		}
@@ -77,6 +77,6 @@ func executeConfig(file string) {
 	err := exec.Command(file).Run()
 
 	if err != nil {
-		log.Info("Error executing config file: %s", err)
+		log.Warn("Error executing config file: %s", err)
 	}
 }

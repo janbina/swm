@@ -15,10 +15,10 @@ var rootCmHandlers = map[string]func(data []uint32){
 func handleRootClientMessage(X *xgbutil.XUtil, e xevent.ClientMessageEvent) {
 	name, err := xprop.AtomName(X, e.Type)
 	if err != nil {
-		log.Info("Error getting atom name for client message %s: %s", e, err)
+		log.Warn("Error getting atom name for client message %s: %s", e, err)
 		return
 	}
-	log.Info("Handle root client message: %s (%s)", name, e)
+	log.Debug("Handle root client message: %s (%s)", name, e)
 	if f, ok := rootCmHandlers[name]; !ok {
 		log.Info("Unsupported root client message: %s", name)
 	} else {

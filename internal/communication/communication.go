@@ -59,7 +59,7 @@ func handleClient(conn net.Conn) {
 		out := processCommand(msg)
 
 		if _, err := fmt.Fprintf(conn, "%s%c", out, 0); err != nil {
-			log.Info("Error sending response to swmctl: %s", err)
+			log.Warn("Error sending response to swmctl: %s", err)
 		}
 	}
 	_ = conn.Close()

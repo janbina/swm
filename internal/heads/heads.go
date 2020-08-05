@@ -46,7 +46,7 @@ func InitScreen(X *xgbutil.XUtil) {
 		).Check()
 
 		if err != nil {
-			log.Info("Error creating colormap for visual %d: %s", visual, err)
+			log.Warn("Error creating colormap for visual %d: %s", visual, err)
 
 			screen = &ScreenInfo{
 				Depth:    X.Screen().RootDepth,
