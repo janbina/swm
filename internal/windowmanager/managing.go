@@ -36,11 +36,6 @@ func manageWindow(w xproto.Window) {
 
 	win := window.New(xWin, winInfo, winActions)
 
-	if win == nil {
-		log.Info("Cannot manage window id %d", w)
-		return
-	}
-
 	if winActions.IsFocusable {
 		focus.InitialAdd(win)
 	}
