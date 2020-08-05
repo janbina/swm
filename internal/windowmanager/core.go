@@ -42,6 +42,8 @@ func Initialize(x *xgbutil.XUtil, replace bool) error {
 	stack.Initialize(X)
 	groupmanager.Initialize(X)
 
+	registerCommands()
+
 	if err = takeWmOwnership(X, replace); err != nil {
 		return err
 	}
