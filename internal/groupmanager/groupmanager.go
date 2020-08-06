@@ -61,14 +61,14 @@ func AddWindow(win xproto.Window, groups []int) {
 	for _, g := range groups {
 		winToGroups[win][g] = true
 		ensureEnoughGroups(g)
-		getGroup(g).windows[win] = true
+		getGroup(g).addWindow(win)
 	}
 	setWinDesktop(win)
 }
 
 func RemoveWindow(win xproto.Window) {
 	for g := range winToGroups[win] {
-		delete(getGroup(g).windows, win)
+		getGroup(g).removeWindow(win)
 	}
 	delete(winToGroups, win)
 }
@@ -143,7 +143,7 @@ func SetGroupNames(names []string) {
 
 // SetNumberOfGroups
 // 1) If we are increasing number of groups, we just update internals and ewmh properties
-// 2) If we are increasing number of groups, windows from removed groups are moved to group with highest index.
+// 2) If we are decreasing number of groups, windows from removed groups are moved to group with highest index.
 //    If current group is out of bounds after decrease, we show the group with highest index
 func SetNumberOfGroups(num int) *Changes {
 	if num < 1 {
@@ -233,14 +233,8 @@ func SetGroupForWindow(win xproto.Window, group int) *Changes {
 		group = StickyGroupID
 	}
 
-	ensureEnoughGroups(group)
-	for g := range winToGroups[win] {
-		delete(getGroup(g).windows, win)
-	}
-	getGroup(group).windows[win] = true
-
-	winToGroups[win] = map[int]bool{group: true}
-	setWinDesktop(win)
+	RemoveWindow(win)
+	AddWindow(win, []int{group})
 
 	return createChanges()
 }
@@ -251,7 +245,7 @@ func AddWindowToGroup(win xproto.Window, group int) *Changes {
 	}
 
 	ensureEnoughGroups(group)
-	getGroup(group).windows[win] = true
+	getGroup(group).addWindow(win)
 	winToGroups[win][group] = true
 	setWinDesktop(win)
 
@@ -266,14 +260,14 @@ func RemoveWindowFromGroup(win xproto.Window, group int) *Changes {
 		return nil
 	}
 
-	delete(getGroup(group).windows, win)
+	getGroup(group).removeWindow(win)
 	delete(winToGroups[win], group)
 
 	if len(winToGroups[win]) == 0 {
 		// window has to be in some group...
 		g := StickyGroupID
 		winToGroups[win] = map[int]bool{g: true}
-		getGroup(g).windows[win] = true
+		getGroup(g).addWindow(win)
 	}
 
 	setWinDesktop(win)
@@ -293,14 +287,14 @@ func GetVisibleGroups() []uint {
 
 func moveWinsToGroup(from, to int) {
 	// only if from is windows only group
-	for w := range getGroup(from).windows {
+	for _, w := range getGroup(from).getWindows() {
 		if len(winToGroups[w]) == 1 {
-			getGroup(to).windows[w] = true
+			getGroup(to).addWindow(w)
 			winToGroups[w] = map[int]bool{to: true}
 			setWinDesktop(w)
 		}
 	}
-	getGroup(from).windows = map[xproto.Window]bool{}
+	getGroup(from).removeAllWindows()
 }
 
 func ensureEnoughGroups(group int) {
