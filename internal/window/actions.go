@@ -295,7 +295,7 @@ func (w *Window) ToggleSkipTaskbar() {
 }
 
 func (w *Window) UnSkipPager() {
-	w.skipPager = true
+	w.skipPager = false
 	w.RemoveStates("_NET_WM_STATE_SKIP_PAGER")
 }
 
